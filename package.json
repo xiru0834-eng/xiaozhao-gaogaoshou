@@ -7,6 +7,9 @@
     "node": ">=24.14.0 <25"
   },
   "scripts": {
+    "coach:install": "npm --prefix products/shizhi-interview ci",
+    "coach": "npm --prefix products/shizhi-interview start",
+    "coach:check": "npm --prefix products/shizhi-interview run verify",
     "dev": "npm run build && npm start",
     "build": "npm run typecheck && vite build && tsc -p tsconfig.server.json",
     "typecheck": "tsc --noEmit",

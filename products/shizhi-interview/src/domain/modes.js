@@ -1,0 +1,40 @@
+import { assertDomain } from './errors.js'
+
+export const INTERVIEW_MODES = Object.freeze({
+  bagu: Object.freeze({
+    id: 'bagu',
+    label: '背八股',
+    questionStyle: 'knowledge',
+    configuration: 'topic',
+  }),
+  mock: Object.freeze({
+    id: 'mock',
+    label: '模拟面试',
+    questionStyle: 'adaptive',
+    configuration: 'mock',
+  }),
+  resume_drill: Object.freeze({
+    id: 'resume_drill',
+    label: '简历押题',
+    questionStyle: 'resume',
+    configuration: 'resume_drill',
+  }),
+  scenario: Object.freeze({
+    id: 'scenario',
+    label: '场景题',
+    questionStyle: 'scenario',
+    configuration: 'topic',
+  }),
+  leetcode: Object.freeze({
+    id: 'leetcode',
+    label: '刷力扣',
+    questionStyle: 'catalog',
+    configuration: 'catalog',
+  }),
+})
+
+export function modeDefinition(mode) {
+  const definition = INTERVIEW_MODES[mode]
+  assertDomain(definition, 'INVALID_MODE', `不支持的面试模式：${String(mode)}`)
+  return definition
+}

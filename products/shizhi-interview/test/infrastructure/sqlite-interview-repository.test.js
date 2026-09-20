@@ -1,0 +1,111 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { createPractice, askQuestion, submitAnswer, evaluateAnswer, saveExplanation } from '../../src/domain/practice.js'
+import { createSessionBinding, focusSessionQuestion, transferSessionBinding } from '../../src/domain/session.js'
+import { SqliteInterviewRepository } from '../../src/infrastructure/sqlite-interview-repository.js'
+
+function fixture() {
+  const directory = mkdtempSync(join(tmpdir(), 'shizhi-interview-sqlite-'))
+  const repository = new SqliteInterviewRepository(join(directory, 'interview.sqlite'))
+  return { repository, cleanup() { repository.close(); rmSync(directory, { recursive: true, force: true }) } }
+}
+
+function aggregate() {
+  let practice = createPractice({
+    id: 'practice-1', mode: 'resume_drill',
+    config: {
+      resume: 'Java 后端简历', targetRole: '后端开发工程师', jobDescriptionProvided: true,
+      jobDescription: '负责服务端开发。', focus: '项目难点与技术选型', difficulty: 'intermediate',
+    },
+    now: 1,
+  })
+  practice = askQuestion(practice, { id: 'question-1', prompt: '解释 happens-before。', now: 2 }).practice
+  practice = submitAnswer(practice, { questionId: 'question-1', attemptId: 'attempt-1', answer: '它描述可见性顺序。', now: 3 }).practice
+  practice = evaluateAnswer(practice, { questionId: 'question-1', attemptId: 'attempt-1', score: 8.5, feedback: '准确。', dimensions: { accuracy: 9 }, now: 4 }).practice
+  practice = saveExplanation(practice, { questionId: 'question-1', detail: '前一个操作的结果对后一个操作可见。', memorizationPoints: '可见性与有序性。', now: 5 }).practice
+  const binding = focusSessionQuestion(createSessionBinding({ sessionId: 'session-1', practiceId: practice.id, now: 1 }), 'question-1', 2)
+  return { practice, binding }
+}
+
+test('SQLite 事务保存并恢复完整聚合与无阶段会话绑定', async () => {
+  const context = fixture()
+  try {
+    const { practice, binding } = aggregate()
+    await context.repository.commit({ practice, binding })
+    assert.deepEqual(await context.repository.getPractice(practice.id), practice)
+    assert.deepEqual(await context.repository.getSessionBinding(binding.sessionId), binding)
+    assert.equal(context.repository.database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='session_cursors'").get(), undefined)
+  } finally { context.cleanup() }
+})
+
+test('SQLite 原子转移练习绑定并释放旧会话', async () => {
+  const context = fixture()
+  try {
+    const { practice, binding } = aggregate()
+    await context.repository.commit({ practice, binding })
+    const transferred = transferSessionBinding(binding, 'session-2', 3)
+    await context.repository.commit({ binding: transferred })
+    assert.equal(await context.repository.getSessionBinding('session-1'), null)
+    assert.deepEqual(await context.repository.getSessionBindingByPractice(practice.id), transferred)
+    await context.repository.commit({ unbindSessionId: 'session-2' })
+    assert.equal(await context.repository.getSessionBindingByPractice(practice.id), null)
+  } finally { context.cleanup() }
+})
+
+test('SQLite 表结构约束一个练习只能绑定一个会话', async () => {
+  const context = fixture()
+  try {
+    const { practice, binding } = aggregate()
+    await context.repository.commit({ practice, binding })
+    assert.throws(() => context.repository.database.prepare(`
+      INSERT INTO session_bindings (session_id, practice_id, current_question_id, revision, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('session-duplicate', practice.id, binding.currentQuestionId, 1, 3))
+  } finally { context.cleanup() }
+})
+
+test('SQLite 列表支持模式、状态和主题筛选', async () => {
+  const context = fixture()
+  try {
+    const { practice, binding } = aggregate()
+    await context.repository.commit({ practice, binding })
+    assert.equal((await context.repository.listPractices({ mode: 'resume_drill', status: 'active', query: 'java' })).length, 1)
+    assert.equal((await context.repository.listPractices({ mode: 'scenario' })).length, 0)
+  } finally { context.cleanup() }
+})
+
+test('删除练习通过外键级联清理题目、作答和会话绑定', async () => {
+  const context = fixture()
+  try {
+    const { practice, binding } = aggregate()
+    await context.repository.commit({ practice, binding })
+    await context.repository.deletePractice(practice.id)
+    assert.equal(await context.repository.getPractice(practice.id), null)
+    assert.equal(await context.repository.getSessionBinding(binding.sessionId), null)
+  } finally { context.cleanup() }
+})
+
+test('SQLite 保存并更新力扣热题完成状态', async () => {
+  const context = fixture()
+  try {
+    await context.repository.saveLeetcodeProgress({ slug: 'two-sum', completed: true, completedAt: 10, updatedAt: 10 })
+    assert.deepEqual(await context.repository.listLeetcodeProgress(), [{ slug: 'two-sum', completed: true, completedAt: 10, updatedAt: 10 }])
+    await context.repository.saveLeetcodeProgress({ slug: 'two-sum', completed: false, completedAt: null, updatedAt: 11 })
+    assert.deepEqual(await context.repository.listLeetcodeProgress(), [{ slug: 'two-sum', completed: false, completedAt: null, updatedAt: 11 }])
+  } finally { context.cleanup() }
+})
+
+test('SQLite 保存并恢复力扣题库元数据', async () => {
+  const context = fixture()
+  try {
+    let practice = createPractice({ id: 'leetcode-1', mode: 'leetcode', config: { language: 'python' }, now: 1 })
+    practice = askQuestion(practice, { id: 'question-1', prompt: '1. 两数之和', leetcode: { slug: 'two-sum' }, now: 2 }).practice
+    await context.repository.commit({ practice })
+    const restored = await context.repository.getPractice(practice.id)
+    assert.deepEqual(restored.config, { language: 'python' })
+    assert.deepEqual(restored.questions[0].leetcode, practice.questions[0].leetcode)
+  } finally { context.cleanup() }
+})

@@ -1,0 +1,351 @@
+import { assertDomain } from './errors.js'
+import { LEETCODE_TOP_100_SOURCE, leetcodeTop100Problem } from './leetcode-top-100.js'
+import { LEETCODE_LANGUAGES, leetcodeLanguageDefinition } from './leetcode-languages.js'
+import { modeDefinition } from './modes.js'
+import { assertModeCapability } from './mode-capabilities.js'
+
+const DIFFICULTIES = new Set(['junior', 'intermediate', 'senior'])
+
+function requiredText(value, code, message) {
+  const text = typeof value === 'string' ? value.trim() : ''
+  assertDomain(text, code, message)
+  return text
+}
+
+function activePractice(practice) {
+  assertDomain(practice?.status === 'active', 'PRACTICE_NOT_ACTIVE', '练习未处于进行中状态')
+}
+
+function withUpdatedAt(practice, now, patch = {}) {
+  return { ...practice, ...patch, updatedAt: now }
+}
+
+function normalizeQuestionPrompt(prompt) {
+  const normalizedPrompt = requiredText(prompt, 'INVALID_QUESTION', '题目内容不能为空')
+  assertDomain(normalizedPrompt.length <= 120, 'QUESTION_TOO_LONG', '题目必须简单扼要，长度不能超过 120 个字符')
+  const questionMarkCount = (normalizedPrompt.match(/[?？]/g) || []).length
+  assertDomain(questionMarkCount <= 1 && !/[\r\n]/.test(normalizedPrompt), 'MULTI_PART_QUESTION', '每轮只能提出一道问题，不能拼接多个子问题')
+  return normalizedPrompt
+}
+
+function normalizeConfiguration(definition, config) {
+  assertDomain(config && typeof config === 'object' && !Array.isArray(config), 'CONFIGURATION_REQUIRED', '必须明确提供练习配置')
+  if (definition.configuration === 'topic') {
+    const topic = requiredText(config.topic, 'INVALID_TOPIC', '必须明确提供练习主题')
+    if (config.target === undefined) return { topic }
+    assertDomain(config.target && typeof config.target === 'object' && !Array.isArray(config.target), 'INVALID_TARGET', '公司练习背景格式不正确')
+    const target = {}
+    for (const key of ['companyId', 'companyName', 'targetRole', 'roles', 'city', 'url']) {
+      const value = config.target[key]
+      assertDomain(typeof value === 'string' && value.length <= 20000, 'INVALID_TARGET', '公司练习背景字段不正确')
+      target[key] = value
+    }
+    assertDomain(target.companyId.trim() && target.companyName.trim() && target.targetRole.trim(), 'INVALID_TARGET', '公司与目标岗位不能为空')
+    return { topic, target }
+  }
+  if (definition.configuration === 'catalog') {
+    const language = requiredText(config.language, 'LEETCODE_LANGUAGE_REQUIRED', '刷力扣必须明确选择编程语言')
+    assertDomain(leetcodeLanguageDefinition(language), 'INVALID_LEETCODE_LANGUAGE', `不支持的力扣编程语言：${language}`)
+    return { language }
+  }
+
+  const resume = requiredText(config.resume, 'RESUME_REQUIRED', `${definition.label}必须明确提供简历内容`)
+  const targetRole = requiredText(config.targetRole, 'TARGET_ROLE_REQUIRED', `${definition.label}必须明确提供目标岗位`)
+  assertDomain(typeof config.jobDescriptionProvided === 'boolean', 'JOB_DESCRIPTION_PROVIDED_REQUIRED', `${definition.label}必须明确选择是否提供 JD`)
+  const jobDescription = config.jobDescriptionProvided
+    ? requiredText(config.jobDescription, 'JOB_DESCRIPTION_REQUIRED', '已选择提供 JD 时必须填写岗位描述')
+    : ''
+  const difficulty = requiredText(config.difficulty, 'DIFFICULTY_REQUIRED', '模拟面试必须明确选择面试难度')
+  assertDomain(DIFFICULTIES.has(difficulty), 'INVALID_DIFFICULTY', `不支持的难度：${difficulty}`)
+  if (definition.configuration === 'resume_drill') {
+    const focus = requiredText(config.focus, 'RESUME_DRILL_FOCUS_REQUIRED', '简历押题必须明确押题范围')
+    return {
+      resume, targetRole, jobDescriptionProvided: config.jobDescriptionProvided, jobDescription,
+      focus, difficulty,
+    }
+  }
+  const interviewerStyle = requiredText(config.interviewerStyle, 'INTERVIEWER_STYLE_REQUIRED', '模拟面试必须明确选择面试官风格')
+  assertDomain(typeof config.coding === 'boolean', 'CODING_REQUIRED', '模拟面试必须明确选择是否手撕代码')
+  return {
+    resume, targetRole, jobDescriptionProvided: config.jobDescriptionProvided, jobDescription,
+    interviewerStyle, coding: config.coding, difficulty,
+  }
+}
+
+function practiceIdentity(definition, config) {
+  if (definition.configuration === 'topic') {
+    return { topic: config.topic, source: { kind: 'topic', content: config.topic } }
+  }
+  if (definition.configuration === 'catalog') {
+    return { topic: LEETCODE_TOP_100_SOURCE.name, source: { kind: 'catalog', content: LEETCODE_TOP_100_SOURCE.url } }
+  }
+  return { topic: definition.label, source: { kind: 'resume', content: config.resume } }
+}
+
+export function createPractice({ id, mode, config, now }) {
+  const definition = modeDefinition(mode)
+  const normalizedConfig = normalizeConfiguration(definition, config)
+  const identity = practiceIdentity(definition, normalizedConfig)
+
+  return {
+    id: requiredText(id, 'INVALID_PRACTICE_ID', '练习 ID 不能为空'),
+    mode,
+    topic: identity.topic,
+    source: identity.source,
+    config: normalizedConfig,
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+    completedAt: null,
+    summary: null,
+    questions: [],
+  }
+}
+
+export function updatePractice(practice, { mode, config, now }) {
+  assertDomain(practice && typeof practice === 'object', 'PRACTICE_REQUIRED', '练习不能为空')
+  const definition = modeDefinition(mode)
+  const normalizedConfig = normalizeConfiguration(definition, definition.configuration === 'topic' && practice.config.target
+    ? { target: practice.config.target, ...config } : config)
+  const currentLeetcode = mode === 'leetcode' ? practice.questions?.[0]?.leetcode : null
+  const identity = currentLeetcode
+    ? { topic: currentLeetcode.title, source: { kind: 'leetcode', content: currentLeetcode.url } }
+    : practiceIdentity(definition, normalizedConfig)
+  return withUpdatedAt(practice, now, {
+    mode,
+    topic: identity.topic,
+    source: identity.source,
+    config: normalizedConfig,
+  })
+}
+
+export function findQuestion(practice, questionId) {
+  const question = practice?.questions?.find((item) => item.id === questionId)
+  assertDomain(question, 'QUESTION_NOT_FOUND', `找不到题目：${String(questionId)}`)
+  return question
+}
+
+export function findAttempt(question, attemptId) {
+  const attempt = question?.attempts?.find((item) => item.id === attemptId)
+  assertDomain(attempt, 'ATTEMPT_NOT_FOUND', `找不到作答：${String(attemptId)}`)
+  return attempt
+}
+
+function normalizeLeetcodeProblem(practice, input) {
+  if (practice.mode !== 'leetcode') return null
+  const problem = leetcodeTop100Problem(input?.slug)
+  assertDomain(problem, 'LEETCODE_PROBLEM_REQUIRED', '刷力扣模式必须从固定题库中选择题目')
+  return { ...problem }
+}
+
+function normalizeHot100Problem(practice, input) {
+  if (input?.kind !== 'hot100') return null
+  assertModeCapability(practice, 'question.draw_hot100', 'HOT100_NOT_ALLOWED', '当前模式不能抽取 Hot 100 手撕题')
+  assertDomain(practice.config.coding === true, 'MOCK_CODING_REQUIRED', '只有开启手撕代码的模拟面试才能抽取 Hot 100 题目')
+  const problem = leetcodeTop100Problem(input?.slug)
+  assertDomain(problem, 'HOT100_PROBLEM_REQUIRED', '模拟面试手撕题必须从固定 Hot 100 题库中选择')
+  return { ...problem }
+}
+
+export function askQuestion(practice, { id, prompt, leetcode, hot100, now }) {
+  activePractice(practice)
+  const questionId = requiredText(id, 'INVALID_QUESTION_ID', '题目 ID 不能为空')
+  const normalizedPrompt = normalizeQuestionPrompt(prompt)
+  assertDomain(
+    practice.mode !== 'leetcode' || practice.questions.length === 0,
+    'LEETCODE_PRACTICE_ALREADY_HAS_QUESTION',
+    '每条力扣练习只能包含一道题',
+  )
+  const normalizedLeetcode = normalizeLeetcodeProblem(practice, leetcode)
+  const normalizedHot100 = normalizeHot100Problem(practice, hot100)
+  assertDomain(!practice.questions.some((item) => item.id === questionId), 'DUPLICATE_QUESTION', `题目已存在：${questionId}`)
+  const question = {
+    id: questionId,
+    sequence: practice.questions.length + 1,
+    prompt: normalizedPrompt,
+    createdAt: now,
+    attempts: [],
+    explanation: null,
+    ...(normalizedLeetcode ? { leetcode: normalizedLeetcode } : {}),
+    ...(normalizedHot100 ? { hot100: normalizedHot100 } : {}),
+  }
+  return {
+    practice: withUpdatedAt(practice, now, {
+      questions: [...practice.questions, question],
+      ...(normalizedLeetcode ? {
+        topic: normalizedLeetcode.title,
+        source: { kind: 'leetcode', content: normalizedLeetcode.url },
+      } : {}),
+    }),
+    question,
+  }
+}
+
+export function updateQuestion(practice, { questionId, prompt, now }) {
+  const target = findQuestion(practice, questionId)
+  assertDomain(!target.leetcode, 'LEETCODE_QUESTION_IMMUTABLE', '固定题库中的力扣题目不允许修改')
+  assertDomain(!target.hot100, 'HOT100_QUESTION_IMMUTABLE', '模拟面试手撕题不允许修改')
+  const questions = practice.questions.map((question) => question.id === target.id
+    ? { ...question, prompt: normalizeQuestionPrompt(prompt) }
+    : question)
+  return { practice: withUpdatedAt(practice, now, { questions }), question: questions.find((question) => question.id === target.id) }
+}
+
+export function deleteQuestion(practice, { questionId, now }) {
+  const target = findQuestion(practice, questionId)
+  const questions = practice.questions
+    .filter((question) => question.id !== target.id)
+    .map((question, index) => ({ ...question, sequence: index + 1 }))
+  return { practice: withUpdatedAt(practice, now, { questions }), question: target }
+}
+
+export function submitAnswer(practice, { questionId, attemptId, answer, now }) {
+  activePractice(practice)
+  const target = findQuestion(practice, questionId)
+  const id = requiredText(attemptId, 'INVALID_ATTEMPT_ID', '作答 ID 不能为空')
+  assertDomain(!target.attempts.some((item) => item.id === id), 'DUPLICATE_ATTEMPT', `作答已存在：${id}`)
+  const attempt = {
+    id,
+    sequence: target.attempts.length + 1,
+    answer: requiredText(answer, 'INVALID_ANSWER', '回答不能为空'),
+    submittedAt: now,
+    evaluation: null,
+  }
+  const questions = practice.questions.map((question) => question.id === target.id
+    ? { ...question, attempts: [...question.attempts, attempt] }
+    : question)
+  return { practice: withUpdatedAt(practice, now, { questions }), attempt }
+}
+
+export function evaluateAnswer(practice, { questionId, attemptId, score, feedback, dimensions = {}, now }) {
+  activePractice(practice)
+  assertModeCapability(practice, 'evaluation.create', 'EVALUATION_NOT_ALLOWED', '当前模式不提供作答评价')
+  const targetQuestion = findQuestion(practice, questionId)
+  const targetAttempt = findAttempt(targetQuestion, attemptId)
+  assertDomain(!targetAttempt.evaluation, 'ATTEMPT_ALREADY_EVALUATED', '该作答已经评价，重新回答会创建新的作答记录')
+  const normalizedScore = Number(score)
+  assertDomain(Number.isFinite(normalizedScore) && normalizedScore >= 0 && normalizedScore <= 10, 'INVALID_SCORE', '评分必须在 0–10 之间')
+  const normalizedDimensions = Object.fromEntries(Object.entries(dimensions || {}).map(([key, value]) => {
+    const dimensionScore = Number(value)
+    assertDomain(Number.isFinite(dimensionScore) && dimensionScore >= 0 && dimensionScore <= 10, 'INVALID_DIMENSION_SCORE', `维度 ${key} 的评分必须在 0–10 之间`)
+    return [key, dimensionScore]
+  }))
+  const evaluation = {
+    score: normalizedScore,
+    feedback: requiredText(feedback, 'INVALID_FEEDBACK', '评价内容不能为空'),
+    dimensions: normalizedDimensions,
+    evaluatedAt: now,
+  }
+  const questions = practice.questions.map((question) => question.id !== targetQuestion.id ? question : {
+    ...question,
+    attempts: question.attempts.map((attempt) => attempt.id === targetAttempt.id
+      ? { ...attempt, evaluation }
+      : attempt),
+  })
+  return { practice: withUpdatedAt(practice, now, { questions }), evaluation }
+}
+
+export function saveExplanation(practice, { questionId, detail, memorizationPoints, replace = false, now }) {
+  activePractice(practice)
+  assertModeCapability(
+    practice,
+    replace ? 'explanation.replace' : 'explanation.create',
+    'EXPLANATION_NOT_ALLOWED',
+    '当前模式不提供答案讲解',
+  )
+  const target = findQuestion(practice, questionId)
+  assertDomain(replace || !target.explanation, 'EXPLANATION_ALREADY_EXISTS', '该题已经存在讲解')
+  const normalizedDetail = requiredText(detail, 'INVALID_EXPLANATION', '讲解内容不能为空')
+  if (target.leetcode) {
+    const selectedLanguage = leetcodeLanguageDefinition(practice.config.language)
+    assertDomain(selectedLanguage, 'INVALID_LEETCODE_LANGUAGE', `不支持的力扣编程语言：${String(practice.config.language)}`)
+    assertDomain(
+      selectedLanguage.pattern.test(normalizedDetail),
+      'LEETCODE_SOLUTION_LANGUAGE_REQUIRED',
+      `力扣讲解必须包含 ${selectedLanguage.label} 完整代码`,
+      { language: selectedLanguage.id },
+    )
+    const unexpectedLanguages = LEETCODE_LANGUAGES
+      .filter((language) => language.id !== selectedLanguage.id && language.pattern.test(normalizedDetail))
+      .map((language) => language.id)
+    assertDomain(
+      unexpectedLanguages.length === 0,
+      'LEETCODE_SOLUTION_LANGUAGE_MISMATCH',
+      `力扣讲解只能包含配置的 ${selectedLanguage.label} 代码`,
+      { language: selectedLanguage.id, unexpectedLanguages },
+    )
+  }
+  const explanation = {
+    detail: normalizedDetail,
+    memorizationPoints: requiredText(memorizationPoints, 'INVALID_MEMORIZATION_POINTS', '讲解要点不能为空'),
+    createdAt: now,
+  }
+  const questions = practice.questions.map((question) => question.id === target.id
+    ? { ...question, explanation }
+    : question)
+  return { practice: withUpdatedAt(practice, now, { questions }), explanation }
+}
+
+export function completePractice(practice, { overall, strengths, improvements, now }) {
+  activePractice(practice)
+  if (practice.mode === 'mock') {
+    return withUpdatedAt(practice, now, { status: 'completed', completedAt: now, summary: null })
+  }
+  assertDomain(practice.mode !== 'leetcode', 'LEETCODE_ANALYSIS_NOT_ALLOWED', '力扣练习不生成面试分析总结')
+  assertModeCapability(practice, 'summary.show', 'SUMMARY_NOT_ALLOWED', '当前模式不生成面试分析总结')
+  assertDomain(Array.isArray(strengths) && strengths.length > 0, 'INVALID_SUMMARY_STRENGTHS', '练习总结必须包含至少一项表现亮点')
+  assertDomain(Array.isArray(improvements) && improvements.length > 0, 'INVALID_SUMMARY_IMPROVEMENTS', '练习总结必须包含至少一项改进建议')
+  const summary = {
+    kind: 'interview',
+    overall: requiredText(overall, 'INVALID_SUMMARY', '练习总结不能为空'),
+    strengths: strengths.map((item) => requiredText(item, 'INVALID_SUMMARY_STRENGTHS', '表现亮点不能为空')),
+    improvements: improvements.map((item) => requiredText(item, 'INVALID_SUMMARY_IMPROVEMENTS', '改进建议不能为空')),
+    createdAt: now,
+  }
+  return withUpdatedAt(practice, now, { status: 'completed', completedAt: now, summary })
+}
+
+/** Archives an active practice without inventing an ability assessment.
+ * @param {object} practice Current practice aggregate.
+ * @param {number} now Completion time.
+ * @returns {object} Completed practice retaining its questions and recorded feedback.
+ */
+export function archivePractice(practice, now) {
+  activePractice(practice)
+  return withUpdatedAt(practice, now, { status: 'completed', completedAt: now })
+}
+
+export function completeLeetcodePractice(practice, { now }) {
+  activePractice(practice)
+  assertDomain(practice.mode === 'leetcode', 'LEETCODE_PRACTICE_REQUIRED', '只有力扣练习可以直接生成刷题汇总')
+  const problems = practice.questions
+    .filter((question) => question.leetcode)
+    .map((question) => ({ sequence: question.sequence, ...question.leetcode }))
+  const summary = {
+    kind: 'leetcode',
+    questionCount: problems.length,
+    problems,
+    createdAt: now,
+  }
+  return withUpdatedAt(practice, now, { status: 'completed', completedAt: now, summary })
+}
+
+export function reopenPractice(practice, now) {
+  assertDomain(practice?.status === 'completed', 'PRACTICE_NOT_COMPLETED', '只有已结束练习可以重新打开')
+  return withUpdatedAt(practice, now, { status: 'active', completedAt: null, summary: null })
+}
+
+export function summarizePractice(practice) {
+  const attempts = practice.questions.flatMap((question) => question.attempts)
+  const evaluated = attempts.filter((attempt) => attempt.evaluation)
+  const averageScore = evaluated.length
+    ? Math.round((evaluated.reduce((sum, attempt) => sum + attempt.evaluation.score, 0) / evaluated.length) * 10) / 10
+    : null
+  return {
+    questionCount: practice.questions.length,
+    attemptCount: attempts.length,
+    evaluatedCount: evaluated.length,
+    averageScore,
+    verdict: averageScore === null ? '未评分' : averageScore >= 8 ? '优秀' : averageScore >= 6 ? '合格' : '需要加强',
+  }
+}
