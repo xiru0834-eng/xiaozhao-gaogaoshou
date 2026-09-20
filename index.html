@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>校招高高手</title>
+<style>
+:root{color-scheme:light;--bg:#f3f5f7;--paper:#fff;--paper-2:#f7f8fa;--ink:#222b35;--muted:#5c6572;--faint:#66717f;--line:#e4e8ed;--line-strong:#bbc4cf;--accent:#176953;--accent-ink:#176953;--accent-soft:#e8f5ee;--amber:#8a500f;--amber-soft:#fff3df;--alarm:#b13b32;--alarm-soft:#fceeea;--good:#246b43;--good-soft:#e7f5eb;--gold:#8a5b19;--violet:#6a51a1;--sidebar:#17232c;--sidebar-text:#d4dee5;--sidebar-muted:#a5b5c2;--shadow:0 12px 40px #17232c18;--z-sticky:10;--z-menu:20;--z-toast:40}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#11151b;--paper:#1a1f27;--paper-2:#222832;--ink:#eef1f5;--muted:#b1bac7;--faint:#a5b1c0;--line:#343d49;--line-strong:#5a6879;--accent:#88d8b7;--accent-ink:#a4e3c9;--accent-soft:#263d36;--amber:#efc382;--amber-soft:#3c3327;--alarm:#ffb0a5;--alarm-soft:#402d2b;--good:#9dddb2;--good-soft:#263d31;--gold:#e7c18a;--violet:#cfbafd;--sidebar:#101820;--shadow:0 12px 40px #0004}
+*{box-sizing:border-box}html{scrollbar-gutter:stable}body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button,a,input,select,summary{touch-action:manipulation}button,select,summary{cursor:pointer}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}button{color:inherit}button:disabled,select:disabled{opacity:.55;cursor:not-allowed}[hidden]{display:none!important}img{max-width:100%}:focus-visible{outline:3px solid var(--accent);outline-offset:3px}button,select,a{transition:background .15s ease,border-color .15s ease}h1,h2,h3{line-height:1.35;text-wrap:balance}.sr-only{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.workspace{display:grid;grid-template-columns:218px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:var(--sidebar);color:var(--sidebar-text);padding:26px 18px 20px;display:flex;flex-direction:column;gap:24px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none!important;color:#f5f8f9;font-weight:800;font-size:21px;letter-spacing:.3px;line-height:1.2}.brand img{width:45px;height:45px}.brand small{display:block;margin-top:5px;font-size:11px;font-weight:500;color:var(--sidebar-muted);letter-spacing:.2px}
+.season{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ffffff20;border-bottom:1px solid #ffffff20;padding:13px 2px;color:var(--sidebar-muted);font-size:12px}.season b{font-size:20px;font-weight:600;letter-spacing:1px;color:#a2e1c6;font-style:italic}
+.nav-label{color:var(--sidebar-muted);font-size:11px;font-weight:500;margin:0 10px 10px}.chips{display:flex;gap:5px;flex-wrap:wrap}.chip{border:1px solid transparent;background:none;color:var(--muted);min-height:34px;padding:6px 10px;border-radius:6px;text-align:left;line-height:1.5}.chip:hover{background:var(--paper-2);color:var(--ink)}.chip[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent-soft);font-weight:600}
+.chip .n{font-size:11px;font-variant-numeric:tabular-nums}.sidebar .chips{display:grid;gap:5px}.sidebar .chip{display:flex;align-items:center;gap:9px;width:100%;min-height:39px;color:var(--sidebar-text);border:0;padding:8px 12px}.sidebar .chip .n{margin-left:auto;color:var(--sidebar-muted)}.sidebar .chip:hover{background:#ffffff0b;color:#fff}.sidebar .chip[aria-pressed="true"]{background:#c2eadb;color:#153a30;font-weight:650}.sidebar .chip[aria-pressed="true"] .n{color:#31584a}.nav-icon{font-size:15px;width:18px;display:inline-grid;place-items:center}.sidebar .chip:focus-visible{outline-color:#a2e1c6}
+.side-progress{margin-top:auto;padding:18px 10px 0;border-top:1px solid #ffffff20}.side-progress .progress-heading{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--sidebar-text)}.side-progress b{color:#a2e1c6;font-size:17px;font-weight:600}.bar{height:5px;background:#ffffff20;border-radius:4px;margin-top:12px;overflow:hidden}.bar i{height:100%;display:block;background:#a2e1c6;border-radius:4px}.side-progress small{font-size:11px;color:var(--sidebar-muted);display:block;margin-top:10px}.side-help{background:none;color:var(--sidebar-muted);border:0;text-align:left;padding:0 10px;font-size:12px}.side-help:hover{color:white}.filter-top{display:none}
+.main-shell{min-width:0}.app-header{height:68px;position:sticky;top:0;z-index:var(--z-sticky);background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 32px}.breadcrumb{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px}.breadcrumb b{font-weight:600;color:var(--ink)}.breadcrumb span:last-child{color:var(--faint)}.header-tools{display:flex;align-items:center;gap:8px}.action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font-size:12px;text-decoration:none;white-space:nowrap}.action:hover{background:var(--paper-2);border-color:var(--line-strong);text-decoration:none}.action.primary{background:var(--accent);color:var(--paper);border-color:var(--accent)}:root[data-theme="dark"] .action.primary{color:#132d25}.icon-button{width:34px;padding:0;font-size:16px}.menu{position:relative}.menu summary{list-style:none}.menu-panel{position:absolute;right:0;top:42px;z-index:var(--z-menu);min-width:202px;background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:6px}.menu-panel .action{width:100%;justify-content:flex-start;border:0;margin:2px 0}.connection{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);min-width:0}.savenote{max-width:320px;overflow-wrap:anywhere}.savenote::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px}.savenote[data-kind="error"]{color:var(--alarm)}.savenote[data-kind="error"]::before{background:var(--alarm)}.savenote[data-kind="saving"]::before{background:var(--amber)}
+.content{max-width:1720px;margin:auto;padding:28px 32px 48px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:24px}.page-title{display:flex;align-items:center;gap:12px}h1{font-size:27px;letter-spacing:-.6px;font-weight:750;margin:0}.edition{border:1px solid var(--line-strong);padding:2px 7px;font-size:11px;border-radius:3px;font-weight:500;color:var(--muted)}.dek{color:var(--muted);font-size:12px;margin:7px 0 0}.summary-stats{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.stat{display:flex;flex-direction:column;gap:3px;text-align:right}.stat span{font-size:11px;color:var(--muted)}.stat b{font-size:21px;font-weight:650;line-height:1.2;font-variant-numeric:tabular-nums}.stat.is-soon b{color:var(--alarm)}.stat.is-offer b{color:var(--accent)}
+.tools{display:flex;gap:10px;align-items:center;margin-bottom:12px}.search{display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);background:var(--paper);border-radius:7px;padding:0 12px;min-height:40px;min-width:220px;flex:1;max-width:480px}.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}.search svg{color:var(--muted);flex-shrink:0}.search input{border:0;outline:none;background:none;color:var(--ink);width:100%;min-width:0;font-size:13px}.search input::placeholder{color:var(--faint)}.shortcut{font:11px monospace;border:1px solid var(--line);border-radius:3px;color:var(--muted);padding:0 4px}.search button{flex-shrink:0;border:0;background:none;color:var(--muted);font-size:18px;width:24px;padding:0}.filter-menus{display:flex;gap:6px;flex-wrap:wrap}.filter-menu{position:relative}.filter-menu>summary{list-style:none;display:flex;align-items:center;gap:7px;min-height:36px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--muted);font-size:12px}.filter-menu[open]>summary{color:var(--accent);border-color:var(--accent)}.filter-menu>summary::after{content:"⌄";color:var(--faint);font-size:12px}.filter-menu .filter-panel{position:absolute;left:0;top:44px;min-width:226px;max-height:65vh;overflow:auto;z-index:var(--z-menu);background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:8px}.filter-menu:last-child .filter-panel{left:auto;right:0}.filter-panel .chips{display:grid;gap:3px}.filter-panel .chip{display:flex;justify-content:space-between;gap:12px}.filter-panel h3{font-size:11px;color:var(--muted);padding:3px 9px;margin:0 0 5px}.filter-label{display:none}.text-button{background:none;border:0;color:var(--accent);padding:5px;min-height:30px;font-size:12px}.text-button:hover{text-decoration:underline}
+.active-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:28px;margin:0 0 14px;font-size:12px;color:var(--muted)}.filter-token{border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:var(--paper);color:var(--ink);font-size:11px;max-width:100%;overflow-wrap:anywhere}.filter-token:hover{border-color:var(--accent);background:var(--accent-soft)}.filter-token span{margin-left:8px;color:var(--muted)}.result-summary{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}#result-count{color:var(--muted);font-size:12px}.view-tools{display:flex;align-items:center;gap:8px}.select-control{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:11px}.select-control select{border:0;background:transparent;color:var(--ink);max-width:130px;padding:6px 3px;font-size:12px}.view-tools .action{background:none}
+#board{border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden}.sec+.sec{border-top:1px solid var(--line)}.sec-head{display:flex;align-items:center;gap:9px;min-height:44px;padding:8px 18px;background:var(--paper-2)}.sec-head h2{font-size:13px;margin:0;font-weight:650;order:1}.sec-head .cnt{font:11px "Segoe UI",sans-serif;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);order:2}.sec-head .hint{font-size:11px;color:var(--muted);margin-left:auto;order:3}.sec-head.hot h2{color:var(--alarm)}.fold-group{border:0;background:none;color:var(--muted);border-radius:4px;padding:1px;width:20px;height:24px;display:inline-grid;place-items:center;order:0}.fold-group svg{width:14px;height:14px;transition:transform .15s}.fold-group[aria-expanded="false"] svg{transform:rotate(-90deg)}.fold-group:hover{background:var(--line)}.sec.is-folded>.row,.sec.is-folded>.column-head{display:none}.column-head,.row{display:grid;grid-template-columns:minmax(235px,2.1fr) minmax(125px,1fr) minmax(140px,1fr) 174px;gap:18px}.column-head{font-size:11px;color:var(--muted);padding:8px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.row{padding:14px 18px;border-bottom:1px solid var(--line);align-items:center;min-height:86px;position:relative}.row:last-child{border-bottom:0}.row:hover{background:var(--paper-2)}.row.done .company-name{color:var(--muted)}.co{grid-column:1;grid-row:1;min-width:0}.company-title{display:flex;align-items:center;gap:9px}.company-initial{flex-shrink:0;width:30px;height:30px;border:1px solid var(--line);border-radius:7px;display:grid;place-items:center;background:var(--paper-2);font-weight:700;font-size:13px;color:var(--muted)}.company-name{border:0;background:none;padding:0;color:var(--ink);font-size:14px;font-weight:650;text-align:left;line-height:1.5;overflow-wrap:anywhere}.company-name:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}.name-block{min-width:0}.company-meta{font-size:10px;color:var(--muted);margin-top:2px}.co .rl{font-size:12px;color:var(--muted);margin-top:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}.added-badge{font-size:10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:3px;padding:1px 4px;margin-left:6px;white-space:nowrap;font-weight:500}.codewrap{grid-column:2;grid-row:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}.code{border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--accent);font:600 12px/1.5 "Cascadia Code",Consolas,monospace;padding:4px 7px;max-width:100%;overflow-wrap:anywhere;text-align:left;user-select:text}.code::after{content:" ⧉";font-weight:400;color:var(--muted)}.code:hover{border-color:var(--accent);background:var(--accent-soft)}.code.copied{background:var(--good-soft)}.code.nocode{font:12px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;border:0;background:none;color:var(--muted);padding:0}.code.nocode::after{content:none}.detail-hint{border:0;background:none;color:var(--muted);font-size:10px;padding:0;text-align:left}.detail-hint:hover{color:var(--accent);text-decoration:underline}.cell-when{grid-column:3;grid-row:1;min-width:0;font-size:12px;color:var(--ink)}.cityline{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.deadline{display:block;font-size:11px;margin-top:4px;color:var(--muted)}.cell-when.soon .deadline{color:var(--alarm)}.cell-st{grid-column:4;grid-row:1;display:flex;align-items:center;gap:8px;min-width:0}select.st{font-size:12px;border:1px solid var(--line);border-radius:5px;min-height:32px;padding:4px 5px;width:98px;background:var(--paper);color:var(--muted);flex-shrink:0}select.st[data-v="已投"]{color:var(--accent);background:var(--accent-soft)}select.st[data-v="面试"]{color:var(--violet)}select.st[data-v="笔试"]{color:var(--gold)}select.st[data-v="Offer"]{color:var(--good);background:var(--good-soft)}.links{font-size:12px;min-width:0}.links a{white-space:nowrap;color:var(--ink);font-weight:550}.links a:hover{color:var(--accent)}.links .sub{color:var(--muted);font-size:11px}.empty{padding:65px 20px;text-align:center}.empty h2{font-size:17px;margin:12px 0 7px}.empty p{color:var(--muted);font-size:12px;max-width:50ch;margin:0 auto 20px}.empty-symbol{font-size:32px;color:var(--muted)}
+body[data-density="compact"] .row{padding-block:8px;min-height:66px}body[data-density="compact"] .company-initial{display:none}body[data-density="compact"] .company-meta{display:none}body[data-density="compact"] .rl{margin-top:2px}
+footer{margin-top:24px;font-size:12px;color:var(--muted);max-width:80ch}footer summary{cursor:pointer}footer h3{font-size:13px;margin:20px 0 7px;color:var(--ink)}footer ul{padding-left:18px}footer li{margin-bottom:6px}footer code{overflow-wrap:anywhere;font-size:11px}footer .src{font-size:11px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);z-index:var(--z-toast);border-radius:7px;background:var(--ink);color:var(--paper);padding:10px 18px;font-size:12px;box-shadow:var(--shadow)}
+#company-detail{position:fixed;inset:0 0 0 auto;margin:0;width:480px;max-width:100vw;height:100dvh;max-height:100dvh;border:0;border-left:1px solid var(--line);padding:0;background:var(--paper);color:var(--ink);box-shadow:-12px 0 50px #0002;overflow:auto}
+#company-detail::backdrop{background:#10182055}.detail-top{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1}.detail-top span{font-size:12px;color:var(--muted)}.detail-content{padding:24px}.detail-content h2{font-size:23px;margin:0 0 8px}.detail-content .intro{font-size:13px;color:var(--muted);margin:0 0 22px}.detail-content h3{font-size:12px;font-weight:650;margin:24px 0 9px}.detail-content p{font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}.detail-properties{display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;font-size:12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0}.detail-properties dt{color:var(--muted)}.detail-properties dd{margin:0;overflow-wrap:anywhere}.detail-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0}.detail-code{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.detail-code .code{font-size:15px;padding:7px 12px}.detail-code small{color:var(--muted);font-size:11px}.detail-note{border-top:1px solid var(--line);margin-top:24px}.detail-navigation{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 0;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}
+@media(min-width:1600px){.content{padding-inline:42px}.app-header{padding-inline:42px}.row,.column-head{grid-template-columns:minmax(320px,2.2fr) minmax(170px,1fr) minmax(180px,1fr) 186px;gap:28px}}
+@media(max-width:1199px){.workspace{grid-template-columns:188px minmax(0,1fr)}.sidebar{padding-inline:12px}.brand{font-size:18px;gap:6px}.brand img{width:39px;height:39px}.content{padding:22px}.app-header{padding-inline:22px}.column-head,.row{grid-template-columns:minmax(180px,1.7fr) minmax(100px,1fr) 130px;gap:12px}.cell-when{grid-column:1;grid-row:2;display:flex;gap:10px;align-items:center}.cell-when .deadline{margin:0}.cell-st{grid-column:3;grid-row:1 / span 2;flex-direction:column;align-items:flex-end}.codewrap{grid-column:2;grid-row:1 / span 2}.column-head .deadline-label{display:none}.row{min-height:96px;padding-block:12px;row-gap:6px}.sec-head .hint{display:none}.summary-stats{gap:14px}.stat.is-code{display:none}.tools{flex-wrap:wrap}.search{max-width:none}.filter-menus{flex-shrink:0}.breadcrumb{display:none}.app-header{justify-content:space-between}.masthead{margin-bottom:20px}}
+@media(max-width:860px){.workspace{display:block}.sidebar{position:relative;height:auto;padding:16px 20px;display:grid;grid-template-columns:1fr auto;gap:0;overflow:visible}.brand{font-size:19px}.brand small{display:none}.brand img{width:34px;height:34px}.season,.nav-label,.side-progress,.side-help{display:none}.filter-top{display:flex;align-items:center}.filter-top button{color:#d4eee2;background:#ffffff12;border:1px solid #ffffff25;padding:6px 10px;border-radius:6px;min-height:34px}#filter-body{grid-column:1/-1;margin-top:14px}.sidebar[data-collapsed="true"] #filter-body{display:none}.sidebar .chips{display:flex;gap:6px}.sidebar .chip{width:auto;min-height:36px}.sidebar .chip .n{margin-left:3px}#quick-filters{margin-top:9px}.app-header{height:52px;padding:0 20px}.content{padding:22px 20px 40px}.masthead h1{font-size:24px}.connection{font-size:10px}.savenote{max-width:310px}.summary-stats{gap:18px}.stat b{font-size:20px}.tools{gap:8px}.column-head,.row{grid-template-columns:minmax(200px,1.6fr) minmax(120px,1fr) 130px}.main-shell{min-width:0}.header-tools .action{min-height:31px;font-size:11px}.header-tools .icon-button{width:31px}.edition{font-size:10px}}
+@media(max-width:600px){.sidebar{padding:14px 16px}.content{padding:20px 12px 32px}.app-header{padding:8px 12px;height:auto;min-height:52px;gap:6px}.connection{max-width:calc(100% - 134px)}.savenote{max-width:none}.header-tools{gap:5px}.menu-panel{top:38px}.masthead{align-items:flex-start;gap:16px;flex-direction:column;margin-bottom:18px}.page-title{gap:10px}h1{font-size:24px}.dek{font-size:11px}.summary-stats{width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:14px}.stat{flex-direction:row;align-items:center;gap:7px}.stat b{font-size:17px}.stat span{font-size:11px}.stat.is-code{display:flex}.tools{display:block}.search{min-height:44px;width:100%;min-width:0}.filter-menus{margin-top:9px;display:flex;gap:6px}.filter-menu{flex:1}.filter-menu>summary{justify-content:space-between;padding:9px 8px;font-size:11px;min-height:40px}.filter-menu .filter-panel{min-width:220px;max-width:calc(100vw - 24px)}.filter-menu:nth-child(2) .filter-panel{left:50%;transform:translateX(-50%)}.active-filters{margin-bottom:8px;font-size:11px}.filter-token{padding:5px 8px}.result-summary{align-items:flex-start;flex-direction:column;gap:7px;padding:10px 0}.view-tools{width:100%;justify-content:space-between;gap:4px}.select-control{gap:2px}.select-control select{max-width:100px;min-height:38px;font-size:11px}.view-tools .action{font-size:11px;padding:4px 7px;min-height:38px}.column-head{display:none}.row{grid-template-columns:minmax(0,1fr) 96px;gap:9px;padding:15px 12px}.co{grid-column:1 / span 2;grid-row:1}.company-name{font-size:14px}.company-initial{width:30px;height:30px}.rl{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.codewrap{grid-column:1;grid-row:2;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap}.code{padding:8px;font-size:12px}.detail-hint{font-size:11px;min-height:32px}.cell-when{grid-column:1;grid-row:3;display:block;font-size:11px}.cell-when .deadline{margin-top:3px}.cell-st{grid-column:2;grid-row:2 / span 2;align-items:stretch;gap:6px}select.st{width:100%;min-height:40px;font-size:12px}.links{text-align:center;min-height:30px;display:grid;align-items:center}.links a{display:block;padding:6px 0}.sec-head{padding:10px 12px}.sec-head h2{font-size:12px}.sec-head .cnt{font-size:10px}.sec-head .fold-group{width:24px;height:28px}.shortcut{display:none}#company-detail{width:100%}.detail-top{padding:12px 16px}.detail-content{padding:20px 16px}.detail-properties{grid-template-columns:65px minmax(0,1fr)}.detail-content h2{font-size:22px}.detail-top button{min-height:40px}.action{min-height:38px}body[data-density="compact"] .row{padding-block:11px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+.brand{position:relative;min-height:140px;display:block;isolation:isolate;background:#c2eadb;color:#173d32;border-radius:8px 8px 28px 8px;padding:14px;overflow:hidden;flex-shrink:0}.brand-wordmark{position:relative;z-index:1;display:block}.brand-wordmark>span{display:block;font-size:17px;font-weight:750;letter-spacing:2px}.brand-wordmark strong{display:block;font-size:29px;line-height:1.25;font-weight:850;letter-spacing:-1px}.brand-star{font-size:17px;margin-left:3px;vertical-align:top;color:#527865}.brand small{font-size:10px;margin-top:25px;color:#284c40;letter-spacing:0;max-width:88px;line-height:1.6}.brand img{position:absolute;right:-3px;bottom:-5px;width:85px;height:85px;z-index:0;transform:rotate(-8deg)}.season{padding-block:10px;margin-top:-10px}.sidebar{gap:20px}.company-name:focus-visible{outline-offset:4px}body:has(#company-detail[open]){overflow:hidden}
+@media(max-width:1199px) and (min-width:861px){.brand{padding:12px;min-height:134px}.brand-wordmark strong{font-size:26px}.brand img{width:72px;height:72px}.brand small{margin-top:25px;font-size:9px;max-width:85px}}
+@media(max-width:860px){.brand{background:none;padding:0;min-height:0;display:flex;gap:8px;overflow:visible;align-items:center}.brand img{position:static;transform:none;width:35px;height:35px;order:-1}.brand-wordmark{display:flex;align-items:baseline;gap:1px;color:#edf5f1}.brand-wordmark>span,.brand-wordmark strong{font-size:20px;letter-spacing:0;line-height:1.3}.brand-wordmark .brand-star{font-size:13px;margin-left:5px;color:#a2e1c6}.brand small{display:none}.sidebar{gap:0}}
+#company-detail .toast{left:auto;right:20px;transform:none;max-width:calc(100% - 40px)}.co .rl{line-height:1.6}.company-meta{font-size:11px}.detail-hint{font-size:11px}
+.company-name{font-size:15px}.co .rl{font-size:13px}.cell-when{font-size:13px}.sidebar .chip{font-size:13px}.brand small{font-size:11px}
+@media(max-width:600px){.co .rl,.cell-when{font-size:12px}.company-name{font-size:14px}}
+/* Main workspace refinement: one command surface, stable columns, aligned reading. */
+.content{max-width:1540px;padding-top:30px}
+.app-header{justify-content:flex-start}.connection{margin-left:auto}.header-tools{flex-shrink:0}
+.masthead{align-items:center;margin-bottom:22px;gap:24px}.page-title h1{font-size:29px;letter-spacing:-.7px}.edition{border:0;background:var(--accent-soft);color:var(--accent-ink);min-height:24px;display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px}.dek{margin-top:8px;line-height:1.7}
+.summary-stats{display:flex;align-items:center;justify-content:flex-end;gap:5px;position:relative;padding-top:19px;flex-shrink:0}
+.summary-caption{position:absolute;top:0;right:8px;font-size:11px;color:var(--muted)}
+.summary-stats .stat{display:flex;flex-direction:row;align-items:center;gap:9px;padding:8px 10px;border:1px solid transparent;border-radius:7px;background:none;text-align:left;white-space:nowrap;font:inherit}
+.summary-stats .stat span{font-size:12px}.summary-stats .stat b{font-size:20px;font-weight:700}.summary-stats .stat svg{width:15px;height:15px;color:var(--muted)}
+.summary-stats button.stat:hover{background:var(--paper);border-color:var(--line)}
+.summary-stats button.stat[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.control-deck{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px 0;margin-bottom:18px;position:relative}
+.control-deck .tools{margin:0;gap:12px;flex-wrap:wrap}.control-deck .search{max-width:none;flex:1 1 360px;min-width:200px;min-height:42px;border-color:var(--line-strong);background:var(--paper-2)}
+.control-deck .filter-menus{gap:7px;flex-wrap:nowrap}.control-deck .filter-menu>summary{min-height:42px;padding:9px 12px;color:var(--ink);background:var(--paper);max-width:100%;overflow-wrap:anywhere}
+.control-deck .filter-menu[open]>summary{background:var(--accent-soft);color:var(--accent-ink)}
+.control-deck .active-filters{margin:0;padding:10px 0;min-height:38px;gap:7px}.filter-token{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink);border-radius:5px;padding:4px 8px}
+.control-deck .result-summary{padding:10px 0;min-height:55px}.view-tools{background:var(--paper-2);border:1px solid var(--line);border-radius:7px;padding:3px 5px;gap:9px}.select-control{gap:6px}.select-control select{font-size:12px;padding-block:4px}.view-tools .action{border:0;min-height:30px;background:var(--paper);box-shadow:0 1px 3px #142d2310}
+.result-count-number{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+#board{border-radius:12px}.sec-head{min-height:45px;padding-inline:20px;background:var(--paper-2)}.sec-head h2{font-size:13px}.sec-head.hot{background:var(--alarm-soft)}.sec-head.hot .cnt{color:var(--alarm);border-color:transparent;background:var(--paper)}.column-head{background:var(--paper);padding-inline:20px;font-size:11px}
+.row{padding:15px 20px;min-height:90px;transition:background .15s ease}.row:hover,.row:focus-within{background:color-mix(in srgb,var(--accent-soft) 45%,var(--paper))}.company-title{gap:10px}.company-initial{width:34px;height:34px;border-radius:10px 10px 10px 3px;color:var(--accent-ink);background:var(--accent-soft);border-color:transparent}.company-meta{margin-top:3px}.co .rl{padding-left:44px;margin-top:5px;color:var(--muted)}
+.row[data-category="game"] .company-initial{background:color-mix(in srgb,var(--violet) 11%,var(--paper));color:var(--violet)}.row[data-category="fin"] .company-initial{background:var(--amber-soft);color:var(--amber)}
+.row .detail-hint{min-height:24px}.row .code{padding:5px 8px;border-color:color-mix(in srgb,var(--accent) 24%,var(--line));background:var(--accent-soft)}.row .code.nocode{padding:0;border:0;background:none}
+.row .cell-when.soon .deadline{display:inline-block;background:var(--alarm-soft);border-radius:4px;padding:2px 6px;margin-left:-6px}
+.row .links a{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-weight:600;color:var(--accent-ink);background:var(--paper)}
+.row .links a:hover{background:var(--accent-soft);border-color:var(--accent);text-decoration:none}select.st{min-height:34px}
+body[data-density="compact"] .co .rl{padding-left:0}body[data-density="compact"] .row{min-height:68px}
+@media(min-width:1200px){.column-head,.row{grid-template-columns:minmax(245px,1fr) 145px 160px 185px;gap:24px}}
+@media(min-width:1600px){.column-head,.row{grid-template-columns:minmax(320px,1fr) 166px 200px 190px;gap:28px}.content{padding-inline:38px}.app-header{padding-inline:max(38px,calc((100vw - 218px - 1540px)/2 + 38px))}}
+@media(max-width:1199px){.masthead{gap:14px;align-items:flex-start}.summary-stats{gap:0;flex-wrap:wrap;max-width:330px}.summary-stats .stat{gap:6px;padding:6px 8px}.summary-stats .stat b{font-size:18px}.summary-stats .stat svg{display:none}.summary-stats .stat.is-code{display:flex}.row .cell-when{padding-left:44px}.row .cell-when.soon .deadline{margin-left:0}.row{padding-block:12px}body[data-density="compact"] .row .cell-when{padding-left:0}.control-deck .search{flex-basis:250px}.control-deck .filter-menu>summary{padding-inline:9px}}
+@media(max-width:860px){.page-title h1{font-size:26px}.summary-stats{max-width:300px}.summary-stats .stat span{font-size:11px}.content{padding-top:24px}.control-deck{padding:12px 14px 0}.control-deck .search{flex-basis:290px}.control-deck .filter-menus{flex-grow:1}.control-deck .filter-menu{flex:1}.control-deck .filter-menu>summary{justify-content:space-between}.row{padding-inline:16px}.column-head,.sec-head{padding-inline:16px}.connection{margin-left:0;margin-right:auto}}
+@media(max-width:600px){.content{padding-top:22px}.masthead{gap:12px;align-items:stretch}.summary-stats{padding:8px 0 0;border-top:1px solid var(--line);max-width:none;justify-content:space-between;gap:2px}.summary-caption{position:static;width:100%;padding:0 3px 2px;font-size:10px}.summary-stats .stat{gap:5px;padding:5px 3px}.summary-stats .stat span{font-size:11px}.summary-stats .stat b{font-size:18px}.summary-stats .stat.is-code{display:flex}.control-deck{padding:10px 10px 0;margin-bottom:14px;border-radius:10px}.control-deck .tools{display:block}.control-deck .search{min-width:0;min-height:44px}.control-deck .filter-menus{gap:5px;margin-top:8px}.control-deck .filter-menu{min-width:0}.control-deck .filter-menu>summary{min-height:40px;padding:8px 6px;font-size:11px;gap:3px}.control-deck .active-filters{padding:9px 0;font-size:11px;line-height:1.6}.control-deck .result-summary{gap:7px;padding:8px 0 10px}.view-tools{gap:3px;padding:3px;width:100%}.select-control{font-size:10px;gap:0}.select-control select{font-size:11px;max-width:91px;padding-inline:0}.view-tools .action{font-size:10px;padding:4px 5px}.row{padding:14px 13px}.co .rl{padding-left:44px;font-size:12px}.row .cell-when{padding-left:0}.row .links a{display:flex;padding:5px}.row .code{padding:7px 8px}.row .cell-when.soon .deadline{margin-left:0}.row .cell-st{width:100%}}
+</style>
+</head>
+
+<body>
+<div class="workspace">
+  <aside class="sidebar controls" aria-label="投递视图" data-collapsed="true">
+    <a class="brand" href="#" aria-label="校招高高手，回到全部公司"><span class="brand-wordmark"><span>校招</span><strong>高高手<span class="brand-star" aria-hidden="true">✦</span></strong><small>下一家，<br>准备好了。</small></span><img src="data:image/png;base64,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" alt="" aria-hidden="true"></a>
+    <div class="season"><span>秋招进行时</span><b>2027</b></div>
+    <div class="filter-top"><button id="toggle-filters" type="button" aria-expanded="false" aria-controls="filter-body">展开视图</button></div>
+    <div id="filter-body">
+      <p class="nav-label">我的投递</p>
+      <nav class="chips" id="status-filters" aria-label="投递状态筛选"></nav>
+      <p class="nav-label" style="margin-top:26px">快捷查看</p>
+      <div class="chips" id="quick-filters" aria-label="快捷筛选"></div>
+    </div>
+    <div class="side-progress"><div class="progress-heading"><span>已投递</span><span><b id="s-sent">0</b> / <span id="s-all">—</span></span></div><div class="bar"><i id="s-bar"></i></div><small>每一步，都算数。<br>记录进度，继续下一家。</small></div>
+    <button class="side-help" type="button" id="open-help">使用说明与备份指南 ↗</button>
+  </aside>
+  <div class="main-shell">
+    <header class="app-header">
+      <div class="breadcrumb"><b>求职空间</b><span>/</span><span>公司与投递</span></div>
+      <div class="connection"><span class="savenote" id="savenote" role="status" aria-live="polite">正在连接 qiuzhao.db…</span><button class="text-button" id="retry-connection" type="button" hidden>重连</button></div>
+      <div class="header-tools">
+        <button class="action icon-button" id="theme-toggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">☼</button>
+        <details class="menu"><summary class="action">导出备份 ⌄</summary><div class="menu-panel">
+          <button class="action" id="btn-csv" type="button">导出公司与投递 CSV</button>
+          <a class="action" href="/api/backup" download="qiuzhao-backup.db">备份 SQLite 数据库</a>
+          <button class="action" id="btn-sql" type="button">导出 SQL 进度</button>
+        </div></details>
+      </div>
+    </header>
+    <div class="content">
+      <div class="masthead">
+        <div><div class="page-title"><h1>投递工作台</h1><span class="edition">AI / Agent</span></div><p class="dek"><span id="h-count">—</span> 家公司的机会，和你的每一步进展。</p></div>
+        <div class="summary-stats" role="group" aria-label="当前筛选概览">
+          <span class="summary-caption">当前筛选概览</span>
+          <button class="stat is-soon" id="summary-soon" data-summary-filter="soon" type="button" aria-pressed="false" title="叠加或取消 7 天内截止筛选"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 5.5V10l3 2"/></svg><span>7 天内截止</span><b id="s-soon">—</b></button>
+          <button class="stat is-code" id="summary-code" data-summary-filter="code" type="button" aria-pressed="false" title="叠加或取消有推荐码筛选"><span>有推荐码</span><b id="s-code">—</b></button>
+          <div class="stat is-offer"><span>Offer</span><b id="s-offer">0</b></div>
+        </div>
+      </div>
+      <section class="control-deck" aria-label="查找公司与调整视图">
+      <div class="tools">
+        <label class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="q" type="search" autocomplete="off" aria-label="搜索公司、岗位、城市或内推码" placeholder="搜索公司、岗位、城市或内推码">
+          <kbd class="shortcut">/</kbd><button id="clear-search" type="button" aria-label="清空搜索" hidden>×</button>
+        </label>
+        <div class="filter-menus" aria-label="组合筛选">
+          <details class="filter-menu"><summary id="owner-label">公司性质</summary><div class="filter-panel"><h3>公司性质</h3><div class="chips" id="ownership-filters"></div></div></details>
+          <details class="filter-menu"><summary id="industry-label">行业方向</summary><div class="filter-panel"><h3>行业方向</h3><div class="chips" id="filters"></div></div></details>
+          <details class="filter-menu"><summary id="channel-label">国企渠道</summary><div class="filter-panel"><h3>国有体系招聘渠道</h3><div class="chips" id="channel-filters"></div></div></details>
+        </div>
+      </div>
+      <div id="active-filters" class="active-filters" aria-label="已选筛选条件"></div>
+      <div class="result-summary">
+        <span id="result-count" role="status" aria-live="polite">正在读取公司…</span>
+        <div class="view-tools">
+          <label class="select-control">分组<select id="group-select" aria-label="列表分组"><option value="dl">按截止日期</option><option value="cat">按行业</option><option value="owner">按公司性质</option><option value="none">不分组</option></select></label>
+          <label class="select-control">排序<select id="sort-order" aria-label="组内排序"><option value="deadline">截止优先</option><option value="name">公司名称</option><option value="original">收录顺序</option></select></label>
+          <button class="action" id="density-toggle" type="button" aria-pressed="false" title="切换列表密度">紧凑视图</button>
+        </div>
+      </div>
+      </section>
+      <main id="board" aria-label="公司清单"></main>
+  <footer><details><summary>使用说明、内推注意事项与数据存储</summary>
+    <h3>这张表怎么用</h3>
+    <ul>
+      <li><strong>分组默认按截止排。</strong>近期截止在前，已过期在末尾且默认折叠；用「分组」下拉选择行业、性质或不分组。目录日期仅作提醒，投前请核对官网。</li>
+      <li><strong>点码即复制。</strong>点推荐码按钮即复制；点击公司名或「核验说明」查看备用码、失效说明和原始备注。标了「26 届」「实习」的不用于当年校招。</li>
+      <li><strong>入口链接</strong>指向公司官方系统或带推荐参数的深链；只给了公众号/邮箱的，「搜入口」按钮直接搜当年入口。</li>
+    </ul>
+    <h3>状态存在哪里</h3>
+    <ul>
+      <li><strong>按 README 启动「校招高高手」。</strong>投递状态保存在当前应用目录的 <code>qiuzhao.db</code>，不上传 GitHub。等待右上角显示「已写入 qiuzhao.db」后即可关闭。</li>
+      <li><strong>关闭重开、电脑重启或清浏览器缓存，不会删除已保存的数据库状态。</strong>请保留应用目录；原来的临时 HTML 是独立旧版本，其浏览器进度不会自动迁移。</li>
+      <li><strong>备份：</strong>启动时按日备份到 <code>backups</code>，也可点击「备份数据库」下载副本。数据库记录公司名、投递状态和更新时间；公司目录保存在应用 HTML 中。</li>
+    </ul>
+    <h3>几个真会踩的坑</h3>
+    <ul>
+      <li><strong>投递前必须先填码的：</strong>沐瞳（投后补不了）、小红书（提交后不能补码）、京东方（只能首次网申填）、招银网络科技（先打开绑码链接再去官网网申，顺序反了码就丢）。</li>
+      <li><strong>志愿数硬限制：</strong>大华、去哪儿、携程、农银金科、中证股转、网易系各 1 岗；小红书 5 志愿可排序；阿里云一次投递 2 个意向且提交不可改；搜狐、泡泡玛特、建信金科 2 岗；赛力斯、汇川 3 志愿；名创优品不限。</li>
+      <li><strong>官方明确不设内推的：</strong>华为、工行、农行、建行、中行、邮储、中国移动、中国电信、联通、中国中车、申万宏源。这些公司出现的"付费内推"都是假的，直投就行。</li>
+      <li><strong>学历及毕业时间：</strong>按本人真实资料填写；海外学历认证要求以各单位当期公告为准。</li>
+      <li><strong>邮箱直投：</strong>以官方要求为准，例如 <code>应聘-岗位名-本人学校-毕业届别</code>，附件 <code>姓名-简历.pdf</code>。</li>
+    </ul>
+    <p class="src">这是 2026-09-20 整理的共享目录快照，线索来自公司官网、高校就业网及公开招聘社区，不能保证全部岗位仍开放。公开推荐码未逐一实测，也不保证有效；使用前核实公司、批次和适用岗位，不为内推付费。投递记录仅保存在本人电脑。</p>
+  </details></footer>
+    </div>
+  </div>
+</div>
+<dialog id="company-detail" aria-labelledby="detail-title">
+  <div class="detail-top"><span id="detail-save-note" role="status" aria-live="polite">公司档案 / 投递前核对</span><button class="action icon-button" id="close-detail" type="button" aria-label="关闭公司详情">×</button></div>
+  <div class="detail-content" id="detail-content"><h2 id="detail-title">公司详情</h2></div>
+  <div class="toast" id="detail-toast" role="status" aria-live="polite" hidden></div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+const CATS = [
+  ["net","互联网平台"],
+  ["ai","AI 原生 · 大模型"],
+  ["fin","金融科技 · 券商 · 量化"],
+  ["soe","国企央企 · 运营商"],
+  ["car","车企 · 智驾"],
+  ["hw","硬件 · 机器人 · 芯片"],
+  ["b2b","企业软件 · ToB"],
+  ["game","游戏"],
+  ["frn","外企 · 咨询"]
+];
+const CATNAME = Object.fromEntries(CATS);
+
+const OWNERSHIPS = [
+  ["private","私企"],
+  ["foreign","外企"],
+  ["state","央国企"],
+  ["public","科研/事业单位"]
+];
+const OWNERSHIPNAME = Object.fromEntries(OWNERSHIPS);
+
+const RECRUIT_CHANNELS = [
+  ["online","线上可投"],
+  ["hybrid","线上 + 线下"],
+  ["offline","仅线下"],
+  ["verify","待核验"]
+];
+const RECRUIT_CHANNEL_NAME = Object.fromEntries(RECRUIT_CHANNELS);
+
+// 只有官方公告明确写明现场收简历或线下投递时，才标记线下渠道。
+// 搜索结果页不当作官方入口；直达官网、官方招聘系统、官方授权招聘页或官方邮箱统一视为线上可投。
+const HYBRID_RECRUIT_COMPANIES = new Set([
+  "超聚变 xFusion","中国电子云（中电云计算）"
+]);
+const HYBRID_RECRUIT_EVIDENCE = new Map([
+  ["超聚变 xFusion","官网可投；2027 校招公告列明 9–10 月进校交流活动"],
+  ["中国电子云（中电云计算）","官方校招简章明确：官网网申或宣讲会/双选会现场投递，二选一即可"]
+]);
+const OFFLINE_ONLY_COMPANIES = new Set([]);
+
+// 默认按国内私企处理；外企、合资企业、央国企及事业单位在这里显式列出，避免影响原 DATA 结构。
+const FOREIGN_COMPANIES = new Set([
+  "Apple 中国","NVIDIA 中国","Qualcomm 中国","微软亚太研发集团","亚马逊","SAP 中国研究院「STAR」",
+  "埃森哲「AI 未来分析师计划 AAP」","凯捷 Capgemini","施耐德电气","西门子中国","GE 医疗 EEDP",
+  "爱立信中国研发中心","IBM 中国","毕马威 KPMG","普华永道 PwC","Shopee 研发中心",
+  "汇丰科技 HSBC","瑞银 UBS GTP","联发科 MTK","安谋科技 Arm China",
+  "三星中国（西安 SRCX / 北京研究院）","博世 BCSC（无锡）","酷睿程 CARIZON"
+]);
+const STATE_COMPANIES = new Set([
+  "招银网络科技","中金所技术公司","上交所技术公司","浦银金融科技（浦发银行）","建信金科",
+  "工行软件开发中心","农银金科","中银金科","交银金科","中信银行","江苏银行 总行金融科技培养生",
+  "南京银行","宁波银行 总行金融科技定向生","徽商银行","兴业数金","中电金信","广发证券 IT",
+  "中金公司","申万宏源","银河证券","招商证券","中信建投","华泰证券","中证股转科技",
+  "国寿财险 金融科技中心","中国人保","中移金科","中原银行 / 郑州银行",
+  "上海人工智能实验室","之江实验室","北京通用人工智能研究院 BIGAI","中科院计算所","启元实验室",
+  "智源研究院「智星」","TeleAI（中国电信人工智能研究院）","紫金山实验室",
+  "海康威视","京东方 BOE","紫光展锐","海光信息","长江存储","北京人形机器人创新中心",
+  "长安汽车","广汽集团 / 研究院","上汽零束 / 上汽集团","德赛西威","一汽集团","东风研发总院",
+  "中国汽研 CAERI","麒麟软件","锐捷网络",
+  "达梦数据","超聚变 xFusion","中国电子云（中电云计算）","中移九天（中国移动数智事业部）",
+  "中移互联网","咪咕 / 中国移动研究院 / 中移物联网","天翼云（中国电信）","联通数科","中科曙光",
+  "浪潮集团","昆仑数智（中石油）","中电科 32 所","中电科智能科技研究院","中电科 58 所",
+  "电科网安（中电科 30 所系）","中国网安 / 三十所","太极股份（中电科 15 所）","中核华辉",
+  "国家电网（信通 / 国网智能）","南网数字集团（南方电网）","招商局集团","中国移动（集团统一）",
+  "中国电信（集团）","中国联通（集团）","中国航信","北方华创","中景芯创"
+]);
+const PUBLIC_RESEARCH_ORGS = new Set([
+  "上海人工智能实验室","之江实验室","北京通用人工智能研究院 BIGAI","中科院计算所",
+  "启元实验室","智源研究院「智星」","紫金山实验室"
+]);
+function ownershipOf(row){
+  const name = row[F.n];
+  if(FOREIGN_COMPANIES.has(name) || row[F.cat] === "frn") return "foreign";
+  if(PUBLIC_RESEARCH_ORGS.has(name)) return "public";
+  if(STATE_COMPANIES.has(name) || row[F.cat] === "soe") return "state";
+  return "private";
+}
+function classificationLabel(row){
+  const owner = OWNERSHIPNAME[ownershipOf(row)] || "";
+  const category = (CATNAME[row[F.cat]] || "").split(" · ")[0];
+  if((row[F.cat] === "frn" && owner === "外企") || (row[F.cat] === "soe" && owner === "央国企")) return owner;
+  return owner + (category ? " · " + category : "");
+}
+function recruitChannelOf(row){
+  if(ownershipOf(row) !== "state") return "none";
+  const name = row[F.n];
+  if(HYBRID_RECRUIT_COMPANIES.has(name)) return "hybrid";
+  if(OFFLINE_ONLY_COMPANIES.has(name)) return "offline";
+  const url = row[F.url] || "";
+  if(/^mailto:/i.test(url)) return "online";
+  if(/^https?:\/\//i.test(url) && !/bing\.com\/search/i.test(url)) return "online";
+  return "verify";
+}
+function recruitChannelEvidence(row){
+  const channel = recruitChannelOf(row);
+  if(channel === "hybrid") return HYBRID_RECRUIT_EVIDENCE.get(row[F.n]) || "官方线上入口 + 官方公告确认的线下渠道";
+  if(channel === "offline") return "官方公告仅见线下渠道";
+  if(channel === "online") return /^mailto:/i.test(row[F.url] || "") ? "官方公告邮箱投递" : "官网或官方授权招聘系统可投";
+  if(channel === "verify") return "当前仅保存了搜索页，需回公司官网核验";
+  return "";
+}
+
+// [公司, 分类, 岗位/方向, 城市, 主码, 备用码说明, 入口, 截止(ISO或""), 截止显示, 备注]
+const DATA = [
+["腾讯","net","Agent 开发 · AI 全栈 · AI 应用","深圳/北京/上海","TECCED77Z1","备 7MFGOF99XU","https://join.qq.com/","","正式批进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["字节跳动","net","AI Agent · AI 应用 · 多模态","北京/上海/杭州","4THQCVV","备 VTRVDTB · 758T3HT · BJQVE55 · SWUQFDU；新码 4FGQH44","https://jobs.bytedance.com/campus","2026-12-31","至 12-31","勾选「正式」批；年底前约 2 次投递机会，别因为有新码重复投同一岗"],
+["阿里巴巴（淘天/高德/钉钉/饿了么/盒马/夸克/通义）","net","AI Agent · AI 全栈 · AI 应用","杭州/北京","2T4KIB9F","备 2T4VLIMB · 2T4GF4IM；实习码 2T4HS9Q5 · 6GJN61F 别填","https://campus-talent.alibaba.com/campus/position?batchId=100000760001","","正式批","批次号必须是 100000760001；阿里系子业务同一系统，不用另找码"],
+["阿里淘天 AI Studio","net","AI 应用研发 · Agent · RAG","杭州","1B3H3R","","https://campus-talent.alibaba.com/campus/position?campusShareCode=N5JJz6ukaesPOcQHnLvjvw_3KT2zHNSDIJ9hKKANCkk%3D&batchId=100000760001","","正式批","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["阿里云","net","AI Agent 研发 · AI 全栈 · Agent Infra · AI 应用","多地","1RJON2T","","https://campus-talent.alibaba.com/campus/position?batchId=100000760001","","毕业 2026-11~2027-10","一次投递 2 个意向且提交后不可修改，先想清第一志愿"],
+["百度","net","AIDU · Agent 应用全栈 J99974","北京","IZH1JB","备 IZH1K1 · IS1JAH · IS133G；ISK63T 是实习链接","https://talent.baidu.com/jobs/list?recruitType=GRADUATE","","AIDU 提前批 + 正式批","AIDU 是专项冲刺；JD 写规划—执行—反思、多 Agent、RAG+Agent、成本时延评测"],
+["拼多多","net","AI Agent 研发（优先）· 大模型 · AI Infra","上海","aj7XpWwVCq","大模型 Ggz2SaxtS4；正式批 W3FmE9gXeL；通用 d6j02mkPqq","https://careers.pddglobalhr.com/campus/grad?t=aj7XpWwVCq","","正式批 9 月","先投 AI Agent 研发；提前批码和正式批码分开"],
+["京东（JDS / TGT）","net","AI Infra · 多模态大模型 · 全栈开发","北京","C927D","TET 管培生用 XIWC0P；旧码 C4Y35 · C4G1Y 是 26 届","https://campus.jd.com/","2026-11-30","08-17 ~ 11-30","TET 与 JDS/TGT 可同时申请，是两条线"],
+["快手","net","可灵 · 大模型 · AI Infra","北京/杭州","campusXyZtJvC","快 Star 用 campusKkNBdvQph；备 WyDQqwGBt · campusgFjqZbPgn","https://campus.kuaishou.cn/","","进行中",""],
+["蚂蚁集团（含 OceanBase）","fin","智能体平台 · AI 应用 · Java 后端","杭州/上海","不填码，点链接","阿里的码不能用在蚂蚁","https://u.alipay.cn/_1k7B5XFUsp4EWTJjqLBXDy","","进行中","链接本身就是内推入口，表单里别再填阿里码"],
+["网商银行","fin","AI 应用 · Java","杭州","走蚂蚁内推链接","","https://hrrecommend.antgroup.com/guide.html?code=/G7GwF1XaegSmn6lxXkk/g1_NyQespxsKec3xznSOxI=","","提前批","和蚂蚁同一系统，投网商岗位用这条链接"],
+["小红书","net","AI Agent · 大模型应用 · AI Coding","上海/北京/杭州","FBLHBZUNYCAD","T60AXDBN5XP8 更像实习 + 转正","https://job.xiaohongshu.com/link?referer_code=FBLHBZUNYCAD","","09-08 启动","⚠ 提交后不能补码，投前先定码；一次最多 5 志愿且可排序，是目前志愿最多的大厂"],
+["美团","net","LongCat · AI 平台 · Java 后端","北京/上海","BZLWXC5","备 ANSJJZH","https://zhaopin.meituan.com/web/campus","2026-10-31","至 10-31","码能识别再用；头部里截止最早的一批"],
+["B 站","net","AI 平台 · 大模型应用","上海","0A0N87","备 P17TMZ · EC16T7；旧码 T4K407 · 2X335Q 是 26 届/春招","https://jobs.bilibili.com/campus","","进行中","最多 2 志愿"],
+["网易有道","net","AI Agent 应用开发 · AI 全栈（数据）· 算法应用","北京","无码","内推要员工发「邀请函」，没有公开口令","https://campus.163.com","","08-31 起招满即止，笔试 10-11","JD 直接写 RAG / Agent；网易互联网系统每人 1 志愿，别和互娱撞车"],
+["网易互娱","game","游戏 AI · 后端","广州/上海","omqqNU","备 TIFh5R · fA169G · rDBXrQ · qPtwfi · Q5zose","https://game.campus.163.com","","进行中","网易系每人 1 志愿，和有道二选一"],
+["网易雷火","game","LLM Agent · 游戏 AI Agent · Harness","杭州","走链接不算填码","另一条 introduceId=3cd70q6n5xv9eda9，两条任选一条","https://xiaozhao.leihuo.netease.com/neitui/#/?introduceId=v0hf3u68kxizxydc","2026-10-30","至 10-30","南开公告明列 Harness 方向；毕业范围 2026-09-01~2027-08-31"],
+["得物","net","AI 应用 · 算法 · Java 后端","上海","4VPN5BZ","备 JABXADV（填在「大使推荐」栏）","https://campus.dewu.com/","","08-10 开","本轮确认是 27 届码；每人 2 次投递"],
+["贝壳找房","net","家居 AI · 大模型应用 · Java","北京","IVVG3H","旧码 ISVG3S · IVKM9A 是 26 届","https://campus.ke.com/campus/jobs","","2027 秋招",""],
+["SHEIN","net","AI 应用 · 算法","广州/南京","DSajZqyT","","https://careers.shein.cn/","","进行中","海外业务多，英文环境，澳洲背景加分"],
+["Shopee 研发中心","net","Agent 开发工程师（常规批）· AI Star","深圳/上海/北京","DSybWVh7","备 NTAGK82","https://app.mokahr.com/su/jaxwma","2026-11-30","07-28 ~ 11-30","常规批 1 志愿 + AI Star 1 志愿各投一个；常规批里就有 Agent 开发工程师"],
+["58 同城「58A 计划」","net","Agent 开发工程师 · 大语言模型 · AI Infra","北京","DSngZnU5","备 DSRTU4tZ · DScFZemh，三个都是 27 届","https://app.mokahr.com/m/campus_apply/58/150953?recommendCode=DSngZnU5","2026-11-01","09-01 ~ 11-01","岗位名就叫 Agent 开发工程师，是最直白的一个"],
+["菜鸟","net","供应链 AI · Java 后端","杭州","2T4M03VB","备 2T4M03V4 · 1RMJRFH","https://campus-talent.alibaba.com/campus/position?batchId=100000760001","2026-10-05","08-05 ~ 10-05","投菜鸟岗用这个专属码；与阿里其他 BU 投递互不影响"],
+["微博","net","大模型应用 · 推荐","北京","NTAMI1d","","https://career.sina.com.cn","","进行中","网申时填「内推码」栏"],
+["唯品会","net","AI 应用 · 算法","广州","NTAArwH","","https://campus.vip.com/","2026-10-20","内推期 08-17 ~ 10-20","帖子写免简历筛"],
+["高途","net","教育 AI 应用","北京","DS6yCBud","","https://app.mokahr.com/m/campusrecruitment/bjhl/102145?recommendCode=DS6yCBud&hash=%23%2Fjobs#/jobs","","进行中","链接自带码，直接投"],
+["携程","net","Agent 开发工程师（2027 届秋招）","上海","NTAfGS2","旧码 NTAH5a6 是 26 届","https://www.nowcoder.com/jobs/detail/463573","","秋招每人 1 次","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["搜狐「引力计划」","net","AI 全栈研发 · AI 算法研发","北京/天津","DSCtTtZm","码出自南开 09-14 公告","https://app.mokahr.com/m/campus_apply/sohu/36036?recommendCode=DSCtTtZm#/jobs","","09-14 公告","每人 2 个岗位；AI 全栈优先于算法专项"],
+["腾讯音乐 TME","net","AI 应用 · 后端","深圳/北京","DS8DMTYZ","备 DSBCNVWY","https://join.tencentmusic.com/campus/post","","进行中","官方 FAQ：没填码可在个人中心补填，但提交时用了 A 码就不能换 B 码；填码与否流程没差别，别为等码拖延"],
+["滴滴","net","大模型应用 · 智能客服 Agent","北京/杭州","NTADaYM","备 DS5q4Y5d","https://outreach.didichuxing.com/elite/","2026-09-23","提前批至 09-23","提前批快关了，正式批以官网为准"],
+["虎牙","net","AI 应用工程师 · 全栈 · 语音大模型","佛山/广州/深圳/武汉","NTABNaF","另一条 NTAGaDI 是往届别填；用下面的链接投可以不填码","https://app.mokahr.com/recommendation-apply/huya/4113?recommenderId=264905#/jobs?isCampusJob=1","2026-09-23","至 09-23","同时可投 2 岗；链接内推优先于填码"],
+["爱奇艺","net","Java · 后端","北京","MQN4MKM","帖子写「长期有效」，表单认再填","https://iq.jobs.feishu.cn/s/i5yNhatK","","进行中","27 届主站校招公告没搜到，只有重庆客服岗"],
+["顺丰科技","net","AI 开发 · AI 全栈 · 大模型算法","深圳/武汉/成都","无有效公开码","旧码 5UGFT7 · 01404691 都是 26 届，别填","https://campus.sf-express.com","2027-09-30","申请窗口到 2027-09","提前批 08-12 起，公告列 AI 开发/AI 全栈/大模型算法；先核对正式批当前职位"],
+["阅文集团","net","技术岗（投递页有「AI 应用」附加题）","上海","无码","","https://join.yuewen.com/school","2026-10-31","09-14 ~ 10-31","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["去哪儿","net","AI 应用开发工程师（测试开发）· AI 产品运营","北京","无 27 届码","往届码一律别填","https://campus.qunar.com","2026-10-06","至 10-06","每人只能投 1 个岗"],
+["货拉拉","net","后端开发（云原生 AI 平台 / 国际化 AI 项目）","深圳/北京/上海","无 27 届码","","https://www.bing.com/search?q=%E8%B4%A7%E6%8B%89%E6%8B%8927%E7%A7%8B%E6%8B%9B","2026-10-12","至 10-12","58 个岗，技术里有两个 AI 平台方向的后端"],
+["哈啰","net","AI 全栈","上海","无 27 届码","旧码 MRA6K2 · NTAHPYm 是 26 届别填","https://careers.hellobike.com/","","进行中","有 AI 全栈岗，无码直投"],
+["美图","net","AI Agent 研发","厦门/深圳","无码","","https://campus.meitu.com","","进行中","面向 2026-09 ~ 2027-12 毕业"],
+["汽车之家「JIA STAR」","net","AI Agent 产品 / 研发","北京","无码","","https://www.bing.com/search?q=%E6%B1%BD%E8%BD%A6%E4%B9%8B%E5%AE%B6+JIA+STAR+2027%E6%A0%A1%E6%8B%9B","","进行中","27 届计划含 AI Agent 角色"],
+["知乎","net","直答 Agent · 大模型应用","北京","无码","","https://app.mokahr.com/campus-recruitment/zhihu/68321#/","","进行中",""],
+["作业帮","net","教育 Agent · 大模型应用","北京","无码","","https://app.mokahr.com/campus-recruitment/zuoyebang/150514?locale=zh-CN","","进行中",""],
+["途虎养车","net","AI 应用 · Java","上海","无 27 届码","旧码 NTANZfX · DS11hsv9 是 26 届","https://campus.tuhu.cn","","09-08 开",""],
+["途牛","net","AI 应用开发工程师 · 全栈","南京","无码","","https://www.bing.com/search?q=%E9%80%94%E7%89%9B+2027%E5%B1%8A%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2026-10-21","至 10-21","自研 AI 助手「小牛」已上线；本科起，优先实习转正"],
+["满帮集团","net","技术岗","贵阳/南京","无码","","https://campus.fulltruckalliance.com","","进行中",""],
+["泡泡玛特","net","数字化与技术（算法 / AI / 后端）","北京","无码","","https://popmart.zhiye.com/campus","","进行中","2 志愿"],
+["安踏集团","net","IT 产品 · 技术 · 商品智能化","厦门","无码","","https://campus.anta.com","2026-11-30","至 11-30","低优先"],
+["蜜雪集团","net","系统开发 · 数据开发 · 信息安全","郑州","公告写不设内推码","","https://www.bing.com/search?q=%E8%9C%9C%E9%9B%AA%E9%9B%86%E5%9B%A2+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","郑州本地岗，通勤成本最低，但是纯业务开发"],
+["粉笔","net","NLP 算法工程师","北京","邮件直投","","mailto:lvhl@fenbi.com","","进行中","主题写「姓名+NLP算法工程师+校招」"],
+["松鼠 AI","net","AI 算法 / AI 工程（明写 AI Agent）","上海","邮件直投","","mailto:qingsongwen@squirrelai.com","","进行中",""],
+["阿里健康","net","技术岗","杭州","无码","和阿里主站码不通用","https://careers.alihealth.cn","2027-02-05","至 2027-02-05","独立招聘系统"],
+["MiniMax","ai","Agent 产品 · 大模型应用","上海/北京/深圳","MJMNS4C","员工码可试 28BB6TD · NJ9YQ6J；4HFM3WU · M8GZTZ3 是实习/26 届补录别填","https://vrfi1sk8a0.jobs.feishu.cn/379481","2027-03-31","至 2027-03-31","⚠ 推荐方式必须选「大使推荐」，选「内推」会校验失败；2026-07~2027-03 最多投 3 次；旧分享链已 404"],
+["智谱 Z.ai","ai","AutoGLM Agent · 评测算法 · 大模型工程","北京","NT7FWNH","备 ZQVBNUW（2026-03 帖）· QKTGW2S（2025 旧帖）","https://zhipu-ai.jobs.feishu.cn/s/t6UUWegpmwM","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["科大讯飞","ai","星火 Agent · AI 应用 · 飞星计划","合肥/北京/上海","EV3RHJ","飞星计划（27 届硕博 AI 研究算法）用 EVBRH0；备 EVVPSK · EV3RHG","https://iflytek.zhiye.com/5/jobs","","07 月起","飞星 / 飞凡两个计划，语音 NLP 多模态训练框架都在范围内"],
+["DeepSeek","ai","大模型全栈 · 核心系统研发","杭州/北京","邮箱直投，无内推码","","https://talent.deepseek.com/","","常年开放","简历发 talent@deepseek.com，主题「姓名-岗位-联系方式」"],
+["月之暗面 Moonshot","ai","大模型 · Agent 产品工程","北京","无码，走内推链接","","https://moonshot.jobs.feishu.cn/s/iFdosECp","","已开 2027/2028","官方校招页 careers.kimi.com/campus"],
+["百川智能「源点计划」","ai","Agent 算法工程师","北京","E13K57R","届别没标，表单能识别再填","https://careers.baichuan-inc.com/origin-program","2026-12-31","全年开放，网申到 12-31","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["面壁智能「前进四」","ai","端侧大模型 · Agent","北京","邮箱直投","","mailto:career@modelbest.cn","","全年申请","硕士可投，邮件主题写岗位+学校+姓名"],
+["实在智能","ai","Agent · RPA","杭州","邮箱直投","","mailto:campus@i-i.ai","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["星环科技","ai","智能体开发工程师 · 大模型算法 · AI 前线部署","上海/北京/南京/广州/成都","无公开码","官方只说「找在职学长学姐要码」","https://app.mokahr.com/campus_apply/transwarp","2026-12-31","08-18 ~ 12-31","研发类明列「智能体开发工程师」，窗口长、竞争小"],
+["深势科技","ai","算法 · 大模型 · 工程开发","北京/上海/深圳","MZRPAQD","员工 2026-07 帖标 27 届","https://www.bing.com/search?q=%E6%B7%B1%E5%8A%BF%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","官网「加入我们」→ 校园招聘（飞书系统）填码"],
+["思必驰","ai","AI Agent 研发工程师","苏州","无公开码","","https://aispeech.zhiye.com/Campus","","09-07 公告","公告明确 27 届本科及以上、硕士优先；职责涉及多 Agent 调度、规划、记忆、工具编排。邮箱 xiaozhao@aispeech.com"],
+["杉数科技","ai","AI Agent 研发工程师","北京/上海/广州","无公开码","","https://www.bing.com/search?q=%E6%9D%89%E6%95%B0%E7%A7%91%E6%8A%80+2027+AI+Agent+%E7%A0%94%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88","","09-08 发布","职责含多智能体节点、RAG、上下文组装、动态工作流、成功率/Token/时延评估；需补运筹优化领域语义"],
+["速境 Speediance","ai","大模型应用开发工程师","深圳","邮箱直投","","https://sil.speediance.com/zh/career","","进行中","career@speediance.com；投递时主动说明 2027-01 毕业"],
+["海艺科技 SeaArt","ai","Agent 开发 · AI 应用 · AI 工程化","成都","无公开码","官网有内推入口但无码","https://app.mokahr.com/recommendation-apply/haiyi","2027-05-31","至 2027-05-31","可能招满提前关；「星海人才计划」是研究专项（Agentic RL / Harness），别和应用岗混投"],
+["商汤科技","ai","日日新应用 · 行业 Agent","上海/深圳/北京","无 27 届码","","https://hr.sensetime.com/campus","","进行中","校招体系成熟，有专门的应用交付岗"],
+["阶跃星辰 StepFun","ai","多模态 Agent · 终端智能","上海","无 27 届码","","https://www.bing.com/search?q=%E9%98%B6%E8%B7%83%E6%98%9F%E8%BE%B0+StepStar+2027%E6%A0%A1%E6%8B%9B","","进行中","有 Agent 岗，走公众号 / StepStar 计划"],
+["依图科技","ai","算法工程师","上海","AA5ZR","自助内推链接，打开即带推荐人","https://app.mokahr.com/recommendation-apply/yitu-inc/3702?recommenderId=109456&hash=%23%2Fjobs%3FisCampusJob%3D1","","27 届正式批未开","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["云知声","ai","山海大模型 · 医疗 Agent","北京/厦门","无码","","https://unisound.zhiye.com/campus/jobs","","进行中",""],
+["第四范式","ai","企业级 Agent · AIGS","北京","无 27 届码","2023 年的旧码别填","https://www.bing.com/search?q=%E7%AC%AC%E5%9B%9B%E8%8C%83%E5%BC%8F+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","待确认","企业 AI 落地老兵，工程规范强"],
+["旷视 / 千里科技","ai","视觉 · 大模型","北京","无 27 届码","DSfnuT4Y 是 26 届别填","https://www.bing.com/search?q=%E6%97%B7%E8%A7%86%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E6%8B%9B","","待确认",""],
+["云天励飞","ai","芯片 · AI Infra","深圳","无码","","https://www.bing.com/search?q=%E4%BA%91%E5%A4%A9%E5%8A%B1%E9%A3%9E+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","27 届已开","偏芯片 / AI Infra"],
+["晶泰科技","ai","AI for Science","深圳","邮箱争取内推","","mailto:career@xtalpi.com","","进行中",""],
+["群核科技（酷家乐）","ai","科研算法 · AI Infra · AI 产品","杭州","无码","","https://www.bing.com/search?q=%E7%BE%A4%E6%A0%B8%E7%A7%91%E6%8A%80+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","","招满即止","偏研究，走「群核科技招聘」公众号"],
+["上海人工智能实验室","ai","多智能体 · 评测 · 书生浦语","上海","码要问员工或校园大使","","https://www.shlab.org.cn/joinus","","27 届已开","开源 Agent 框架（Lagent / XTuner）产出多，简历含金量高"],
+["之江实验室","ai","研究 · 工程","杭州","无码","","https://talents.zhejianglab.com","","宣讲已排","偏硕博；邮箱 zhaopin@zhejianglab.org"],
+["北京通用人工智能研究院 BIGAI","ai","研究工程师（智能体 / TongAgents）","北京","无码","","https://app.mokahr.com/campus-recruitment/bigai-ai/102640","","09-08 开","27 届全球校招，硕士起；提供住房与落户支持"],
+["中科院计算所","ai","大模型训推 · NLP/RAG · AI 算法应用","北京","无码","","https://www.ict.ac.cn/rczp/","","常年招","解决北京户口；现在挂的是 2026 年度公告，27 届新公告约 10 月中"],
+["启元实验室","ai","软件开发类研究及工程技术岗","北京","无码","","https://qiyuanzp.zhiye.com/","","常年","20–40K，硕士起；有政审，海外学历先问 HR"],
+["智源研究院「智星」","ai","研究 / 工程","北京","无码","","https://www.bing.com/search?q=%E6%99%BA%E6%BA%90%E7%A0%94%E7%A9%B6%E9%99%A2+%E6%99%BA%E6%98%9F+2027","2026-09-26","07-28 ~ 09-26","公告要顶会或竞赛，没有就跳过"],
+["字节 Seed 大模型人才校招","ai","Search Agent · Multi-Agent RL · 模型记忆系统","北京","用字节的码","和第一档字节同系统","https://seed.bytedance.com/zh/seedearlycareer","","进行中","研究型专项，作为冲刺"],
+["米哈游","game","AI 技术中台 · 游戏 AI","上海","TTTGC","备 GZRRW；8UEZ 更像实习","https://jobs.mihoyo.com/","","提前批已开","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["沐瞳科技","game","Agentic 开发工程师 · AI 大模型研究","上海","48PWF6Z","备 FF42KAQ（链接 /s/pO9kcITv5Ng）· HYPRHKD，三选一","https://moonton.jobs.feishu.cn/s/A70Ws0XN7xo","","即日起","⚠ 投递前必填码，投后补不了；JD 含知识库、MCP、RAG、SFT/LoRA"],
+["鹰角网络","game","游戏开发（Agent 研发方向）· AI 算法","上海","NTAcuvq","","https://career.hypergryph.com/","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["莉莉丝","game","2027 秋招算法工程师（Agent Harness / RAG）","上海","6G6T2FN","","https://lilithgames.jobs.feishu.cn/s/7N0IO3VJ1r8","","提前批","第三方 JD 写 Agent Harness、RAG、业务交付，硕博；回官网核实后再投"],
+["叠纸游戏","game","游戏 AI · 后端","上海","9VZY3DV","校园大使码，技术岗能识别再填","https://career.papegames.com/s/E3xzfVBWDsg","2026-10-31","约 10-31",""],
+["库洛游戏","game","技术岗","广州","KTBS4XE","美术早鸟码 BPBTBAJ 不适用技术岗","https://kurogame.jobs.feishu.cn/campus/","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["点点互动","game","AI Agent 工程师（Elite Program+）","北京/上海/深圳/广州","EV3P18","","https://ddhd.cn/4/jobs","","进行中","JD 含 AI 中台、LLM Agent 服务平台、工具调用、Eval；归在专项计划，不要当保底。08-31 免笔试权益已过期"],
+["4399","game","AI Agent 技术开发岗","广州","9ueia","","https://hr.4399om.com/weixin/?r=job/agent&type=2&isOpen=0&jobTableType=1&code=9ueia","","进行中","不采信帖子的「直通笔试」承诺；链接里的 r=job/agent 不代表就是 AI 岗，要选中实际职位"],
+["三七互娱","game","AI 中台 · 投放算法","广州/上海","DSC79bfC","偏 26 届 / 27 实习，核对届别","https://campus.37.com","","进行中",""],
+["波克城市","game","算法 · 应用研发","上海","HSKNF84","","https://boke.jobs.feishu.cn/s/yj_x-yFzJPY","2026-10-18","08-18 ~ 10-18","投递时选「校园大使推荐」再填码"],
+["西山居","game","技术岗","珠海/成都","NTAcp04","校招 / 实习 / 社招通用","https://www.bing.com/search?q=%E8%A5%BF%E5%B1%B1%E5%B1%85+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","招满即止",""],
+["深蓝互动","game","游戏后端 · 算法","上海","NTAWufH","","https://www.bing.com/search?q=%E6%B7%B1%E8%93%9D%E4%BA%92%E5%8A%A8+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","是上海游戏公司，不是长安深蓝汽车；方向偏，可放后"],
+["巨人网络","game","AI 算法 · AI 工具","上海","NTAc9ft","","https://hr.ztgame.com/campus/","2026-09-30","员工内推到 09-30","官方 FAQ：近 3 个月已有投递会有保护期；先核对是否真有 AI 岗"],
+["网龙","game","技术岗","福州","自助领码","关注「网龙集团招聘」公众号 → 我要外推 → 注册拿码；旧码 ESKG0K · EVKG39 是往届","https://nd.zhiye.com/campus/jobs","","进行中","少见的可以自助领内推码的公司"],
+["心动 / TapTap","game","商业化算法 · 搜推算法（Agent 开发是实习转正岗）","上海","无 27 届码","AGqul（2021）· NTAGzXd（旧帖）别填","https://www.xd.com/hr","2026-09-25","08-28 ~ 09-25","⚠ 正式校招里没有 Agent 开发，那个是实习转正岗，别搞错"],
+["完美世界","game","游戏 AI · 大模型应用","北京","找员工要码","","https://recruit.games.wanmei.com/","","进行中",""],
+["小黑盒","game","AI 应用工程师","北京","无公开码","","https://job.xiaoheihe.cn","","进行中","只读到岗位清单，AI 岗具体职责未核实"],
+["多益网络","game","2027 AI 应用开发工程师","广州","无公开码","","https://xz.duoyi.com/ANa","","进行中","毕业范围 2026-08 ~ 2027-07；先看应用开发，不要转投客户端凑数"],
+["吉比特","game","技术岗","厦门","无码","","https://hr.g-bits.com","","进行中",""],
+["乐元素","game","技术岗","北京","无码","","https://join.leyuansu.com","","进行中",""],
+["小米","hw","端侧大模型 · 小爱 Agent · AI Agent 算法","北京/上海/西安","4Q6GKUB","备 QN8KF6Z","https://hr.xiaomi.com/campus","2026-12-31","至 12-31","AI Agent 算法岗（上海，硕士）含 LangGraph/MCP 也含 SFT 与后训练，属冲刺；AI 岗需求同比涨五成"],
+["OPPO","hw","端侧大模型 · AI 手机 Agent","深圳/东莞","X6538748","","https://careers.oppo.com/university/oppo/campus/post","","07-15 起 · 招满即止","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["vivo","hw","蓝心大模型 · 端侧 Agent","深圳/杭州/南京","ES1CKS","","https://hr-campus.vivo.com/campus/jobs","2026-09-15","原件写 09-15 截止","⚠ 这个日期已经过了，先去官网确认是否还有补录或后续批次"],
+["荣耀","hw","YOYO Agent · 端侧 AI","深圳","gmpsaa","","https://www.bing.com/search?q=%E8%8D%A3%E8%80%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","08-18 开","走「荣耀招聘」公众号投递流程填码"],
+["大疆","hw","AI 算法 · 嵌入式 · 硬件研发","深圳","DSSAmMbW","备 DSuvNXaV · DSKeRdhz","https://apply.careers.dji.com/campus-recruitment/dji/143359","","进行中","也可走「拓疆者」计划"],
+["传音控股","hw","端侧 AI · 海外 AI 应用","深圳","ESS43G","旧码 EVH89B 是 22–26 届别填","https://transsion.zhiye.com/4/jobs?shareId=50833d1c-a141-44bb-8bab-ef5548e6a932&shareSource=2","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["海康威视","hw","AI 应用 · 算法","杭州","9PPA31","备 36KAB4；U856E0 标 25–26 届，优先 9PPA31","http://campushr.hikvision.com","","进行中",""],
+["大华股份","hw","AI 应用开发 · 大模型应用 · 多模态","杭州","605742","","https://job.dahuatech.com/","","进行中","⚠ 每人仅能投 1 个岗位，先选 AI 应用开发或大模型应用"],
+["联想","hw","AI 软件 · 研发","北京","2027XZLMCWC","备 ANK2027 · 2027XZLMFWX · 2027XZLMZQY；26 届码 2026XZLMDWW 别填","https://talent.lenovo.com.cn/home","","进行中","部分公告要求填「推荐人 itcode」而不是一串码；简历保存和职位申请是两步"],
+["韶音科技","hw","嵌入式 AI · 软件研发","深圳","DS1AT58B","","https://app.mokahr.com/m/campus-recruitment/aftershokzhr/36940","2026-10-30","提前批至 10-30",""],
+["影石 Insta360","hw","AI 影像 · 应用工程","深圳","E45P9HR","校园大使码，技术岗能识别再填","https://www.bing.com/search?q=%E5%BD%B1%E7%9F%B3+Insta360+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["石头科技","hw","算法 · 软件","北京","IS3Y19","","https://www.bing.com/search?q=%E7%9F%B3%E5%A4%B4%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["追觅科技","hw","算法 · 软件","苏州","ISK0VJ","备 IV3CVA","https://www.bing.com/search?q=%E8%BF%BD%E8%A7%85%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["云鲸智能","hw","RAG · 大模型开发","深圳","ISVYSK","年份没标；IS3GVR 是 24 届别填","https://careers.narwal.com","","进行中","27 届岗位里有 RAG / 大模型开发"],
+["拓竹科技 Bambu Lab","hw","算法 · 软件 · 嵌入式 · 数据","深圳","9HZ64G6","","https://bambulab.jobs.feishu.cn/s/KQEJ6LJ8PDM","","进行中","消费级 3D 打印软硬件，软件/算法工程适配度高于纯大模型岗"],
+["安克创新","hw","AI 数据 · 研发技术","深圳/长沙","N385CKS","","https://anker-in.jobs.feishu.cn/s/KF0dY1CMkHo","","进行中","公告列 AI 数据工程师，别当纯 Agent 岗；官网 career.anker.com.cn"],
+["CVTE 视源","hw","算法 · 软件 · 研究类","广州","CVTEGZCWC","","https://campus.cvte.com/","","进行中","网申「招聘来源」选「内部推荐」后填码"],
+["禾赛科技","hw","AI / 算法 · 软件 · 世界模型","上海","SUG1Z1V","","https://kwh0jtf778.jobs.feishu.cn/s/WMidFy4Ae6I","","进行中","偏物理 AI / 传感器，算法岗要 CV 或训练部署基础，属冲刺"],
+["智元机器人 AgiBot","hw","Agent 算法 · 具身 Agent 算法","上海","XP9JUTE","备 1XD5CZ5","https://agirobot.jobs.feishu.cn/s/WIVzPj3j3IE","","进行中","帖子明列「Agent 算法工程师」「具身 Agent 算法工程师」"],
+["银河通用 Galbot","hw","具身智能 · Agent","北京","D1KCYZC","链接自带码","https://owm6ymi5v9b.jobs.feishu.cn/584984/m/position?external_referral_code=D1KCYZC","","进行中",""],
+["优必选","hw","人形机器人 · AI 软件","深圳","IVVJ30","届别自称 27，表单认再填","https://zhaopin.ubtrobot.com/campus","","进行中",""],
+["自变量机器人","hw","具身算法 · 软件","深圳","FYNK8N8","","https://x2-robot.jobs.feishu.cn/s/URzjGh3o_wo","","招满即止",""],
+["普渡科技","hw","Agent 开发工程师 · VLM · VLA","深圳/成都","无公开码","公告写「网申 / 内推」","https://pudutech.zhiye.com/campus","","招满即止","软件类明列 Agent 开发工程师"],
+["极智嘉 Geek+","hw","Agent 工程师 · VLA · 强化学习 · 世界模型","北京/上海/苏州","无码","","https://www.geekplus.com/zh-cn/company/career","2026-10-21","至 10-21","笔试含 AI Coding"],
+["星海图","hw","算法 · 大模型训练 · 仿真平台开发","北京/苏州/深圳","无码","","https://www.galaxeadynamics.com/career/2027campus","2026-10-27","至 10-27","中低优先"],
+["穹彻智能","hw","具身 Agent 算法 · 世界模型 · Training Infra","上海","邮箱直投","","mailto:hr@noematrix.cn","2026-10-20","至 10-20","硕士；主题「姓名-意向岗位-学校」"],
+["千寻智能","hw","具身 Agent 算法 · AI 平台研发 · 模型评测","北京/杭州/深圳","无码","","https://nwd4iy9rd2s.jobs.feishu.cn/campusofSpiritAI","","招满即止","campus@spirit-ai.com"],
+["北京人形机器人创新中心","hw","多模态大模型算法（VLM / 世界模型）","北京通州","无码","","https://www.bing.com/search?q=%E5%8C%97%E4%BA%AC%E4%BA%BA%E5%BD%A2%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%9B%E6%96%B0%E4%B8%AD%E5%BF%83+2027%E6%A0%A1%E6%8B%9B","","进行中","硕士，25–50k×14；要 VLA/VLM 微调经验，顶会加分"],
+["宇树科技 Unitree","hw","机器人软件 · 后端 · AI","杭州","无 27 届码","","https://www.unitree.com/cn/position","","进行中","热度高，投递人数也多"],
+["寒武纪","hw","软件栈 · AI 编译 · 平台","北京/上海/西安","NTAtrFW","帖子写所有岗位通用","https://www.cambicon.com/campus/recruitment/2027campus","","进行中","软件类岗位多，不只招芯片"],
+["摩尔线程","hw","GPU 软件栈 · AI Infra","北京/上海","无 27 届公开码","","https://www.bing.com/search?q=%E6%91%A9%E5%B0%94%E7%BA%BF%E7%A8%8B+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","","进行中","可走知乎内推帖"],
+["燧原科技","hw","AI 编译器 · 高性能算子 · 大模型算法","上海/北京","NTAsxIQ","备 NTAtGlE（内推人工号 901793）","https://app.mokahr.com/campus-recruitment/enflame/168420","","招满即止","郑州线上宣讲 09-19"],
+["海光信息","hw","AI Infra · 软件","北京/成都","链接自带内推，不用填码","另有码 NTApcMK，链接优先","https://app.mokahr.com/su/11Pxti","2026-10-13","08-13 ~ 10-13",""],
+["联发科 MTK","hw","嵌入式 · AI 软件","上海/北京/深圳","ISK60H","提前批码，正式批能识别再填","https://mediatek.zhiye.com/campus/jobs","","进行中",""],
+["京东方 BOE","hw","应用解决方案 · 软件","北京/合肥","FY34V","","http://campus.boe.com","","进行中","⚠ 码只能首次网申时填，之后改不了"],
+["紫光展锐","hw","AI 软件工程师","上海","无码","yocvoi 是 23 届别填","https://www.bing.com/search?q=%E7%B4%AB%E5%85%89%E5%B1%95%E9%94%90+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2026-11-10","至 11-10","推理引擎 / AI 编译器 / Android 端大模型部署，偏底层，排在应用岗后"],
+["沐曦","hw","GPU 软件 · AI","上海","无码","","https://www.bing.com/search?q=%E6%B2%90%E6%9B%A6+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["昆仑芯","hw","AI 芯片软件","北京","无码","IZBG0B 是 26 届别填","https://www.bing.com/search?q=%E6%98%86%E4%BB%91%E8%8A%AF+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","27 届已开",""],
+["长江存储","hw","软件 · 算法","武汉","填推荐人工号，无公开码","","https://ymtc-campus.zhiye.com/jobs","","进行中",""],
+["安谋科技 Arm China","hw","软件开发岗","上海/北京","无码","","https://www.bing.com/search?q=%E5%AE%89%E9%9C%86%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","08-31 开","3 岗；偏芯片软件，放后"],
+["TCL 华星","hw","算法 · 软件","深圳/武汉","wawoob","旧 svqejo；实业码 vvfoca 不能填华星","https://campus.tcl.com","","进行中","要选对招聘主体，别把实业和华星搞混"],
+["TCL 实业","hw","AI 软件 · 应用","深圳/惠州","vvfoca","","https://zhaopin.tcl.com/campus","","进行中","与 TCL 华星是两个主体"],
+["美的集团","hw","软件 · AI","佛山","M4Y642","","https://www.bing.com/search?q=%E7%BE%8E%E7%9A%84%E9%9B%86%E5%9B%A2+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","走「美的招聘」公众号 → 伯乐推荐"],
+["海尔集团","hw","软件 · 数字化","青岛","GHJ498","","https://www.bing.com/search?q=%E6%B5%B7%E5%B0%94%E9%9B%86%E5%9B%A2+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","走「海尔招聘」→ 未来规划局推荐"],
+["老板电器","hw","技术岗","杭州","找学长或校园大使要码","旧码 DScgmp49 · NTAfN14 是 26 届别填","https://campus.robam.com","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["普冉股份","hw","AI 应用开发工程师","上海","无公开码","","https://h2t8ckbsk1.jobs.feishu.cn/678396","","进行中","半导体企业里明确列出的 AI 应用岗；另有 Talent@puyasemi.com"],
+["TP-LINK","hw","软件 · 算法","深圳","XYDS011","","http://hr.tp-link.com.cn/","","进行中","填「TP 内推码」栏"],
+["三环集团","hw","软件","潮州","866001","","https://hr.cctc.cc/","","进行中",""],
+["迈瑞医疗","hw","软件 · 算法","深圳","内推码 = 员工工号","","https://www.bing.com/search?q=%E8%BF%88%E7%91%9E%E5%8C%BB%E7%96%97+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["联影集团","hw","医学影像 AI · 软件 / 算法","上海","IZV439","备 IZK6H9","https://www.bing.com/search?q=%E8%81%94%E5%BD%B1%E9%9B%86%E5%9B%A2+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中",""],
+["三星中国（西安 SRCX / 北京研究院）","hw","多模态大模型算法 · AI 编译器","西安/北京","无码","","https://www.bing.com/search?q=%E8%A5%BF%E5%AE%89%E4%B8%89%E6%98%9F%E7%94%B5%E5%AD%90%E7%A0%94%E7%A9%B6%E6%89%80+27%E5%B1%8A%E6%A0%A1%E6%8B%9B","","9 月启动，岗位待放","岗位出来后在前程无忧搜「西安三星电子研究所」+ 27 届"],
+["招银网络科技","fin","AI 研发 · Java 后端","深圳/杭州/成都","SFQSAK","","https://cmbnt.cmbchina.com/pages/bindInvited.html?qrCode=D164D34CEECC49399968E9607E743731&rand=1782916165724&blNtCode=SFQSAK","","27 秋招全球启动","⚠ 流程是先打开这条绑码链接、再去 career.cmbchina.com 网申；顺序反了码就丢。招行体系内最技术的一块"],
+["恒生电子","fin","AI 应用开发 · 智能体开发 · 金融科技研发","杭州","EVSMAV","","https://campus.hundsun.com/campus/jobs?shareId=19851e61-6850-48fa-b21c-a1d6580dc2e6&shareSource=2","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["同花顺","fin","Agent 算法开发工程师（金融）","杭州","KV3275","帖子写面向 25/26/27 届；PR5578 是 26 届别填","https://campus.10jqka.com.cn/","","提前批已开","JD 明确写 Financial Agent Harness、Agent Loop、Skill/MCP、长程任务可靠性与评测——是金融线里最贴的一个"],
+["度小满","fin","大模型 AI 应用开发 · AI 全栈研发 · AI 全栈（平台与数据）","北京/上海","QCU6N5T","","https://duxiaoman.jobs.feishu.cn/051736/m/position?external_referral_code=QCU6N5T","","毕业 2026-09~2027-08","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["众安保险","fin","AI 全栈工程师（2027 届秋招 - 上海）","上海","DSEbmnjv","校园大使码，正式批能识别再填；DSPjP563 出自旧帖别用","https://www.nowcoder.com/jobs/detail/465360","2026-11-30","09-04 ~ 11-30","JD：RAG、LangGraph、复杂 Agent 是加分项，核心是 AI 辅助前后端业务开发"],
+["九坤投资「梧桐计划」","fin","AI 工程师（Agent 核心能力研究）","上海/北京","DStdWeNM","","https://app.mokahr.com/m/campus_apply/ubiquantrecruit/37031?recommendCode=DStdWeNM#/jobs","2026-09-30","提前批至 09-30","JD 写「Agent 核心能力研究」；也可邮件 recruiter@ubiquant.com，主题「姓名-岗位-校招」"],
+["万得 Wind","fin","AI 工程 - 全栈开发 · AI 算法","上海/南京","sqh2027","26 届旧码 2026hwy1 别填","https://www.wind.com.cn/mobile/JoinUS/RecruitDetail/zh.html?entry=school","","招满即止","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["银泰商业","fin","银泰星 - AI 系统工程师 - 产技 J11330","杭州","ESKW1G","","http://talent.intime.com.cn/campus/jobs","","进行中","AI 系统建设、业务自动化与 Agent 实践；重点讲企业数据链路、部署、排障"],
+["中金所技术公司","fin","大模型应用开发工程师","上海/苏州/北京","无码","","https://www.bing.com/search?q=%E4%B8%AD%E9%87%91%E6%89%80%E6%8A%80%E6%9C%AF%E5%85%AC%E5%8F%B8+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B+%E5%A4%A7%E6%A8%A1%E5%9E%8B","","招满即止","JD 要求熟练掌握 Agent、RAG、Java、前端，基于交易所 MaaS 平台做大模型应用；27 届硕士"],
+["上交所技术公司","fin","研发岗（AI 中台 / AI 业务场景落地）","上海","无码","","https://www.bing.com/search?q=%E4%B8%8A%E4%BA%A4%E6%89%80%E6%8A%80%E6%9C%AF%E5%85%AC%E5%8F%B8+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","招满即止","交易所子公司，岗位稀缺"],
+["浦银金融科技（浦发银行）","fin","AI 应用工程师 · AI 算法 · AI 治理","上海","无码","","https://www.bing.com/search?q=%E6%B5%A6%E5%8F%91%E9%94%B6%E8%A1%8C+2027+%E7%A7%8B%E5%AD%A3%E6%A0%A1%E6%8B%9B+%E6%B5%A6%E9%94%B6%E9%87%91%E7%A7%91","2026-10-08","10-08 18:00","岗位都在「人工智能应用中心」；AI 应用工程师本科起，毕业窗口 2025-01 ~ 2027-07"],
+["阳光保险 科技条线","fin","AI 应用开发 · AI 应用算法 · AI 安全","北京/成都","SUNRISE2027","这是 27 届暑期实习专属码，校招表单能识别再填","http://sunzhaopin.sinosig.com/ygbxHr/","2026-10-08","09-10 ~ 10-08","公告强调「AI Native 思维」"],
+["建信金科","fin","科技类专项岗","上海/北京","无码","","http://job.ccb.com","2026-10-08","至 10-08","27 届 30 人，2 志愿；走「诚聘英才」或「中国建设银行人才招聘」公众号"],
+["工行软件开发中心","fin","大模型 · 算法研究 · 新技术研发","北京/珠海/成都等 7 城","官方无内推渠道","","https://job.icbc.com.cn","2026-10-08","至 10-08","搜「软件开发中心」；2 岗可选；笔试是硬关，提前刷题。工银科技 27 届未见公告，别混"],
+["农银金科","fin","软件研发","北京","官方明确无任何内推","","https://career.abchina.com.cn","2026-10-08","至 10-08","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["中银金科","fin","信息科技岗","上海/北京/河北","官方无内推字段","","https://campus.chinahr.com/pages/2027-boc","2026-10-09","至 10-09","27 届 40 人，专业列了人工智能；全行 5 岗平行志愿"],
+["交银金科","fin","人工智能 / 算法 · 后端","上海","无码","","https://www.bing.com/search?q=%E4%BA%A4%E9%80%9A%E9%94%B6%E8%A1%8C+2027+%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98+%E4%BA%A4%E9%94%B6%E9%87%91%E7%A7%91","2026-09-30","08-12 ~ 09-30","本月底截止，明列「人工智能/算法」岗，不认公开码，直接投"],
+["中信银行","fin","信息科技","北京等","码只发员工","","https://job.citicbank.com","2026-10-09","至 10-09","最多 2 机构 × 2 岗；信银科技没搜到 27 届"],
+["江苏银行 总行金融科技培养生","fin","软件开发 + 数据挖掘（大模型 / 智能信贷 / 智能投研）","南京","无码","","https://hr.jsbchina.cn/zp","2026-09-30","至 09-30","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["南京银行","fin","总行信息科技 · 数字银行；南银法巴消金「数字科技岗 - 人工智能方向」","南京/北京/上海/杭州","无码","","https://job.njcb.com.cn","2026-10-11","至 10-11","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["宁波银行 总行金融科技定向生","fin","算法 · 应用研发（后端/前端/数据）· SRE","宁波","无码","","https://zhaopin.nbcb.com.cn","2026-10-31","至 10-31","公开薪资 15–22K，本科起，免费三餐"],
+["苏商银行","fin","AI 工程师（推动大模型业务场景落地）","南京河西","无码","","https://www.bing.com/search?q=%E8%8B%8F%E5%95%86%E9%93%B6%E8%A1%8C+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98+AI%E5%B7%A5%E7%A8%8B%E5%B8%88","","招满即止","总行入职 1V1 带教"],
+["民生科技（民生银行）","fin","「扬帆」软件开发 · 数据智能算法","北京","无码","","https://www.bing.com/search?q=%E6%B0%91%E7%94%9F%E9%93%B6%E8%A1%8C+2027+%E7%A7%8B%E6%8B%9B+%E6%B0%91%E7%94%9F%E7%A7%91%E6%8A%80","","招满即止","JD 写大模型算法、提示词工程、Agent；硕士起"],
+["徽商银行","fin","金融科技岗","合肥","无码","","https://rczp.hsbank.com.cn/pc/#/homepage","2026-10-08","至 10-08","低优先"],
+["兴业数金","fin","金融 AI · Java","福州/上海","—","27 届提前批走 TouchCIB 科技挑战赛，报名已截止","https://www.bing.com/search?q=%E5%85%B4%E4%B8%9A%E6%95%B0%E9%87%91+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","正式批待开","等正式批公告"],
+["微众银行","fin","AI 中台 · 大模型应用 · Java","深圳","无码","","https://campus.webank.com","","秋招正式批待开","27 届目前只发了实习招聘；技术导向最强的民营银行，值得盯"],
+["平安集团 / 平安科技","fin","金融大模型 · Java 后端","深圳/上海","无 27 届公开码","","https://campus.pingan.com/","2026-11-06","08-10 ~ 11-06","最多投 3 家成员公司"],
+["中电金信","fin","AI 智能体开发 · Java","北京","无码","","https://www.bing.com/search?q=%E4%B8%AD%E7%94%B5%E9%87%91%E4%BF%A1+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","27 届待开","26 届有 AI 智能体开发岗，10 月再看"],
+["广发证券 IT","fin","Agent Infra 工程师 · AIOps · Java/Go/C++","广州","邮箱直投","","mailto:gfithr@gf.com.cn","","招满即止","JD 原文「算法造大脑，我们造四肢和神经」；硕士；流程含现场实习。邮件标题「岗位-姓名-学历-学校」"],
+["中金公司","fin","信息技术","北京/上海/深圳","无码","","https://cicc.zhiye.com","2026-10-28","09-08 ~ 10-28","境内外院校都收，毕业不晚于 2027-10"],
+["申万宏源","fin","金融科技","上海/北京/深圳","官方声明不接受任何付费内推","","https://www.bing.com/search?q=%E7%94%B3%E4%B8%87%E5%AE%8F%E6%BA%90+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B+%E9%87%91%E8%9E%8D%E7%A7%91%E6%8A%80","2026-10-25","至 10-25","硕士"],
+["银河证券","fin","后端 · 数据 · 算法 · 运维 · 安全","北京","无码","","https://www.bing.com/search?q=%E9%92%B6%E6%B2%B3%E8%AF%81%E5%88%B8+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B+%E9%87%91%E8%9E%8D%E7%A7%91%E6%8A%80","2026-10-31","至 10-31","总部硕士优先"],
+["招商证券","fin","金融科技岗","深圳/武汉","无码","","https://cms.hotjob.cn","","招满即止",""],
+["中信建投","fin","金融科技类","北京","无码","","https://csc108.zhiye.com/campus/jobs","","招满即止","硕士"],
+["华泰证券","fin","Fintech 专场","南京/上海","无码","","https://job.htsc.com.cn","","滚动招","27 届含 Fintech 专场"],
+["中证股转科技","fin","北交所 / 新三板信息系统","北京金融街","无码","","http://zhaopin.neeq.com.cn","2026-09-30","至 09-30","硕士 ≤29 岁；每人 1 岗；有实习考察环节"],
+["金证股份","fin","大模型应用开发工程师","深圳/长沙/上海/成都","无码","","https://www.bing.com/search?q=%E9%87%91%E8%AF%81%E8%82%A1%E4%BB%BD+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2026-10-30","线下批 09-14 ~ 10-30","线上批 09-15 已过，走线下批或「金证招聘」公众号"],
+["国寿财险 金融科技中心","fin","人工智能研发岗","北京","无码","","https://www.bing.com/search?q=%E4%B8%AD%E5%9B%BD%E4%BA%BA%E5%AF%BF+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98+%E8%B4%A2%E9%99%A9%E9%87%91%E8%9E%8D%E7%A7%91%E6%8A%80%E4%B8%AD%E5%BF%83","","招满即止","JD：大模型微调、大小模型协同、评测监控、Prompt 工程与知识库；解决北京户口"],
+["泰康","fin","算法研发岗 - 27 校招","武汉光谷","无码","","https://www.bing.com/search?q=%E6%B3%B0%E5%BA%B7+2027%E6%A0%A1%E6%8B%9B+%E7%AE%97%E6%B3%95%E7%A0%94%E5%8F%91%E5%B2%97","","招满即止","垂类大模型 SFT / DPO、评测体系；16–35K；硕士"],
+["中国人保","fin","科技类","北京等","无码","","https://www.bing.com/search?q=%E4%B8%AD%E5%9B%BD%E4%BA%BA%E4%BF%9D+2027%E5%B1%8A%E7%BB%9F%E7%AD%B9%E6%A0%A1%E6%8B%9B+%E7%A7%91%E6%8A%80%E7%B1%BB","2026-10-15","本级岗 10 月中旬","各单位批次 11 月中下旬"],
+["汇丰科技 HSBC","fin","AI · 数据 · 云原生","广州/西安/上海","无码","","https://www.bing.com/search?q=HSBC+Technology+China+2027+campus+graduate","","9 月起","毕业 2025-07 ~ 2027-07；限中国籍"],
+["瑞银 UBS GTP","fin","信息技术部管培生","上海","无码","","https://www.bing.com/search?q=UBS+Group+Technology+GTP+2027+China+campus","2026-10-31","08-17 ~ 10-31","面试新增 AI 熟练度考察"],
+["衍复投资","fin","机器学习研究员 · Quantitative Developer","上海","无码","","https://yanfu.jobs.feishu.cn/index","2026-09-24","至 09-24","全职面向 2026–2027 届；邮件标题「2027衍复校招-姓名-岗位-全职」"],
+["鸣石基金","fin","AI 量化工程师 · 量化开发（C++）","上海","无码","","https://mingshiim.zhiye.com/campus/jobs","2026-10-10","至 10-10","硕士起；也可 campus@mingshim.com，主题「姓名-学校-岗位」"],
+["宽德投资「无境计划」","fin","机器学习平台 · ML 性能 · 策略系统","上海","邮箱直投","","mailto:hr@wizardquant.com","","招满即止","标题「2027校招无境计划+姓名+毕业院校+岗位名称」"],
+["曹操出行","car","技术岗","杭州","DSdA9PrG","年份没标","https://www.bing.com/search?q=%E6%9B%B9%E6%93%8D%E5%87%BA%E8%A1%8C+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["理想汽车","car","智能空间 · AI 岗 ·「理想 +」","北京/上海","无公开码","南开页带渠道参数 H56UNDK","https://www.lixiang.com/employ/campus/list.html?fromJob=1","","即日起","27 届已开，AI 岗多"],
+["小鹏汽车","car","AI / 智驾 · 大模型 ·「探索者计划」","广州/上海","CK45VF3","备 T8W2MCX · 3WGCND2；GWVHCUY 已失效","https://xiaopeng.jobs.feishu.cn/campus/?spread=T8W2MCX","","进行中","填在「人员推荐」栏；注意别误选博士专项"],
+["蔚来","car","智能辅助驾驶 · 座舱 · 数智化 / AI 安全","上海/合肥","R6D4SHC","6WAVJHS 是实习码，不要用于正式校招","https://nio.jobs.feishu.cn/s/iPgS2LfV","","07-31 开",""],
+["地平线","car","智驾大模型 · 工具链","北京/上海","exnxdy","fxfxgc · hlhvjk 是实习码别混用","https://horizon-campus.hotjob.cn/","","进行中","这是 27 正式校招码"],
+["Momenta","car","智驾大模型 · 数据闭环","苏州/北京","HC8239D","是校园大使码，不是员工码","https://momenta.jobs.feishu.cn/s/_DFzXF7Dq9s","","进行中","官网投递时选「有内推」再填码；算法门槛高，平台/工具链岗相对友好"],
+["小马智行 Pony.ai","car","AI 模型 · 世界模型 · 模型部署优化","北京/广州","935C7MU","","https://campus.pony.ai","","进行中","自动驾驶理论与 C++ 要求较高，作为冲刺"],
+["文远知行 WeRide","car","算法 · 研发 · 测试开发","广州/北京/上海/深圳/武汉/新加坡","DSEenxY9","","https://app.mokahr.com/m/campus_apply/jingchi/2137?recommendCode=DSEenxY9#/jobs","","进行中","优先算法或平台研发"],
+["轻舟智航 QCraft","car","算法 · 工程 · 产品项目","北京/苏州","4QS8UFY","","https://qcraft.jobs.feishu.cn/s/iFXv7aYm30E","","进行中","世界模型、强化学习、量产工程链路是主线"],
+["九识智能 ZELOS","car","世界模型 · VLA · 数据闭环 · AI Infra","苏州","NTAXYvq","","https://app.mokahr.com/su/chahst","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["元戎启行","car","端到端智驾 · AI 工程","深圳","NTAW61d","备 NTAiLDj（链接 app.mokahr.com/su/etxxes）","https://app.mokahr.com/campus-recruitment/deeproute/145894#/","","进行中","先用 NTAW61d"],
+["卓驭科技（大疆车载）","car","算法 · 软件（后端）","深圳","链接自带推荐人","牛客个人码 IZKA3B · IZ3A3J 未核实","https://we.zyt.com/5/jobs?shareId=394e07c9-41a3-467e-9bcd-ce7b445b8121&shareSource=2","","07-15 起",""],
+["宁德时代","car","计算机 · AI 应用","宁德/福州/上海","DSFqvXqp","","https://app.mokahr.com/m/campus-recruitment/catlhr/148948?recommendCode=DSFqvXqp#/jobs","2027-12-31","毕业 2026-07 ~ 2027-12","官方说小红书会掉码，走上面这条网申链接；优先查计算机与 AI 类应用岗"],
+["比亚迪","car","智能座舱 · AI 软件","深圳/西安","无 27 届码","BYDNTA05 是 26 春招别填","https://job.byd.com/","","进行中",""],
+["吉利 / 极氪","car","座舱大模型 · AI","宁波/杭州/上海","公众号领码","关注「吉利招聘」公众号领","https://www.bing.com/search?q=%E5%90%89%E5%88%A9%E6%B1%BD%E8%BD%A6+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2026-10-31","网申 / 内推到 10-31","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["长安汽车","car","智能化 · 软件","重庆","无码","阿维塔只有往届码","https://changan.zhiye.com/Campus","2026-09-29","09-01 ~ 09-29","本月底截止"],
+["广汽集团 / 研究院","car","智能化 · 软件","广州","无码","","https://xyzp.51job.com/gacgroup2027","","09-09 起","集团 2 岗；研究院另有入口 gacrnd.zhiye.com"],
+["上汽零束 / 上汽集团","car","软件 · 智能化","上海","无码","","https://www.bing.com/search?q=%E4%B8%8A%E6%B1%BD%E9%9B%86%E5%9B%A2+2027%E5%B1%8A%E5%85%A8%E7%90%83%E6%A0%A1%E6%8B%9B","","全球校招已开",""],
+["德赛西威","car","软件类（AI 工程）· 算法专项","惠州/成都/上海/深圳/南京","无码","","https://www.bing.com/search?q=%E5%BE%B7%E8%B5%9B%E8%A5%BF%E5%A8%81+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","招满即止","毕业 2026-10 ~ 2027-10"],
+["赛力斯","car","软件 & 算法 & 人工智能类","重庆","无码","","https://www.bing.com/search?q=%E8%B5%9B%E5%8A%9B%E6%96%AF%E9%9B%86%E5%9B%A2+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","","招满即止","3 志愿；走「赛力斯集团微招聘」公众号"],
+["一汽集团","car","智能网联研发 · 数智化","长春","无码","","http://zhaopin.faw.com.cn","","招满即止","1500 人，每个企业只能投 1 岗"],
+["东风研发总院","car","AI 与大模型开发岗","武汉","无码","","https://www.bing.com/search?q=%E4%B8%9C%E9%A3%8E%E7%A0%94%E5%8F%91%E6%80%BB%E9%99%A2+2027%E6%A0%A1%E6%8B%9B+AI%E4%B8%8E%E5%A4%A7%E6%A8%A1%E5%9E%8B","","招满即止","东风股份另有入口 app.mokahr.com/campus-recruitment/gufen/143531"],
+["易控智驾","car","平台研发 · 仿真与数据生成 · 智驾算法","郑州/北京","无公开码，找在职员工要","","https://www.eacon.com/join/","2026-10-28","至 10-28","矿区无人驾驶；郑州岗位；hrcampus@eacon.com"],
+["酷睿程 CARIZON","car","深度学习 · 闭环算法 · HMI","北京/上海","无码","","https://www.bing.com/search?q=%E9%85%B7%E7%9D%BF%E7%A8%8B+CARIZON+2027%E6%A0%A1%E6%8B%9B","2026-11-30","至 11-30","大众 CARIAD 中国合资公司"],
+["中国汽研 CAERI","car","数字化与 AI 算法类 · 智能网联","重庆/北京/苏州/郑州等","无码","","https://wecruit.hotjob.cn/SU6603d5a01eb8054100c60436/pb/index.html#/","2027-05-31","至 2027-05-31","国企；邮箱 hrm_zp@caeri.com.cn，主题「中国汽研+学校+学历+工作地点+专业」"],
+["华为","net","盘古大模型 · AI 应用 · 车 BU 多模态","深圳/杭州/西安/上海","官方明确不设内推","FAQ 写只有天才少年走推荐，收费内推都是假的","https://career.huawei.com/cn/campus-recruitment","","进行中","车 BU 在「第一意向部门」选「智能汽车解决方案BU-智能驾驶解决方案产品线」；另有西安 AI 应用工程师岗需核实直签主体"],
+["金蝶","b2b","Agent 开发工程师 · Harness 算法 · AI 开发","深圳/上海/南京/北京/长沙","67405","","https://app.mokahr.com/campus-recruitment/kingdeehr/166565?locale=zh-CN","","500 岗","毕业 2026-10 ~ 2027-09；JD 明列 Agent 开发 + Harness 算法，是全表岗位名最贴的一家。先看 Agent 开发，再判断 Harness 算法岗是否要训练经验"],
+["用友网络","b2b","企业 Agent · YonGPT · 大模型算法 · 全栈","北京","RRbkY6Tn","27 届空宣码","http://career.yonyou.com","2026-11-30","网申到 11 月底","27 届算法类含大模型，研发类含全栈"],
+["万兴科技","b2b","AI 应用开发工程师（Agent 应用与平台）J14851","长沙","IS3RT9","","https://www.nowcoder.com/jobs/detail/464164","","进行中","JD 明确涉及 Agent Harness、Skills、Memory、LangGraph、RAG、工作流与质量评估——重合度最高的几个之一。别把平台显示的 2029 投递区间当截止"],
+["合合信息","b2b","Agent 开发 J14436 · AI 全栈 J14430 · 大模型应用算法 J14435","上海","IS3M9A","出自扫描全能王官方微博","https://intsig.zhiye.com/campus/jobs","2026-10-31","网申到 10-31","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["彩讯股份","b2b","AI 应用开发 · AI 全栈开发（智能体方向）","北京/广州/深圳/成都/杭州","无公开码","","https://www.richinfo.cn/jobs/","","进行中","公告明确写 Agent 编排、RAG、Skill 工具、多智能体、效果评测；邮箱 xiaozhao@richinfo.cn，标题「2027校招-渠道+城市+岗位+姓名+学历+院校+专业」"],
+["广联达","b2b","AI Agent 开发工程师 · AI 数据开发（RAG 知识库）","北京/西安/上海","DSUQpag8","","https://app.mokahr.com/campus-recruitment/glodon/91966?recommendCode=DSUQpag8#/jobs","","提前批已开","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["博世 BCSC（无锡）","b2b","大模型算法工程师（Agent Harness）· AI 平台与 MLOps","无锡","NTAXJFp","备 NTAXieL · NTA6uhF（年份没标）；三个都不认就直投","https://jobs.smartrecruiters.com/BoschGroup/744000142551949--27-bcsc","","第一批 9 月中 Open Day","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["名创优品","b2b","AI 全栈创优生 · AI 解决方案创优生","广州","无公开码","官方说可找员工要","https://miniso.zhiye.com/campus","","即日起","JD 列 Agent、MCP、RAG、Milvus；不限投递数量，可以多投几个岗"],
+["神州数码集团","b2b","Agent 开发 · AI 应用开发 · 多模态算法","北京/上海/深圳（共 16 城）","无码","和神州信息是两家公司","https://digitalchina.zhiye.com/campus/jobs","2026-11-02","至 11-02","AI 专项英才计划，AI 岗集中北上深"],
+["中望软件","b2b","AI 应用开发工程师 · AI 算法工程师","武汉/广州/上海","无码","","https://www.zwsoft.cn/job/campus","","招满即止","共性技术研究院"],
+["达梦数据","soe","Agent 开发工程师 · 算法工程师 · 数据库内核","武汉/成都/北京/上海/重庆/苏州","无码","","https://www.dameng.com/about/join.html","","招满即止","27 届明列「Agent 开发工程师」（15K+）；国产数据库头部，CEC 旗下国企背景"],
+["超聚变 xFusion","soe","AI 软件开发工程师（MCP / 智能体平台 / AI 网关）","郑州/深圳/西安/北京/杭州","无公开码","","https://career.xfusion.com","","招满即止","JD 原文：企业级 AI 应用、智能体平台、MCP 工具、自动化工作流、AI 网关、鉴权、Token 计量、提示词模板。郑州总部 16 人，本科起；9–10 月进校活动已核验，是否现场收简历以场次通知为准"],
+["中国电子云（中电云计算）","soe","Agent 开发 · AI Coding 开发 · LLM / 多模态算法","北京/武汉/南京/杭州/成都","无码","","https://campus.cestc.cn/campus-recruitment/cestc/102244","","招满即止","央企；毕业 2026-09 ~ 2027-07；南开公告另给邮箱 lichengrun@cestc.cn"],
+["神州信息","fin","AI Agent 开发工程师 · AI 应用开发工程师","北京/上海/广州/深圳/西安/杭州","无码","官方只写「找在职师兄师姐」","https://dcits.zhiye.com/campus/jobs","2026-12-31","09-02 ~ 12-31","金融科技公司，JD 写 RAG 知识库、LangChain、ReAct；窗口到年底，从容投"],
+["中移九天（中国移动数智事业部）","soe","AI 开发岗 · 算法开发岗 · 平台开发岗","北京/广东/陕西","无公开码","","https://job.10086.cn","2026-10-24","10-24 统一笔试","195 人，硕士起；产品含 MobileWork 办公智能体、AlphaData 智能体、九天大模型；境外学历要留服认证"],
+["中移互联网","soe","AI 智能体开发 · AI 算法研发 · 后端","广州","无码","","http://zyhlw.hotjob.cn/","2026-10-24","随中移统一笔试","岗位名直接叫 AI 智能体开发"],
+["中移金科","fin","AI 应用开发（行业智能体）· 算法（金融智能体）","北京","无码","","https://job.10086.cn","2026-10-24","随中移统一笔试","硕士；中国移动全资金融科技公司；在 job.10086.cn 选「中移金科」"],
+["咪咕 / 中国移动研究院 / 中移物联网","soe","研发类 · 智能类 · 软件研发","北京/上海/杭州/成都/重庆","无码","","https://job.10086.cn","2026-10-25","10-24 ~ 25 笔试","研究院「智能类」技术含量最高"],
+["天翼云（中国电信）","soe","后端开发（AI 方向为主）· 算法工程师 · 云计算研究员","北京/上海/广州/深圳/成都/厦门","lgyzmp","牛客个人帖码，能识别再填","https://ctyun.hotjob.cn","","招满即止",""],
+["联通数科","soe","技术研发","北京/南京/西安/成都/深圳","无码","","https://ltsk.iguopin.com/","","招满即止",""],
+["中科曙光","soe","AI Agent 研发 · 工业 Agent · 科学智能体","北京/天津","走内推入口即算内推","没有填码栏","https://neitui.italent.cn/sugon/candidate","","27 届已开","27 届有「AI Agent 研发工程师」「工业 Agent 研发」「科学智能体研发」三个方向"],
+["浪潮集团","soe","AI 算力平台 · 软件开发","济南/北京","BNmxz5S","27 提前批码，正式批能识别再填","http://career.inspur.com/campus2027/index.html","","进行中",""],
+["新华三 H3C","b2b","AI 算法工程师 · AI 调优工程师（Python）","杭州/北京","填推荐人工号 + 姓名","不是一串码；牛客有员工公开工号 28238（年份不明）","https://career.h3c.com/campus/jobs","","08-10 起","海外院校 2026-09 后毕业可投；网申后立刻做测评"],
+["中兴通讯","b2b","AI 平台 · 星云大模型","深圳/南京/西安","无公开码","","https://job.zte.com.cn","","主批 08 月下旬已过","公众号回「内推」查进度；关注补录与春招"],
+["昆仑数智（中石油）","soe","AI 算法（大模型 / 智能体 / 知识图谱）· AI 全栈工程师","北京","无码","","https://www.bing.com/search?q=%E6%98%86%E4%BB%91%E6%95%B0%E6%99%BA+2027+%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98+%E6%99%BA%E8%83%BD%E4%BD%93","2026-10-15","09-09 ~ 10-15","硕士；每人最多 2 家单位 × 1 岗；公告写北京生源优先；留学生要留服认证"],
+["中电科 32 所","soe","AI 应用开发工程师 · Java 开发","上海","邮箱直投","","mailto:hr_zp@ecict.com.cn","2026-09-30","08-31 ~ 09-30","事业编；本月底截止，不认公开码"],
+["中电科智能科技研究院","soe","软件开发工程师（专业列人工智能）","北京","邮箱直投","","mailto:cetc_znyhr@cetc.com.cn","2026-10-26","至 10-26","简历命名「2027届+姓名+毕业院校+专业+学历+拟投递岗位」"],
+["中电科 58 所","soe","AI 算法 · AI 编译器","无锡/南京/武汉/西安/成都","无码","","https://www.bing.com/search?q=%E4%B8%AD%E7%94%B5%E7%A7%9158%E6%89%80+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","2026-12-31","至 12-31",""],
+["电科网安（中电科 30 所系）","soe","AI 算法工程师 · AI 攻防安全研究","成都/北京/武汉","无码","","https://www.bing.com/search?q=%E7%94%B5%E7%A7%91%E7%BD%91%E5%AE%89+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","2026-09-21","网申到 09-21","这周就截止；国企，海外学历投前先问政审"],
+["中国网安 / 三十所","soe","人工智能安全研究员 · Java / C++","成都","无码","","https://app.mokahr.com/campus_apply/cetc30/36270","2026-09-25","至 09-25","硕士；有安家费"],
+["卡奥斯 COSMOPlat（海尔）","b2b","FDE（AI 原生应用端到端交付）· 工业智能体 · AI 算法","青岛/北京/上海","无码","","https://maker.haier.net/client/campus/customizedptjobs/id/87.html","2026-11-02","至 11-02","FDE 类就是 AI 原生应用全链路开发交付，本科起；也可走「卡奥斯招聘」公众号"],
+["先导智能","b2b","AI 应用开发工程师 J17813","广州/无锡","无码","","https://leadchina.zhiye.com/campus","","09-10 公告","JD：LLM 接口、RAG、模型路由、Token 统计、MES/SCM 集成；邮箱 campus@leadintelligent.com，限 3 岗"],
+["麒麟软件","b2b","AI 研发工程师（应用分支）","北京/天津/长沙","无公开码","","https://kylinos.zhiye.com/campus/detail?jobAdId=dd5441a9-cf8e-4b07-9a08-5bcf2db1e11a","","09-04 发布","OS AI 助手、Agent/RAG、工具调用、记忆；同一 JD 也含模型量化和算子，别把自己包装成推理优化专家"],
+["达观 / 中控信息","b2b","AI 应用工程师","杭州","无 27 届码","NTAWcqw 是 26 届别填","https://www.bing.com/search?q=%E4%B8%AD%E6%8E%A7%E4%BF%A1%E6%81%AF+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98+AI%E5%BA%94%E7%94%A8%E5%B7%A5%E7%A8%8B%E5%B8%88","","进行中","JD 含 Agent 与算法平台集成、AI 编程及 Java 微服务；注意浙江中控信息与中控技术不是同一招聘主体"],
+["帆软","b2b","Agent 研发工程师","南京/无锡/成都","正式批无可用码","提前批码 NDPGP · BLGLY · FDYHC 均已过期（08-31 截止）","https://join.fanruan.com/campus/","","正式批进行中","AI+BI 场景；具体 Agent JD 需回官网核实，别默认是 RAG 岗"],
+["深信服","b2b","安全 GPT · 平台后端","深圳","NTAN7JQ","备 NTAKS7a · NTAF5rh；页面没写届别","https://hr.sangfor.com","","进行中","校招培养体系口碑好，技术训练扎实"],
+["奇安信","b2b","安全大模型 · Agent","北京","无 27 届码","","https://campus.qianxin.com/campus/intern","","进行中",""],
+["绿盟科技","b2b","安全 · AI","北京","NTAcaii","出自搜索摘要，来源页未打开","https://www.bing.com/search?q=%E7%BB%BF%E7%9B%9F%E7%A7%91%E6%8A%80+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","","技术岗公告未出","目前只见校园大使招聘；安全公司 AI 岗少，低优先"],
+["长亭科技","b2b","AI 研发工程师 · Agent 相关方向","北京","无 27 届码","NTAPiHV 是 26 届别填","https://campus2027.chaitin.cn/","2027-12-31","毕业 2026-09 ~ 2027-12","官方 27 届 AI 人才校招专题；「星柳」顶尖专项是攻防研究，别混投。resume@chaitin.com"],
+["亚信安全","b2b","大模型开发 · AI 研究与架构 · 算法","南京/北京","V2NRKVF","","https://asiainfo-sec.jobs.feishu.cn/s/wxf-PC9cvy8","","进行中","先看大模型开发是否做知识库 / Agent / 业务集成；帖子的「免笔试」未验证"],
+["迪普科技","b2b","AI 应用开发 · 网络安全 · C / Java 研发","杭州","3PU7XFJS","备 RK2THY42","http://zhaopin.dptech.com/","","进行中","原帖明确列有 AI 应用开发"],
+["汇川技术","b2b","AI 算法 · 机器人算法 · C++ / 应用软件","深圳/苏州","RM48KWC","IZ373H · ISV4B3 · IZV1H0 都是 26 届或更早，别填","https://recruit.inovance.com","","进行中","3 志愿；工业方向，中低优先"],
+["三一集团","b2b","AI 应用工程师","长沙","ESKMBS","旧码 25318 已报无效；ESKM89 线索未核实","https://sanycampus.zhiye.com/campus/jobs?shareId=0f1f4dfe-9eb1-4d80-9a35-8d8b4d42d392&shareSource=2","","进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["树根互联（三一系）","b2b","AI 全栈开发工程师（AI Coding 前后端）","广州/长沙","邮箱直投","","mailto:lina.jiang@irootech.com","","招满即止","要求可实习 3 个月到岗，转正性质"],
+["新大陆科技集团","b2b","算法（大模型 / 视觉 / AI）","福州","无可靠 27 码","","https://newland.zhiye.com","","09-14 公告","优先大模型应用 / 检索工程分支；邮箱 hrxz@newland.com.cn"],
+["东软集团","b2b","人工智能工程师 · 算法工程师","沈阳/大连/上海","无可靠 27 码","","https://neusoft-campus.zhiye.com/","","进行中","硕士及以上；问清产品研发 / 项目交付 / 驻场和劳动合同主体"],
+["杰瑞集团","b2b","27 届 AI 开发工程师 - 成都","成都","无公开码","","https://jereh.zhiye.com/campus","","需确认","在系统里搜「27届-AI开发工程师-成都」确认还开放再投；提前批 08-30 已结束，别回投。不投博士专属计划"],
+["华大基因","b2b","AI 技术方向储备生（AI 应用开发）","深圳","无码","","https://genomics.zhiye.com/campus","","即日起","AI 应用开发、生物数据处理、智能系统构建"],
+["卫宁健康","b2b","AI 应用工程师 - 27 届 · 算法（大模型工程）","上海等","无码","","https://www.bing.com/search?q=%E5%8D%AB%E5%AE%81%E5%81%A5%E5%BA%B7+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B+AI%E5%BA%94%E7%94%A8%E5%B7%A5%E7%A8%8B%E5%B8%88","","招满即止","本科、专业不限；LLM 基础 + NLP / 对话系统项目加分"],
+["数坤科技","ai","大模型算法工程师","北京/上海","无码","","https://www.bing.com/search?q=%E6%95%B0%E5%9D%A4%E7%A7%91%E6%8A%80+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2026-10-19","至 10-19","医疗 AI 大模型；走公众号「数坤科技」→ 加入我们"],
+["声网 Agora","b2b","对话式 AI · RTC","上海","无码","","https://www.shengwang.cn/about/jobs","","岗位已发","实时对话 Agent（语音打断、低延迟）技术点很硬"],
+["软通动力","b2b","AI 应用开发","北京/西安/成都","无码","","https://www.bing.com/search?q=%E8%BD%AF%E9%80%9A%E5%8A%A8%E5%8A%9B+2027%E5%B1%8A%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","2027-12-31","毕业 2027 全年","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["中软国际","b2b","AI 应用开发","北京/杭州/大连","无码","","https://www.bing.com/search?q=%E4%B8%AD%E8%BD%AF%E5%9B%BD%E9%99%85+2027%E5%B1%8A%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","招满即止","保底选项"],
+["汉得信息","b2b","咨询顾问 - AI 方向 · Java 后端","上海/武汉","无码","","https://www.bing.com/search?q=%E6%B1%89%E5%BE%97%E4%BF%A1%E6%81%AF+2027%E7%A7%8B%E6%8B%9B","2026-09-25","至 09-25","保底"],
+["金山办公","b2b","技术岗","珠海/北京","无 27 届码","NTA7mnS 是 26 届","https://join.wps.cn","","进行中",""],
+["360","b2b","技术岗","北京","无 27 届码","IZVM0T 是 26 届","https://360campus.zhiye.com","","进行中",""],
+["明源云","b2b","产研岗（后端 / 测试，后续滚动开）","深圳","无码","","https://www.bing.com/search?q=%E6%98%8E%E6%BA%90%E4%BA%91+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","2026-10-06","09-08 ~ 10-06","现在只有顾问 / 产品岗，产研岗后续开；地产 SaaS，低优先"],
+["锐捷网络","b2b","软件研发","福州","DSEzRFug","","https://www.bing.com/search?q=%E9%94%90%E6%8D%B7%E7%BD%91%E7%BB%9C+2027%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","进行中","偏 27 实习转正"],
+["太极股份（中电科 15 所）","soe","Java 开发工程师","北京/重庆","无码","","https://www.bing.com/search?q=%E5%A4%AA%E6%9E%81%E8%82%A1%E4%BB%BD+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","","招满即止","硕士；保底"],
+["中核华辉","soe","AI 研发工程师（全栈）","北京","无码","","https://www.bing.com/search?q=%E4%B8%AD%E6%A0%B8%E5%8D%8E%E8%BE%89+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B+AI%E7%A0%94%E5%8F%91%E5%B7%A5%E7%A8%8B%E5%B8%88","","招满即止","Python / Java / TypeScript，要 AI 应用项目交付经验；硕士"],
+["国家电网（信通 / 国网智能）","soe","人工智能类 · 平台研发","多地","无码","官方明确不设内推","https://zhaopin.sgcc.com.cn","2026-11-15","第一批 11 月中旬","笔试预计 12 月上旬；留学生要上传留服认证"],
+["南网数字集团（南方电网）","soe","专业含人工智能","广州/深圳等 8 城","无码","","https://www.bing.com/search?q=%E5%8D%97%E7%BD%91%E6%95%B0%E5%AD%97%E9%9B%86%E5%9B%A2+2027%E5%B1%8A%E6%A0%A1%E6%8B%9B","2026-09-30","提前批 9 月内","约 160 人，硕士；正式批随后"],
+["招商局集团","soe","技术类","深圳","无码","","https://cmhk.zhiye.com","","09-09 启动",""],
+["金山云「云翼计划」","b2b","管培生（AI 课题实战）","珠海","无码","","https://job.ksyun.com/campus/apply?source=campus&positionId=135669","2026-10-31","至 10-31","低优先；金山系上市公司，不归入央国企"],
+["中国移动（集团统一）","soe","技术类 · 智能类","全国","官方明确无内推","","https://job.10086.cn","2026-10-24","统一笔试 10-24",""],
+["中国电信（集团）","soe","技术类","全国","官方明确无内推","","https://www.bing.com/search?q=%E4%B8%AD%E5%9B%BD%E7%94%B5%E4%BF%A1+2027%E5%B1%8A%E6%A0%A1%E5%9B%AD%E6%8B%9B%E8%81%98","","9 月启动",""],
+["TeleAI（中国电信人工智能研究院）","ai","研究员（具身 / 世界模型 / AI Infra / AI 安全）","上海/北京","无码","","mailto:TeleAI.HR@Chinatelecom.cn","","招满即止","偏研究、偏顶会；标题「姓名 + TeleAI Top Talent + 意向方向 + 城市」。中低优先"],
+["中国联通（集团）","soe","技术类","全国","官方明确无内推","","https://hr.chinaunicom.com","","9 月启动",""],
+["Apple 中国","frn","机器学习与人工智能类 · 软件和服务类","上海/北京/深圳/苏州","无码","","https://jobs.apple.com/zh-cn/search?location=china-CHNC","2026-11-30","9 月投递","本硕可投，筛「学生 / 应届」"],
+["NVIDIA 中国","frn","应届生技术岗","上海/北京/深圳","无码","","https://www.bing.com/search?q=NVIDIA+China+2027+new+grad+campus","","已发布",""],
+["Qualcomm 中国","frn","应届生技术岗","上海/北京/深圳","无码","","https://www.bing.com/search?q=Qualcomm+China+2027+campus+new+grad","","已发布",""],
+["微软亚太研发集团","frn","软件工程师","北京/苏州","员工邮件内推需 Job ID","无公开码","https://www.microsoft.com/zh-cn/aprd/recruitment","","进行中",""],
+["亚马逊","frn","SDE","北京/上海/深圳","员工邮件内推","无公开码","https://www.bing.com/search?q=amazon.jobs+china+2027+new+grad+SDE","2026-10-24","约 08-24 ~ 10-24","每人最多 3 岗"],
+["SAP 中国研究院「STAR」","frn","Generative AI Developer","上海/西安","找员工内推","","https://www.bing.com/search?q=SAP+China+STAR+program+2027+campus","","进行中",""],
+["埃森哲「AI 未来分析师计划 AAP」","frn","人工智能 · 算法 · 研发","上海/北京/大连","无码","","https://www.accenture.com/cn-zh/college-internship","2026-11-08","09-08 ~ 11-08","毕业 2026-01 ~ 2027-08"],
+["凯捷 Capgemini","frn","AIGC 开发工程师 · AI 开发工程师","大连/沈阳/上海/北京","无码","","https://www.bing.com/search?q=Capgemini+China+2027+campus+AIGC","","招满即止","JD 写「了解 RAG / 微调 / 私有部署优先」；保底"],
+["施耐德电气","frn","技术咨询和 AI 应用顾问 · 研发新星","北京/上海/广州","无码","","https://www.bing.com/search?q=%E6%96%BD%E8%80%90%E5%BE%B7%E7%94%B5%E6%B0%94+2027%E7%A7%8B%E6%8B%9B","2026-09-17","网申 09-17 截止","2 个平行志愿，投完不能改；走「施耐德电气招聘」公众号"],
+["西门子中国","frn","SCM Specialist (Digital & AI)","北京","员工内推","","https://jobs.siemens.com/zh_CN/externaljobs/JobDetail/521819","","进行中","硕士应届，要机器学习 + Python"],
+["GE 医疗 EEDP","frn","研发培训生（软件与计算机工程）","北京/天津/无锡","无码","","https://www.bing.com/search?q=GE+HealthCare+China+EEDP+2027+campus","","08-31 起","硕士，2 年轮岗，Java / C++ / Python"],
+["爱立信中国研发中心","frn","5G / 6G / AI Software Developer","北京/成都","无码","","https://www.bing.com/search?q=Ericsson+China+2027+campus+software+developer","2027-12-31","毕业 2026-01 ~ 2027-12",""],
+["IBM 中国","frn","通用校招","北京/上海/大连","无码","","https://www.ibm.com/cn-zh/careers","","预计 10 月",""],
+["毕马威 KPMG","frn","科技研发线（软件工程师 - AI 工程方向）","大连/上海","无码","","https://www.bing.com/search?q=KPMG+China+2027+%E7%A7%8B%E6%8B%9B+%E7%A7%91%E6%8A%80","","08-07 起","保底"],
+["普华永道 PwC","frn","科技咨询","上海/北京","无码","","https://www.bing.com/search?q=PwC+China+2027+campus+technology","","秋季入职批","接 2025-08 ~ 2027-08 毕业；保底"],
+["紫金山实验室","ai","网络大模型 · 网络智能体","南京","无码","","https://xy.liepin.com/pmlabs/","","27 届未发","26 届是 09-11 ~ 11-10，10 月再看；hr_zhaopin@pmlabs.com.cn"],
+["中原银行 / 郑州银行","fin","算法工程师（大模型 / 知识工程）","郑州","无码","","https://zybank.zhiye.com/campus/jobs","","27 届待出","26 届是 09-22 发、10-31 截止，按惯例这两周出公告；郑州本地"],
+["中国航信","soe","人工智能助理研究员 · 算法工程师","北京 + 17 城","无码","","https://travelsky.hotjob.cn","","27 届待出","26 届 09-25 开、11-25 截止；解决北京户口、六险二金；每单位 1 岗"],
+
+// ---- 每日追加区：新公司只能追加到这里，禁止插入或重排上方历史数据 ----
+["途游游戏","game","游戏 AI 算法工程师 · AI 游戏开发","北京","DS6wt6FY","备 DSgFzmFQ；两条均来自公开 27 届内推帖，未在表单实测","https://app.mokahr.com/campus_apply/tuyoogame/146219?recommendCode=DS6wt6FY#/jobs","","27 届进行中","岗位涉及 LLM、多模态、Agent 原型、智能 NPC 与内容生成；企业 AI 项目落地是加分项，但需要补游戏业务理解"],
+["苏州科达","b2b","大模型应用研发 · AI 业务开发 · 视讯 AI 应用","苏州/上海","无有效 27 届公开码","BYDNTA02 来自 26 春招补录，已过适用期，不建议填","https://kedacom.zhiye.com/Campus","","2027 校招仍可申请","官方页当前仍列大模型应用研发、AI 业务开发和视讯 AI 应用；优先大模型应用研发，和 RAG/Agent 工程经历最贴"],
+["北方华创","hw","Agent 开发工程师 J16415","北京","IVB9AK","09-07 员工公开帖提供，来源称可加快筛选，未实测","https://career.naura.com/campus","","2027 校招进行中","国企；硕士、软件工程/计算机相关，岗位名与 Agent 方向直接匹配；投递时按岗位编号 J16415 搜索"],
+["中景芯创","hw","AI Agent 开发工程师 · AI 应用工程师","北京/上海","无公开码","未找到可追溯的 27 届公开内推码","https://stics.zhiye.com/campus","","2027 校招进行中","国企；面向 2027 届海内外本硕博，软件工程/人工智能等专业可投；岗位在数字化与 IT 类，需在官网核对具体城市与学历"],
+["威迈斯新能源","car","AI Agent 开发工程师 J11836","深圳","无公开码","官方公告仅建议联系员工获取专属内推，未发现可公开核验的码","https://vmax.zhiye.com/campus","2026-10-25","27 届秋招 · 聚合页标至 10-25","接受 2026-09~2027-09 毕业，本科及以上、计算机类可投；岗位名直接匹配 Agent，但具体 JD 仍需登录官网核对"],
+["富兰瓦时 FranklinWH","frn","大模型工程师（Agent · Harness · RAG）","深圳","无公开码","未找到可追溯的 27 届公开内推码；不使用招聘联系人私人手机号代替内推码","https://jyb.gzist.edu.cn/info/2022/4565.htm","","2027 届校招进行中","申请条件、岗位状态及历史投递记录请以官方招聘系统和本人情况为准。"],
+["虹科","b2b","AI 应用开发工程师","上海/广州","需员工/校园大使提供","官方 2027 简章只说明可向员工或校园大使获取内推码，未找到公开可核验代码","https://job.hkaco.com/recruitment-2/","","2027 届校招进行中","私企；2027 海内外硕士可投。岗位含 LLM API、Prompt、RAG、Python 及应用落地，同时涉及嵌入式部署和模型压缩，需坦诚说明端侧优化经验有限"]
+];
+
+// 与上面的每日追加区同步维护，用于页面上的“最近新增”筛选与日期标记。
+const APPEND_DATES = new Map([
+  ["途游游戏","2026-09-19"],
+  ["苏州科达","2026-09-19"],
+  ["北方华创","2026-09-19"],
+  ["中景芯创","2026-09-19"],
+  ["威迈斯新能源","2026-09-19"],
+  ["富兰瓦时 FranklinWH","2026-09-20"],
+  ["虹科","2026-09-20"]
+]);
+
+const STATUSES = ["未投","已投","笔试","面试","Offer","结束","无合适岗位"];
+const APPLIED_STATUSES = new Set(["已投","笔试","面试","Offer","结束"]);
+const F = {n:0,cat:1,roles:2,city:3,code:4,alt:5,url:6,dl:7,dlTxt:8,note:9};
+
+let state = {}, filterCat = "all", filterOwnership = "all", filterChannel = "all", filterStatus = "all", onlyCode = false, onlyRecent = false,
+    groupBy = "dl", query = "", saveTimer = null, sortOrder = "deadline", onlySoon = false;
+const LS = "qiuzhao-neitui-v1";
+let backend = "local", pending = {}, writing = false, editVersion = 0;
+const foldedGroups = new Set(['dl:past']);
+let detailName = "", detailOpener = null;
+const STATUS_VIEWS = [['all','全部公司','▦'],['todo','待投递','○'],['applied','已投递','✓'],['interview','面试中','◷'],['unsuitable','无合适岗位','−']];
+window.addEventListener('beforeunload', e => { if(writing || Object.keys(pending).length){e.preventDefault(); e.returnValue='';} });
+function loadLocal(){ try{ const r = localStorage.getItem(LS); if(r) state = JSON.parse(r) || {}; }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+function note(t){
+  const el = document.getElementById("savenote");
+  el.textContent = t;
+  el.dataset.kind = /失败|未连接/.test(t) ? "error" : (/正在|连接中/.test(t) ? "saving" : "ready");
+  const detailNote = document.getElementById("detail-save-note");
+  if(detailNote){ detailNote.textContent=t; detailNote.style.color=el.dataset.kind==="error"?"var(--alarm)":"var(--muted)"; }
+  document.getElementById("retry-connection").hidden = !/未连接/.test(t);
+}
+function hhmm(){ return new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}); }
+
+function save(name){
+  if(name) editVersion++;
+  saveLocal();
+  if(backend !== "sqlite"){ note("数据库未连接，尚未保存到数据库"); return; }
+  if(name) pending[name] = state[name];
+  note("正在保存到数据库…");
+  if(writing) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    writing = true;
+    const batch = pending; pending = {};
+    try{
+      const res = await fetch("api/status", {
+        method:"POST", headers:{"Content-Type":"application/json", "X-App-Token":window.APP_TOKEN}, keepalive:true,
+        body: JSON.stringify({updates: batch})
+      });
+      if(!res.ok) throw new Error(res.status);
+      note(Object.keys(pending).length ? "正在保存后续修改，请勿关闭窗口…" : "已写入 qiuzhao.db · " + hhmm());
+    }catch(e){
+      pending = Object.assign({}, batch, pending);
+      note("写库失败，请勿关闭窗口；正在重试");
+    }finally{
+      writing = false;
+      if(Object.keys(pending).length) setTimeout(() => save(), 1500);
+    }
+  }, 400);
+}
+
+async function initBackend(){
+  note("正在连接 qiuzhao.db…");
+  try{
+    const res = await fetch("api/status", {cache:"no-store"});
+    if(res.ok){
+      const j = await res.json();
+      state = j.statuses || {};
+      backend = "sqlite";
+      saveLocal();
+      render();
+      note("qiuzhao.db 已连接");
+      return;
+    }
+  }catch(e){}
+  note("数据库未连接，请通过桌面快捷方式重开");
+  document.querySelectorAll('select.st').forEach(el => el.disabled=true);
+}
+
+// Refresh changes made in the desktop companion, without overwriting an edit
+// started while the read was in flight.
+async function refreshSharedProgress(){
+  if(backend !== "sqlite" || writing || Object.keys(pending).length || document.activeElement?.tagName === "SELECT") return;
+  const version = editVersion;
+  try{
+    const res = await fetch("api/status", {cache:"no-store"});
+    if(!res.ok) return;
+    const data = await res.json();
+    if(version !== editVersion || writing || Object.keys(pending).length) return;
+    if(JSON.stringify(data.statuses || {}) !== JSON.stringify(state)){
+      state = data.statuses || {}; saveLocal(); render();
+      note("已同步小助手和其他窗口的进度 · " + hhmm());
+    }
+  }catch(e){ /* Preserve visible data; the next focus retries this read. */ }
+}
+window.addEventListener("focus", refreshSharedProgress);
+
+/* ---- 导出 ---- */
+function download(filename, text, mime){
+  const blob = new Blob([text], {type: mime || "text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function csvCell(v){
+  v = String(v == null ? "" : v);
+  return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function exportCsv(){
+  const head = ["公司","状态","公司性质","国有体系招聘渠道","渠道核验依据","行业分类","岗位方向","城市","内推码","备用码","入口","截止","截止说明","备注"];
+  const lines = [head.map(csvCell).join(",")];
+  for(const r of DATA){
+    lines.push([r[F.n], state[r[F.n]] || "未投", OWNERSHIPNAME[ownershipOf(r)] || "", RECRUIT_CHANNEL_NAME[recruitChannelOf(r)] || "", recruitChannelEvidence(r), CATNAME[r[F.cat]] || "", r[F.roles], r[F.city],
+                r[F.code], r[F.alt], r[F.url], r[F.dl], r[F.dlTxt], r[F.note]].map(csvCell).join(","));
+  }
+  download("秋招投递进度.csv", "\ufeff" + lines.join("\r\n"), "text/csv;charset=utf-8");
+}
+function exportSql(){
+  const q = v => "'" + String(v).replace(/'/g, "''") + "'";
+  const out = ["-- 把这份进度写回 qiuzhao.db：",
+               "--   sqlite3 qiuzhao.db < status.sql",
+               "BEGIN;"];
+  for(const r of DATA){
+    const st = state[r[F.n]] || "未投";
+    out.push("INSERT INTO applications(name,status,updated_at) VALUES(" + q(r[F.n]) + "," + q(st) + "," + q(new Date().toISOString()) + ") ON CONFLICT(name) DO UPDATE SET status=excluded.status, updated_at=excluded.updated_at;");
+  }
+  out.push("COMMIT;");
+  download("status.sql", out.join("\n"), "application/sql");
+}
+
+function daysLeft(dl){
+  if(!dl) return null;
+  const t = new Date(dl + "T23:59:59");
+  if(isNaN(t)) return null;
+  return Math.floor((t - Date.now()) / 86400000);
+}
+
+const DLGROUPS = [
+  ["w1", "7 天内截止", d => d !== null && d >= 0 && d <= 7, "先核对官网，再安排这一批"],
+  ["w3", "三周内截止", d => d !== null && d > 7 && d <= 21, "还有时间，把匹配的公司留下"],
+  ["m2", "一到两个月内", d => d !== null && d > 21 && d <= 60, "按你的节奏继续准备"],
+  ["late", "更晚截止", d => d !== null && d > 60, "长窗口不代表一直开放"],
+  ["open", "未标截止日期", d => d === null, "是否仍开放，以招聘官网为准"],
+  ["past", "已过期 · 待核实补招", d => d !== null && d < 0, "不代表仍可申请，请先回官网核对"]
+];
+function groupOf(row){
+  if(groupBy === "none") return "all";
+  if(groupBy === "owner") return ownershipOf(row);
+  if(groupBy === "cat") return row[F.cat];
+  const d=daysLeft(row[F.dl]);
+  for(const g of DLGROUPS){ if(g[2](d)) return g[0]; }
+  return "open";
+}
+function groupList(){
+  if(groupBy === "none") return [["all","公司清单",""]];
+  if(groupBy === "owner") return OWNERSHIPS.map(([k,t])=>[k,t,""]);
+  if(groupBy === "cat") return CATS.map(([k,t])=>[k,t,""]);
+  return DLGROUPS.map(g=>[g[0],g[1],g[3]]);
+}
+function sortedRows(rows, mode = sortOrder){
+  const copy=rows.slice();
+  if(mode === "original"){
+    const order=new Map(DATA.map((r,i)=>[r[F.n],i]));
+    return copy.sort((a,b)=>(order.get(a[F.n])??Infinity)-(order.get(b[F.n])??Infinity));
+  }
+  if(mode === "name") return copy.sort((a,b)=>a[F.n].localeCompare(b[F.n],"zh-CN"));
+  return copy.sort((a,b)=>{
+    const da=daysLeft(a[F.dl]),db=daysLeft(b[F.dl]),tier=d=>d===null?1:d<0?2:0;
+    return tier(da)-tier(db)||(da===null||db===null?0:da-db);
+  });
+}
+
+function matches(r){
+  const s = state[r[F.n]] || "未投";
+  if(filterStatus === "todo" && s !== "未投") return false;
+  if(filterStatus === "applied" && !APPLIED_STATUSES.has(s)) return false;
+  if(filterStatus === "unsuitable" && s !== "无合适岗位") return false;
+  if(filterStatus === "interview" && s !== "面试") return false;
+  if(onlySoon){ const d=daysLeft(r[F.dl]); if(d===null || d<0 || d>7) return false; }
+  if(onlyCode && !hasCode(r)) return false;
+  if(onlyRecent && !APPEND_DATES.has(r[F.n])) return false;
+  if(filterCat !== "all" && r[F.cat] !== filterCat) return false;
+  if(filterOwnership !== "all" && ownershipOf(r) !== filterOwnership) return false;
+  if(filterChannel !== "all" && recruitChannelOf(r) !== filterChannel) return false;
+  if(query){
+    const hay = (r[F.n]+" "+r[F.roles]+" "+r[F.city]+" "+r[F.code]+" "+r[F.alt]+" "+r[F.note]+" "+CATNAME[r[F.cat]]+" "+OWNERSHIPNAME[ownershipOf(r)]+" "+(RECRUIT_CHANNEL_NAME[recruitChannelOf(r)]||"")+" "+recruitChannelEvidence(r)).toLowerCase();
+    if(!hay.includes(query)) return false;
+  }
+  return true;
+}
+function hasCode(r){
+  return /^[A-Za-z0-9]{4,24}$/.test(r[F.code] || "");
+}
+
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function entryLink(r, className = ""){
+  const u=r[F.url]||"";
+  if(!/^https?:\/\//.test(u)&&!/^mailto:/.test(u)) return '<span class="sub">见详情</span>';
+  const mail=/^mailto:/.test(u),label=/bing\.com\/search/.test(u)?"查入口 ↗":mail?"邮件投递 ↗":"去官网 ↗";
+  return '<a class="'+esc(className)+'" href="'+esc(u)+'"'+(mail?'':' target="_blank" rel="noopener noreferrer"')+'>'+label+'</a>';
+}
+function statusSelect(name,s){
+  return '<select class="st"'+(backend !== "sqlite" ? " disabled" : "")+' data-name="'+esc(name)+'" data-v="'+esc(s)+'" aria-label="'+esc(name)+' 投递状态">'+STATUSES.map(o=>'<option'+(o===s?' selected':'')+'>'+o+'</option>').join('')+'</select>';
+}
+function codeButton(r){
+  return hasCode(r)?'<button class="code" type="button" data-code="'+esc(r[F.code])+'" aria-label="复制推荐码 '+esc(r[F.code])+'">'+esc(r[F.code])+'</button>':'<span class="code nocode">'+esc(r[F.code]||'暂无公开码')+'</span>';
+}
+function deadlineLabel(r){
+  const d=daysLeft(r[F.dl]);
+  if(d===null)return r[F.dlTxt]||'未标截止';
+  if(d<0)return r[F.dl].slice(5)+' 已过期';
+  if(d===0)return '今天截止';
+  return r[F.dl].slice(5)+(d<=14?' · 剩 '+d+' 天':' 截止');
+}
+function rowHtml(r){
+  const name=r[F.n],s=state[name]||"未投",d=daysLeft(r[F.dl]),added=APPEND_DATES.get(name);
+  const done=["Offer","结束","无合适岗位"].includes(s)?" done":"",badge=added?'<span class="added-badge">'+esc(added.slice(5))+' 新增</span>':'';
+  return '<article class="row'+done+'" data-id="'+esc(name)+'" data-category="'+esc(r[F.cat])+'" aria-label="'+esc(name)+'">'+
+    '<div class="co"><div class="company-title"><span class="company-initial" aria-hidden="true">'+esc(Array.from(name)[0])+'</span><div class="name-block">'+
+    '<button class="company-name" type="button" data-detail="'+esc(name)+'" aria-label="查看 '+esc(name)+' 详情">'+esc(name)+'</button>'+badge+
+    '<div class="company-meta">'+esc(classificationLabel(r))+'</div></div></div><div class="rl" title="'+esc(r[F.roles])+'">'+esc(r[F.roles])+'</div></div>'+
+    '<div class="codewrap">'+codeButton(r)+'<button class="detail-hint" type="button" data-detail="'+esc(name)+'">核验说明 ›</button></div>'+
+    '<div class="cell-when'+(d!==null&&d>=0&&d<=7?' soon':'')+'"><span class="cityline" title="'+esc(r[F.city])+'">'+esc(r[F.city]||'城市未注明')+'</span><span class="deadline">'+esc(deadlineLabel(r))+'</span></div>'+
+    '<div class="cell-st">'+statusSelect(name,s)+'<div class="links">'+entryLink(r)+'</div></div></article>';
+}
+function visibleRows(){
+  const rows=DATA.filter(matches);
+  return groupList().flatMap(([g])=>sortedRows(rows.filter(r=>groupOf(r)===g)));
+}
+function detailHtml(r){
+  const name=r[F.n],s=state[name]||"未投",search="https://www.bing.com/search?q="+encodeURIComponent(name+" 2027届校园招聘 内推");
+  const rows=visibleRows(),idx=rows.findIndex(x=>x[F.n]===name),added=APPEND_DATES.get(name);
+  return '<h2 id="detail-title">'+esc(name)+'</h2><p class="intro">'+esc(r[F.roles])+'</p>'+
+    '<dl class="detail-properties"><dt>公司性质</dt><dd>'+esc(OWNERSHIPNAME[ownershipOf(r)])+'</dd><dt>行业方向</dt><dd>'+esc(CATNAME[r[F.cat]])+'</dd><dt>工作城市</dt><dd>'+esc(r[F.city]||'未注明')+'</dd><dt>截止信息</dt><dd>'+esc(r[F.dlTxt]||r[F.dl]||'未标截止日期')+'</dd>'+
+    (added?'<dt>收录日期</dt><dd>'+esc(added)+'</dd>':'')+'</dl>'+
+    '<div class="detail-actions"><label>投递状态 '+statusSelect(name,s)+'</label>'+entryLink(r,'action primary')+'</div>'+
+    '<h3>推荐码与核验说明</h3><div class="detail-code">'+codeButton(r)+'<small>公开线索，投递前核对适用批次</small></div>'+
+    '<p>'+esc(r[F.alt]||'未记录进一步的推荐码说明，请以官方申请表识别结果为准。')+'</p><a class="action" href="'+esc(search)+'" target="_blank" rel="noopener noreferrer">查找内推来源 ↗</a>'+
+    '<section class="detail-note"><h3>投递提示 · 完整备注</h3><p>'+esc(r[F.note]||'暂无补充备注。请核实岗位要求、届别和毕业时间窗口。')+'</p></section>'+
+    (recruitChannelOf(r)!=='none'?'<section class="detail-note"><h3>国有体系招聘渠道</h3><p>'+esc(RECRUIT_CHANNEL_NAME[recruitChannelOf(r)])+'\n'+esc(recruitChannelEvidence(r))+'</p></section>':'')+
+    '<div class="detail-navigation"><span>'+(idx<0?'此公司已不在当前筛选中':'当前筛选中的 '+(idx+1)+' / '+rows.length+' 家')+'</span><div><button class="action" type="button" data-detail-step="-1"'+(idx<=0?' disabled':'')+' aria-label="上一家公司">←</button> <button class="action" type="button" data-detail-step="1"'+(idx<0||idx>=rows.length-1?' disabled':'')+'>下一家 →</button></div></div>';
+}
+function openDetail(name,opener,direction=1){
+  const row=DATA.find(r=>r[F.n]===name);if(!row)return;
+  detailName=name;if(opener)detailOpener=opener;
+  document.getElementById('detail-content').innerHTML=detailHtml(row);
+  const dialog=document.getElementById('company-detail');
+  if(!dialog.open){dialog.showModal();document.getElementById('close-detail').focus();}
+  else{ const next=dialog.querySelector('[data-detail-step="'+direction+'"]:not(:disabled)'); (next||document.getElementById('close-detail')).focus(); }
+  dialog.scrollTop=0;
+}
+function syncFilters(){
+  const selected=[],add=(key,title)=>selected.push('<button class="filter-token" type="button" data-remove-filter="'+key+'" aria-label="移除'+esc(title)+'筛选">'+esc(title)+'<span aria-hidden="true">×</span></button>');
+  if(filterStatus!=='all')add('status',STATUS_VIEWS.find(x=>x[0]===filterStatus)[1]);
+  if(filterOwnership!=='all')add('owner',OWNERSHIPNAME[filterOwnership]);
+  if(filterCat!=='all')add('cat',CATNAME[filterCat]);
+  if(filterChannel!=='all')add('channel',RECRUIT_CHANNEL_NAME[filterChannel]);
+  if(onlyCode)add('code','有推荐码');if(onlyRecent)add('recent','最近新增');if(onlySoon)add('soon','7 天内截止');
+  if(query)add('query','搜索：'+document.getElementById('q').value.trim());
+  document.getElementById('active-filters').innerHTML=selected.length?selected.join('')+'<button class="text-button" id="reset-filters" type="button">清空筛选</button>':'<span>筛选可叠加，例如「私企」＋「待投递」。</span><button class="text-button" id="reset-filters" type="button" hidden>清空筛选</button>';
+  document.getElementById('clear-search').hidden=!document.getElementById('q').value;
+  document.getElementById('group-select').value=groupBy;document.getElementById('sort-order').value=sortOrder;
+  document.getElementById('owner-label').textContent=filterOwnership==='all'?'公司性质':OWNERSHIPNAME[filterOwnership];
+  document.getElementById('industry-label').textContent=filterCat==='all'?'行业方向':CATNAME[filterCat].split(' · ')[0];
+  document.getElementById('channel-label').textContent=filterChannel==='all'?'国企渠道':RECRUIT_CHANNEL_NAME[filterChannel];
+  for(const [attr,value] of [['status',filterStatus],['owner',filterOwnership],['cat',filterCat],['channel',filterChannel]])document.querySelectorAll('[data-'+attr+']').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset[attr]===value)));
+  for(const [id,on] of [['code-chip',onlyCode],['recent-chip',onlyRecent],['soon-chip',onlySoon]])document.getElementById(id).setAttribute('aria-pressed',String(on));
+  document.getElementById('summary-soon').setAttribute('aria-pressed',String(onlySoon));
+  document.getElementById('summary-code').setAttribute('aria-pressed',String(onlyCode));
+}
+
+function summarizeRows(rows){
+  const result={total:rows.length,soon:0,codes:0,offers:0};
+  for(const r of rows){
+    const d=daysLeft(r[F.dl]);
+    if(d!==null&&d>=0&&d<=7)result.soon++;
+    if(hasCode(r))result.codes++;
+    if(state[r[F.n]]==='Offer')result.offers++;
+  }
+  return result;
+}
+function stats(){
+  const sent=DATA.filter(r=>APPLIED_STATUSES.has(state[r[F.n]])).length;
+  const {soon,codes,offers}=summarizeRows(DATA.filter(matches));
+  document.getElementById("s-all").textContent = DATA.length;
+  document.getElementById("h-count").textContent = DATA.length;
+  document.getElementById("s-code").textContent = codes;
+  document.getElementById("s-soon").textContent = soon;
+  document.getElementById("s-sent").textContent = sent;
+  document.getElementById("s-offer").textContent = offers;
+  document.getElementById("s-bar").style.width = (sent / DATA.length * 100) + "%";
+}
+
+function render(){
+  const board=document.getElementById('board'),buckets=new Map();let html="",shown=0;
+  for(const r of DATA){if(!matches(r))continue;const g=groupOf(r);if(!buckets.has(g))buckets.set(g,[]);buckets.get(g).push(r);}
+  for(const [key,title,hint] of groupList()){
+    const unsorted=buckets.get(key);if(!unsorted?.length)continue;
+    const rows=sortedRows(unsorted);shown+=rows.length;
+    const foldKey=groupBy+':'+key,folded=foldedGroups.has(foldKey)&&!query;
+    html+='<section class="sec'+(folded?' is-folded':'')+'"><div class="sec-head'+(key==='w1'?' hot':'')+'"><button class="fold-group" type="button" data-fold="'+esc(foldKey)+'" aria-expanded="'+!folded+'" aria-label="'+(folded?'展开':'收起')+esc(title)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button><h2>'+esc(title)+'</h2><span class="cnt">'+rows.length+'</span>'+(hint?'<span class="hint">'+esc(hint)+'</span>':'')+'</div>'+
+      '<div class="column-head" aria-hidden="true"><span>公司 / 岗位方向</span><span>推荐码</span><span class="deadline-label">城市 / 截止</span><span>进度 / 入口</span></div>'+rows.map(rowHtml).join('')+'</section>';
+  }
+  board.innerHTML=shown?html:'<div class="empty"><div class="empty-symbol" aria-hidden="true">⌕</div><h2>这一组，还没有匹配的公司</h2><p>试试移除一个筛选条件，或换个公司名。你的投递记录都还在。</p><button class="action primary" type="button" data-reset-filters>清空全部筛选</button></div>';
+  document.getElementById('result-count').textContent='显示 '+shown+' / '+DATA.length+' 家公司';
+  stats();syncFilters();
+  const detailStatus=document.querySelector('#company-detail[open] select.st');
+  if(detailStatus){
+    detailStatus.value=state[detailStatus.dataset.name]||'未投';detailStatus.dataset.v=detailStatus.value;
+    const visible=visibleRows(),idx=visible.findIndex(r=>r[F.n]===detailName),nav=document.querySelector('#company-detail .detail-navigation');
+    if(nav){nav.querySelector('span').textContent=idx<0?'此公司已不在当前筛选中':'当前筛选中的 '+(idx+1)+' / '+visible.length+' 家';nav.querySelector('[data-detail-step="-1"]').disabled=idx<=0;nav.querySelector('[data-detail-step="1"]').disabled=idx<0||idx>=visible.length-1;}
+  }
+  document.querySelectorAll('[data-count-status]').forEach(el=>{
+    const k=el.dataset.countStatus;
+    el.textContent=DATA.filter(r=>{const s=state[r[F.n]]||'未投';return k==='all'||(k==='todo'&&s==='未投')||(k==='applied'&&APPLIED_STATUSES.has(s))||(k==='interview'&&s==='面试')||(k==='unsuitable'&&s==='无合适岗位');}).length;
+  });
+}
+function buildFilters(){
+  document.getElementById('filters').innerHTML=[['all','全部行业'],...CATS].map(([k,t])=>'<button class="chip" type="button" data-cat="'+k+'" aria-pressed="'+(k===filterCat)+'">'+t.split(' · ')[0]+'<span class="n">'+DATA.filter(r=>k==='all'||r[F.cat]===k).length+'</span></button>').join('');
+  document.getElementById('ownership-filters').innerHTML=[['all','全部性质'],...OWNERSHIPS].map(([k,t])=>'<button class="chip" type="button" data-owner="'+k+'" aria-pressed="'+(k===filterOwnership)+'">'+t+'<span class="n">'+DATA.filter(r=>k==='all'||ownershipOf(r)===k).length+'</span></button>').join('');
+  document.getElementById('channel-filters').innerHTML=[['all','全部渠道'],...RECRUIT_CHANNELS].map(([k,t])=>'<button class="chip" type="button" data-channel="'+k+'" aria-pressed="'+(k===filterChannel)+'">'+t+'<span class="n">'+DATA.filter(r=>k==='all'?ownershipOf(r)==='state':recruitChannelOf(r)===k).length+'</span></button>').join('');
+  document.getElementById('status-filters').innerHTML=STATUS_VIEWS.map(([k,t,icon])=>'<button class="chip" type="button" data-status="'+k+'" aria-pressed="'+(k===filterStatus)+'"><span class="nav-icon" aria-hidden="true">'+icon+'</span>'+t+'<span class="n" data-count-status="'+k+'"></span></button>').join('');
+  document.getElementById('quick-filters').innerHTML='<button class="chip" id="soon-chip" type="button" aria-pressed="false"><span class="nav-icon" aria-hidden="true">◴</span>7 天内截止</button><button class="chip" id="recent-chip" type="button" aria-pressed="false"><span class="nav-icon" aria-hidden="true">✧</span>最近新增<span class="n">'+APPEND_DATES.size+'</span></button><button class="chip" id="code-chip" type="button" aria-pressed="false"><span class="nav-icon" aria-hidden="true">⌘</span>有推荐码</button>';
+}
+
+document.addEventListener("change",e=>{
+  if(e.target.id==='group-select'){groupBy=e.target.value;render();return;}
+  if(e.target.id==='sort-order'){sortOrder=e.target.value;render();return;}
+  const sel=e.target.closest('select.st');if(!sel)return;
+  const name=sel.dataset.name;if(backend!=="sqlite"){sel.value=state[name]||'未投';return;}
+  const inDetail=!!sel.closest('#company-detail');
+  state[name]=sel.value;save(name);render();
+  if(inDetail){sel.value=state[name];sel.dataset.v=sel.value;sel.focus();}
+  else{const next=Array.from(document.querySelectorAll('#board select.st')).find(s=>s.dataset.name===name)||document.querySelector('#board button.company-name')||document.getElementById('q');next.focus();}
+});
+document.addEventListener("click",e=>{
+  const summary=e.target.closest('[data-summary-filter]');
+  if(summary){if(summary.dataset.summaryFilter==='soon')onlySoon=!onlySoon;else if(summary.dataset.summaryFilter==='code')onlyCode=!onlyCode;render();return;}
+  const detail=e.target.closest('[data-detail]');if(detail){openDetail(detail.dataset.detail,detail);return;}
+  const step=e.target.closest('[data-detail-step]');
+  if(step){const direction=Number(step.dataset.detailStep),rows=visibleRows(),idx=rows.findIndex(r=>r[F.n]===detailName)+direction;if(rows[idx])openDetail(rows[idx][F.n],null,direction);return;}
+  const fold=e.target.closest('[data-fold]');
+  if(fold){const closed=fold.getAttribute('aria-expanded')==='true';closed?foldedGroups.add(fold.dataset.fold):foldedGroups.delete(fold.dataset.fold);fold.closest('.sec').classList.toggle('is-folded',closed);fold.setAttribute('aria-expanded',String(!closed));fold.setAttribute('aria-label',(closed?'展开':'收起')+fold.closest('.sec-head').querySelector('h2').textContent);return;}
+  if(e.target.closest('[data-reset-filters],#reset-filters,.brand')){e.preventDefault();resetFilters();return;}
+  const remove=e.target.closest('[data-remove-filter]');
+  if(remove){
+    const k=remove.dataset.removeFilter;
+    if(k==='status')filterStatus='all';if(k==='owner'){filterOwnership='all';filterChannel='all';}if(k==='cat')filterCat='all';if(k==='channel')filterChannel='all';
+    if(k==='code')onlyCode=false;if(k==='recent')onlyRecent=false;if(k==='soon')onlySoon=false;if(k==='query'){query='';document.getElementById('q').value='';}render();return;
+  }
+  const cb=e.target.closest('button.code');
+  if(cb){
+    const txt=cb.dataset.code,done=()=>{cb.classList.add('copied');toast('已复制 '+txt);setTimeout(()=>cb.classList.remove('copied'),1300);},failed=()=>toast('复制失败，请选中推荐码后按 Ctrl+C 复制');
+    if(navigator.clipboard?.writeText)navigator.clipboard.writeText(txt).then(done).catch(failed);
+    else{try{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();const copied=document.execCommand('copy');ta.remove();copied?done():failed();}catch(err){failed();}}return;
+  }
+  const chip=e.target.closest('.chip');
+  if(chip){
+    if(chip.id==='code-chip')onlyCode=!onlyCode;else if(chip.id==='recent-chip')onlyRecent=!onlyRecent;else if(chip.id==='soon-chip')onlySoon=!onlySoon;
+    else if(chip.dataset.owner){filterOwnership=chip.dataset.owner;if(filterOwnership!=='state')filterChannel='all';}
+    else if(chip.dataset.channel){filterChannel=chip.dataset.channel;if(filterChannel!=='all')filterOwnership='state';}
+    else if(chip.dataset.status)filterStatus=chip.dataset.status;else if(chip.dataset.cat)filterCat=chip.dataset.cat;else return;
+    const menu=chip.closest('details.filter-menu');if(menu){menu.open=false;menu.querySelector('summary').focus();}render();return;
+  }
+  document.querySelectorAll('details.filter-menu[open],details.menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;});
+});
+document.querySelectorAll('details.filter-menu,details.menu').forEach(menu=>menu.addEventListener('toggle',()=>{if(menu.open)document.querySelectorAll('details.filter-menu[open],details.menu[open]').forEach(other=>{if(other!==menu)other.open=false;});}));
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();render();});
+document.getElementById('clear-search').addEventListener('click',()=>{query='';document.getElementById('q').value='';render();document.getElementById('q').focus();});
+document.getElementById('btn-csv').addEventListener('click',exportCsv);
+document.getElementById('btn-sql').addEventListener('click',exportSql);
+function resetFilters(){filterCat=filterOwnership=filterChannel=filterStatus='all';query='';onlyCode=onlyRecent=onlySoon=false;document.getElementById('q').value='';render();}
+let toastTimer;
+function toast(message){document.getElementById('toast').hidden=true;document.getElementById('detail-toast').hidden=true;const el=document.getElementById(document.getElementById('company-detail').open?'detail-toast':'toast');el.textContent=message;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3500);}
+document.getElementById('toggle-filters').addEventListener('click',e=>{const panel=document.querySelector('.controls'),expanded=panel.dataset.collapsed==='true';panel.dataset.collapsed=String(!expanded);e.currentTarget.setAttribute('aria-expanded',String(expanded));e.currentTarget.textContent=expanded?'收起视图':'展开视图';});
+document.getElementById('retry-connection').addEventListener('click',initBackend);
+document.getElementById('close-detail').addEventListener('click',()=>document.getElementById('company-detail').close());
+document.getElementById('company-detail').addEventListener('click',e=>{if(e.target===e.currentTarget&&e.clientX<e.currentTarget.getBoundingClientRect().left)e.currentTarget.close();});
+document.getElementById('company-detail').addEventListener('close',()=>{if(detailOpener?.isConnected)detailOpener.focus();else{const b=Array.from(document.querySelectorAll('button.company-name')).find(b=>b.dataset.detail===detailName);(b||document.getElementById('q')).focus();}detailName='';});
+document.getElementById('open-help').addEventListener('click',()=>{const help=document.querySelector('footer details');help.open=true;help.scrollIntoView({block:'start'});help.querySelector('summary').focus();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!document.getElementById('company-detail').open)document.querySelectorAll('details.filter-menu[open],details.menu[open]').forEach(menu=>{menu.open=false;menu.querySelector('summary').focus();});
+  if(e.key==='/'&&!document.getElementById('company-detail').open&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&!e.target.isContentEditable){e.preventDefault();document.getElementById('q').focus();}
+});
+function setDensity(compact){document.body.dataset.density=compact?'compact':'comfortable';const b=document.getElementById('density-toggle');b.setAttribute('aria-pressed',String(compact));b.textContent=compact?'舒适视图':'紧凑视图';try{localStorage.setItem('qiuzhao-density',compact?'compact':'comfortable');}catch(e){}}
+try{const t=localStorage.getItem('qiuzhao-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light';if(localStorage.getItem('qiuzhao-density')==='compact')setDensity(true);}catch(e){document.documentElement.dataset.theme='light';}
+document.getElementById('density-toggle').addEventListener('click',()=>setDensity(document.body.dataset.density!=='compact'));
+document.getElementById('theme-toggle').addEventListener('click',()=>{const root=document.documentElement,dark=root.dataset.theme==='dark';root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('qiuzhao-theme',root.dataset.theme);}catch(e){}toast(dark?'已切换浅色主题':'已切换深色主题');});
+loadLocal();
+buildFilters();
+render();
+initBackend();
+</script>
+
+</body>
+</html>

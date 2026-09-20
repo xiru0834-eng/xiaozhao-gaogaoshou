@@ -1,0 +1,2 @@
+# Optional desktop floating window. Full browser mode is standard-library-only.
+pywebview==6.1
