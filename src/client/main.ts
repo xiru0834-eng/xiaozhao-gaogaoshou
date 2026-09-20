@@ -8,6 +8,7 @@ import {
 } from "./selectors.ts";
 import { element, required } from "./dom.ts";
 import "./styles.css";
+import "./workbench.css";
 import {
   DATA,
   CATS,
@@ -237,7 +238,9 @@ function rowHtml(r: CompanyRow) {
     esc(name) +
     '" aria-label="查看 ' +
     esc(name) +
-    ' 详情">' +
+    ' 详情" title="' +
+    esc(name) +
+    '">' +
     esc(name) +
     "</button>" +
     badge +
@@ -250,9 +253,7 @@ function rowHtml(r: CompanyRow) {
     "</div></div>" +
     '<div class="codewrap">' +
     codeButton(r) +
-    '<button class="detail-hint" type="button" data-detail="' +
-    esc(name) +
-    '">核验说明 ›</button></div>' +
+    '</div>' +
     '<div class="cell-when' +
     (d !== null && d >= 0 && d <= 7 ? " soon" : "") +
     '"><span class="cityline" title="' +
@@ -382,7 +383,11 @@ function syncFilters() {
   element("active-filters").innerHTML = selected.length
     ? selected.join("") +
       '<button class="text-button" id="reset-filters" type="button">清空筛选</button>'
-    : '<span>筛选可叠加，例如「私企」＋「待投递」。</span><button class="text-button" id="reset-filters" type="button" hidden>清空筛选</button>';
+    : '';
+  element("active-filters").hidden = selected.length === 0;
+  const advancedCount = [filterOwnership, filterCat, filterChannel].filter(value => value !== "all").length;
+  element("filter-count").textContent = String(advancedCount);
+  element("filter-count").hidden = advancedCount === 0;
   element("clear-search").hidden = !element<HTMLInputElement>("q").value;
   element<HTMLSelectElement>("group-select").value = groupBy;
   element<HTMLSelectElement>("sort-order").value = sortOrder;
@@ -473,7 +478,7 @@ function render() {
       "</span>" +
       (hint ? '<span class="hint">' + esc(hint) + "</span>" : "") +
       "</div>" +
-      '<div class="column-head" aria-hidden="true"><span>公司 / 岗位方向</span><span>推荐码</span><span class="deadline-label">城市 / 截止</span><span>进度 / 入口</span></div>' +
+      '<div class="column-head" aria-hidden="true"><span>公司与岗位</span><span title="公开来源，使用前请核实适用批次">公开推荐码</span><span class="deadline-label">城市 / 截止</span><span>投递进度</span></div>' +
       rows.map(rowHtml).join("") +
       "</section>";
   }
@@ -866,7 +871,7 @@ function setDensity(compact: boolean) {
   document.body.dataset.density! = compact ? "compact" : "comfortable";
   const b = element("density-toggle");
   b.setAttribute("aria-pressed", String(compact));
-  b.textContent = compact ? "舒适视图" : "紧凑视图";
+  b.textContent = compact ? "切换机会卡片" : "切换紧凑清单";
   try {
     localStorage.setItem(
       "qiuzhao-density",

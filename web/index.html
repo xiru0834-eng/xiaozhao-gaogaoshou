@@ -16,9 +16,7 @@
     <div class="season"><span>秋招进行时</span><b>2027</b></div>
     <div class="filter-top"><button id="toggle-filters" type="button" aria-expanded="false" aria-controls="filter-body">展开视图</button></div>
     <div id="filter-body">
-      <p class="nav-label">我的投递</p>
-      <nav class="chips" id="status-filters" aria-label="投递状态筛选"></nav>
-      <p class="nav-label" style="margin-top:26px">快捷查看</p>
+      <p class="nav-label">机会速览</p>
       <div class="chips" id="quick-filters" aria-label="快捷筛选"></div>
     </div>
     <div class="side-progress"><div class="progress-heading"><span>已投递</span><span><b id="s-sent">0</b> / <span id="s-all">—</span></span></div><div class="bar"><i id="s-bar"></i></div><small>每一步，都算数。<br>记录进度，继续下一家。</small></div>
@@ -38,9 +36,9 @@
         </div></details>
       </div>
     </header>
-    <div class="content">
+    <div class="content workbench">
       <div class="masthead">
-        <div><div class="page-title"><h1>投递工作台</h1><span class="edition">AI / Agent</span></div><p class="dek"><span id="h-count">—</span> 家公司的机会，和你的每一步进展。</p></div>
+        <div><div class="page-title"><h1>机会清单<span class="title-dot" aria-hidden="true">✦</span></h1><span class="edition">AI / Agent</span></div><p class="dek"><span id="h-count">—</span> 家公司，慢慢找到你的下一站。</p></div>
         <div class="summary-stats" role="group" aria-label="当前筛选概览">
           <span class="summary-caption">当前筛选概览</span>
           <button class="stat is-soon" id="summary-soon" data-summary-filter="soon" type="button" aria-pressed="false" title="叠加或取消 7 天内截止筛选"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 5.5V10l3 2"/></svg><span>7 天内截止</span><b id="s-soon">—</b></button>
@@ -48,26 +46,34 @@
           <div class="stat is-offer"><span>Offer</span><b id="s-offer">0</b></div>
         </div>
       </div>
+      <nav class="chips status-tabs" id="status-filters" aria-label="投递状态筛选"></nav>
       <section class="control-deck" aria-label="查找公司与调整视图">
       <div class="tools">
         <label class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
           <input id="q" type="search" autocomplete="off" aria-label="搜索公司、岗位、城市或内推码" placeholder="搜索公司、岗位、城市或内推码">
           <kbd class="shortcut">/</kbd><button id="clear-search" type="button" aria-label="清空搜索" hidden>×</button>
         </label>
-        <div class="filter-menus" aria-label="组合筛选">
-          <details class="filter-menu"><summary id="owner-label">公司性质</summary><div class="filter-panel"><h3>公司性质</h3><div class="chips" id="ownership-filters"></div></div></details>
-          <details class="filter-menu"><summary id="industry-label">行业方向</summary><div class="filter-panel"><h3>行业方向</h3><div class="chips" id="filters"></div></div></details>
-          <details class="filter-menu"><summary id="channel-label">国企渠道</summary><div class="filter-panel"><h3>国有体系招聘渠道</h3><div class="chips" id="channel-filters"></div></div></details>
-        </div>
+        <details class="filter-menu" id="advanced-filters">
+          <summary title="按公司性质、行业和国企渠道组合筛选"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><path d="M7 3v4m6 1v4m-6 1v4"/></svg>筛选<span id="filter-count" hidden></span></summary>
+          <div class="filter-panel advanced-panel" aria-label="组合筛选">
+            <section><h3 id="owner-label">公司性质</h3><div class="chips" id="ownership-filters"></div></section>
+            <section><h3 id="industry-label">行业方向</h3><div class="chips" id="filters"></div></section>
+            <section><h3 id="channel-label">国企渠道</h3><div class="chips" id="channel-filters"></div></section>
+          </div>
+        </details>
+        <details class="menu" id="view-options"><summary class="action" title="分组、排序与列表密度"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 7h14M8 7v10"/></svg>视图</summary>
+          <div class="menu-panel view-tools">
+            <h3>整理这份清单</h3>
+            <label class="select-control">分组<select id="group-select" aria-label="列表分组"><option value="dl">按截止日期</option><option value="cat">按行业</option><option value="owner">按公司性质</option><option value="none">不分组</option></select></label>
+            <label class="select-control">排序<select id="sort-order" aria-label="组内排序"><option value="deadline">截止优先</option><option value="name">公司名称</option><option value="original">收录顺序</option></select></label>
+            <button class="action" id="density-toggle" type="button" aria-pressed="false" title="在机会卡片与紧凑清单之间切换">切换紧凑清单</button>
+          </div>
+        </details>
       </div>
       <div id="active-filters" class="active-filters" aria-label="已选筛选条件"></div>
       <div class="result-summary">
         <span id="result-count" role="status" aria-live="polite">正在读取公司…</span>
-        <div class="view-tools">
-          <label class="select-control">分组<select id="group-select" aria-label="列表分组"><option value="dl">按截止日期</option><option value="cat">按行业</option><option value="owner">按公司性质</option><option value="none">不分组</option></select></label>
-          <label class="select-control">排序<select id="sort-order" aria-label="组内排序"><option value="deadline">截止优先</option><option value="name">公司名称</option><option value="original">收录顺序</option></select></label>
-          <button class="action" id="density-toggle" type="button" aria-pressed="false" title="切换列表密度">紧凑视图</button>
-        </div>
+        <span class="list-guidance" title="公开来源，使用前请核实适用批次">推荐码 · 点按复制</span><span class="list-guidance">城市 / 截止</span><span class="list-guidance">进度 / 招聘入口</span>
       </div>
       </section>
       <main id="board" aria-label="公司清单"></main>
@@ -75,7 +81,7 @@
     <h3>这张表怎么用</h3>
     <ul>
       <li><strong>分组默认按截止排。</strong>近期截止在前，已过期在末尾且默认折叠；用「分组」下拉选择行业、性质或不分组。目录日期仅作提醒，投前请核对官网。</li>
-      <li><strong>点码即复制。</strong>点推荐码按钮即复制；点击公司名或「核验说明」查看备用码、失效说明和原始备注。标了「26 届」「实习」的不用于当年校招。</li>
+      <li><strong>点码即复制。</strong>点推荐码按钮即复制；点击公司名查看核验说明、备用码、失效说明和原始备注。标了「26 届」「实习」的不用于当年校招。</li>
       <li><strong>入口链接</strong>指向公司官方系统或带推荐参数的深链；只给了公众号/邮箱的，「搜入口」按钮直接搜当年入口。</li>
     </ul>
     <h3>状态存在哪里</h3>
