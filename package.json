@@ -15,6 +15,10 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:legacy": "python -X utf8 -m unittest -q"
   },
+  "dependencies": {
+    "parse5": "8.0.1",
+    "robots-parser": "3.0.1"
+  },
   "devDependencies": {
     "@types/node": "24.13.6",
     "typescript": "7.0.2",
