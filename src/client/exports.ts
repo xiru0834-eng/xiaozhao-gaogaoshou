@@ -1,22 +1,14 @@
 import {
   DATA,
-  CATS,
   CATNAME,
-  OWNERSHIPS,
   OWNERSHIPNAME,
   RECRUIT_CHANNEL_NAME,
-  APPEND_DATES,
   ownershipOf,
   recruitChannelOf,
   recruitChannelEvidence,
   F,
-  hasCode,
 } from "./catalog.ts";
-import {
-  APPLIED_STATUSES,
-  type CompanyRow,
-  type StatusMap,
-} from "../shared/types.ts";
+import type { StatusMap } from "../shared/types.ts";
 /* ---- 导出 ---- */
 function download(filename: string, text: string, mime?: string) {
   const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
@@ -29,8 +21,10 @@ function download(filename: string, text: string, mime?: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 export function csvCell(v: unknown) {
-  const value = String(v == null ? "" : v);
-  return /[",\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+  const raw = String(v == null ? "" : v);
+  // Public catalog text must not become a spreadsheet formula on export.
+  const value = /^\s*[=+@-]|^[\t\r\n]/.test(raw) ? "'" + raw : raw;
+  return /[",\r\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
 }
 export function csvText(state: StatusMap) {
   const head = [
@@ -72,14 +66,10 @@ export function csvText(state: StatusMap) {
         .join(","),
     );
   }
-  return '\ufeff' + lines.join('\r\n');
+  return "\ufeff" + lines.join("\r\n");
 }
 export function exportCsv(state: StatusMap) {
-  download(
-    "秋招投递进度.csv",
-    csvText(state),
-    "text/csv;charset=utf-8",
-  );
+  download("秋招投递进度.csv", csvText(state), "text/csv;charset=utf-8");
 }
 export function exportSql(state: StatusMap) {
   const q = (v: unknown) => "'" + String(v).replace(/'/g, "''") + "'";

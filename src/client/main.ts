@@ -29,8 +29,16 @@ import { STATUSES, APPLIED_STATUSES, isStatus } from "../shared/types.ts";
 import type { CompanyRow, Status, StatusMap } from "../shared/types.ts";
 import { Progress } from "./progress.ts";
 import { statusApi } from "./api.ts";
-import { sessionFromPage } from './session.ts';
+import { sessionFromPage } from "./session.ts";
 const session = sessionFromPage();
+// Download links cannot send custom headers, so bind them through a non-secret profile ID.
+document
+  .querySelectorAll<HTMLAnchorElement>('a[href^="/api/backup"]')
+  .forEach((link) => {
+    const url = new URL(link.href);
+    url.searchParams.set("profileId", session.profileId);
+    link.href = url.href;
+  });
 let catalogReady = false;
 let connecting = false;
 let state: StatusMap = {};
@@ -93,17 +101,22 @@ async function initBackend() {
   if (connecting || progress.dirty) return;
   connecting = true;
   try {
-    note('正在连接公司目录…');
-    const changed = installCatalog(await session.read('/api/catalog'));
+    note("正在连接公司目录…");
+    const changed = installCatalog(await session.read("/api/catalog"));
     catalogReady = true;
-    if (changed) { buildFilters(); render(); }
+    if (changed) {
+      buildFilters();
+      render();
+    }
     await progress.connect();
   } catch {
     catalogReady = false;
-    backend = 'local';
+    backend = "local";
     render();
-    note('公司目录未连接，请重试；若切换了资料，请重新打开窗口');
-  } finally { connecting = false; }
+    note("公司目录未连接，请重试；若切换了资料，请重新打开窗口");
+  } finally {
+    connecting = false;
+  }
 }
 window.addEventListener("focus", () => {
   if (document.activeElement?.tagName !== "SELECT") void initBackend();
@@ -417,7 +430,8 @@ function stats() {
   element("s-soon").textContent = String(soon);
   element("s-sent").textContent = String(sent);
   element("s-offer").textContent = String(offers);
-  element("s-bar").style.width = (DATA.length ? (sent / DATA.length) * 100 : 0) + "%";
+  element("s-bar").style.width =
+    (DATA.length ? (sent / DATA.length) * 100 : 0) + "%";
 }
 
 function render() {
@@ -465,7 +479,7 @@ function render() {
     ? html
     : !catalogReady
       ? '<div class="empty" role="status"><h2>公司目录尚未连接</h2><p>连接完成后会显示清单。连接失败时请使用上方「重连」，不会用旧清单替代。</p></div>'
-    : '<div class="empty"><div class="empty-symbol" aria-hidden="true">⌕</div><h2>这一组，还没有匹配的公司</h2><p>试试移除一个筛选条件，或换个公司名。你的投递记录都还在。</p><button class="action primary" type="button" data-reset-filters>清空全部筛选</button></div>';
+      : '<div class="empty"><div class="empty-symbol" aria-hidden="true">⌕</div><h2>这一组，还没有匹配的公司</h2><p>试试移除一个筛选条件，或换个公司名。你的投递记录都还在。</p><button class="action primary" type="button" data-reset-filters>清空全部筛选</button></div>';
   element("result-count").textContent =
     "显示 " + shown + " / " + DATA.length + " 家公司";
   stats();

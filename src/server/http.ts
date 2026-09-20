@@ -66,31 +66,66 @@ export async function startServer(options: ServerOptions) {
       return;
     }
     try {
-      if (req.headers['x-profile-id'] && req.headers['x-profile-id'] !== profile.profileId) {
-        send(res, 409, { error: { code: 'PROFILE_MISMATCH', message: 'This page belongs to another profile; reopen the workbench.' } });
-        return;
-      }
       const requestUrl = new URL(req.url ?? "/", url);
       const path = requestUrl.pathname;
+      const downloadProfile =
+        path === "/api/backup"
+          ? requestUrl.searchParams.get("profileId")
+          : null;
+      if (
+        (req.headers["x-profile-id"] &&
+          req.headers["x-profile-id"] !== profile.profileId) ||
+        (downloadProfile && downloadProfile !== profile.profileId)
+      ) {
+        send(res, 409, {
+          error: {
+            code: "PROFILE_MISMATCH",
+            message:
+              "This page belongs to another profile; reopen the workbench.",
+          },
+        });
+        return;
+      }
       if (req.method === "POST") {
         if (req.headers["x-app-token"] !== token) {
           send(res, 403, { error: "forbidden" });
           return;
         }
-        if (path === '/api/companies') {
+        if (path === "/api/companies") {
           let value: unknown;
-          try { value = await body(req); } catch {
-            send(res, 400, { error: { code: 'VALIDATION', message: 'Invalid JSON body' } });
+          try {
+            value = await body(req);
+          } catch {
+            send(res, 400, {
+              error: { code: "VALIDATION", message: "Invalid JSON body" },
+            });
             return;
           }
           try {
-            if (!value || typeof value !== 'object' || !('company' in value) || !('expectedRevision' in value) || !Number.isInteger(value.expectedRevision))
-              throw new DataError('VALIDATION', 'company and integer expectedRevision are required');
-            const result = catalog.append(value.company, value.expectedRevision as number);
-            send(res, result.inserted ? 201 : 200, { ...result, profileId: profile.profileId });
+            if (
+              !value ||
+              typeof value !== "object" ||
+              !("company" in value) ||
+              !("expectedRevision" in value) ||
+              !Number.isInteger(value.expectedRevision)
+            )
+              throw new DataError(
+                "VALIDATION",
+                "company and integer expectedRevision are required",
+              );
+            const result = catalog.append(
+              value.company,
+              value.expectedRevision as number,
+            );
+            send(res, result.inserted ? 201 : 200, {
+              ...result,
+              profileId: profile.profileId,
+            });
           } catch (error) {
             if (!(error instanceof DataError)) throw error;
-            send(res, error.code === 'VALIDATION' ? 400 : 409, { error: { code: error.code, message: error.message } });
+            send(res, error.code === "VALIDATION" ? 400 : 409, {
+              error: { code: error.code, message: error.message },
+            });
           }
           return;
         }
@@ -117,41 +152,73 @@ export async function startServer(options: ServerOptions) {
         return;
       }
       if (path === "/health") {
-        send(res, 200, { app: "xiaozhao-gaogaoshou-ts", version: "0.2.0-dev", profileId: profile.profileId, instanceId: profile.instanceId, schemas: { progress: 1, catalog: 1 } });
+        send(res, 200, {
+          app: "xiaozhao-gaogaoshou-ts",
+          version: "0.2.0-dev",
+          profileId: profile.profileId,
+          instanceId: profile.instanceId,
+          schemas: { progress: 1, catalog: 1 },
+        });
         return;
       }
       if (path === "/api/status") {
-        send(res, 200, { statuses: store.statuses(), profileId: profile.profileId });
+        send(res, 200, {
+          statuses: store.statuses(),
+          profileId: profile.profileId,
+        });
         return;
       }
       if (path === "/api/catalog") {
         send(res, 200, { ...catalog.snapshot(), profileId: profile.profileId });
         return;
       }
-      if (path === '/api/companies') {
-        const limit = Number(requestUrl.searchParams.get('limit') ?? 100);
-        const offset = Number(requestUrl.searchParams.get('offset') ?? 0);
-        if (!Number.isInteger(limit) || limit < 1 || limit > 500 || !Number.isInteger(offset) || offset < 0) {
-          send(res, 400, { error: { code: 'VALIDATION', message: 'limit must be 1-500 and offset non-negative' } });
+      if (path === "/api/companies") {
+        const limit = Number(requestUrl.searchParams.get("limit") ?? 100);
+        const offset = Number(requestUrl.searchParams.get("offset") ?? 0);
+        if (
+          !Number.isInteger(limit) ||
+          limit < 1 ||
+          limit > 500 ||
+          !Number.isInteger(offset) ||
+          offset < 0
+        ) {
+          send(res, 400, {
+            error: {
+              code: "VALIDATION",
+              message: "limit must be 1-500 and offset non-negative",
+            },
+          });
           return;
         }
         const snapshot = catalog.snapshot();
-        send(res, 200, { profileId: profile.profileId, revision: snapshot.revision, total: snapshot.companies.length, items: snapshot.metadata.slice(offset, offset + limit).map((entry, index) => ({ ...entry, row: snapshot.companies[offset + index] })) });
+        send(res, 200, {
+          profileId: profile.profileId,
+          revision: snapshot.revision,
+          total: snapshot.companies.length,
+          items: snapshot.metadata
+            .slice(offset, offset + limit)
+            .map((entry, index) => ({
+              ...entry,
+              row: snapshot.companies[offset + index],
+            })),
+        });
         return;
       }
       if (path === "/api/backup") {
-        const kind = requestUrl.searchParams.get('kind') ?? 'progress';
-        if (kind !== 'progress' && kind !== 'catalog') {
-          send(res, 400, { error: { code: 'VALIDATION', message: 'Unknown backup kind' } });
+        const kind = requestUrl.searchParams.get("kind") ?? "progress";
+        if (kind !== "progress" && kind !== "catalog") {
+          send(res, 400, {
+            error: { code: "VALIDATION", message: "Unknown backup kind" },
+          });
           return;
         }
         const temp = await mkdtemp(join(backups, "export-"));
         try {
           const file = join(temp, "snapshot.db");
-          await (kind === 'catalog' ? catalog : store).backup(file);
+          await (kind === "catalog" ? catalog : store).backup(file);
           res.setHeader(
             "Content-Disposition",
-            `attachment; filename="${kind === 'catalog' ? 'catalog' : 'qiuzhao'}-backup.db"`,
+            `attachment; filename="${kind === "catalog" ? "catalog" : "qiuzhao"}-backup.db"`,
           );
           send(res, 200, await readFile(file), "application/octet-stream");
         } finally {
@@ -162,7 +229,9 @@ export async function startServer(options: ServerOptions) {
       if (path === "/") {
         const html = (
           await readFile(join(options.webDir, "index.html"), "utf8")
-        ).replace("__APP_TOKEN__", token).replace('__PROFILE_ID__', profile.profileId);
+        )
+          .replace("__APP_TOKEN__", token)
+          .replace("__PROFILE_ID__", profile.profileId);
         send(res, 200, Buffer.from(html), "text/html; charset=utf-8");
         return;
       }
@@ -214,9 +283,13 @@ export async function startServer(options: ServerOptions) {
     close: async () => {
       if (closed) return;
       closed = true;
-      try { await new Promise<void>((done, reject) =>
-        server.close((error) => (error ? reject(error) : done())),
-      ); } finally { context.close(); }
+      try {
+        await new Promise<void>((done, reject) =>
+          server.close((error) => (error ? reject(error) : done())),
+        );
+      } finally {
+        context.close();
+      }
     },
   };
 }

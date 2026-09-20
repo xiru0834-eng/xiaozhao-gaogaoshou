@@ -152,7 +152,9 @@ export function matches(r: CompanyRow, filters: Filters) {
       " " +
       (RECRUIT_CHANNEL_NAME[recruitChannelOf(r)] || "") +
       " " +
-      recruitChannelEvidence(r) + ' ' + aliasesOf(r).join(' ')
+      recruitChannelEvidence(r) +
+      " " +
+      aliasesOf(r).join(" ")
     ).toLowerCase();
     if (!hay.includes(query)) return false;
   }

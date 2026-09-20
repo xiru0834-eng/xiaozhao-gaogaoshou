@@ -1,9 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DATA } from "../src/shared/catalog.ts";
-import { APPEND_DATES, ownershipOf, recruitChannelOf, recruitChannelEvidence } from '../src/shared/catalog.ts';
-import { installCatalog } from '../src/client/catalog.ts';
-import { createHash } from 'node:crypto';
+import {
+  APPEND_DATES,
+  ownershipOf,
+  recruitChannelOf,
+  recruitChannelEvidence,
+} from "../src/shared/catalog.ts";
+import { installCatalog } from "../src/client/catalog.ts";
+import { createHash } from "node:crypto";
 import { matches, sortedRows, type Filters } from "../src/client/selectors.ts";
 const base: Filters = {
   state: {},
@@ -16,7 +21,21 @@ const base: Filters = {
   filterChannel: "all",
   query: "",
 };
-installCatalog({schemaVersion:1,revision:315,companies:DATA,appendDates:[...APPEND_DATES],metadata:DATA.map((row,index)=>({id:'co_'+createHash('sha256').update(row[0]).digest('hex').slice(0,32),name:row[0],sequence:index+1,ownership:ownershipOf(row),aliases:[],channel:recruitChannelOf(row),channelEvidence:recruitChannelEvidence(row)}))});
+installCatalog({
+  schemaVersion: 1,
+  revision: 315,
+  companies: DATA,
+  appendDates: [...APPEND_DATES],
+  metadata: DATA.map((row, index) => ({
+    id: "co_" + createHash("sha256").update(row[0]).digest("hex").slice(0, 32),
+    name: row[0],
+    sequence: index + 1,
+    ownership: ownershipOf(row),
+    aliases: [],
+    channel: recruitChannelOf(row),
+    channelEvidence: recruitChannelEvidence(row),
+  })),
+});
 
 test("private + unapplied + referral + search compose without mutating catalog", () => {
   const filters: Filters = {
