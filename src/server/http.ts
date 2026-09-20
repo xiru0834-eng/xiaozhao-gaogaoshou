@@ -14,6 +14,13 @@ import { ModelSettings } from "./model-settings.ts";
 import { ModelService } from "./model-service.ts";
 import type { SecretProtector } from "./model-secrets.ts";
 import type { ModelTransport } from "./model-client.ts";
+import { CollectionError, type SourceDefinition } from "../shared/collection-contract.ts";
+import { SOURCES } from "./source-registry.ts";
+import { SourceReader } from "./source-fetch.ts";
+import type { SourceTransport } from "./source-wire.ts";
+import { PreferencesStore } from "./job-preferences.ts";
+import { CollectionService } from "./collection-service.ts";
+import { collectionRequest, isCollectionPath } from "./collection-api.ts";
 
 export interface ServerOptions {
   dataDir: string;
@@ -21,6 +28,7 @@ export interface ServerOptions {
   port: number;
   /** Dependency injection for tests; never exposed through HTTP or CLI flags. */
   modelDependencies?: { secrets?: SecretProtector; transport?: ModelTransport };
+  collectionDependencies?: { sources?: SourceDefinition[]; transport?: SourceTransport; intervalMs?: number };
 }
 const mime: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
@@ -35,6 +43,11 @@ export async function startServer(options: ServerOptions) {
   const context = await openDataProfile(options.dataDir);
   const { store, catalog, backups, profile } = context;
   const model = new ModelService(new ModelSettings(profile.dataDir, options.modelDependencies?.secrets), options.modelDependencies?.transport);
+  let collection: CollectionService;
+  try {
+    const sources = options.collectionDependencies?.sources ?? [...SOURCES];
+    collection = new CollectionService(await catalog.collections(backups, sources), new PreferencesStore(profile.dataDir), sources, model, new SourceReader(options.collectionDependencies));
+  } catch (error) { context.close(); throw error; }
   let url = "";
   const send = (
     res: ServerResponse,
@@ -92,6 +105,17 @@ export async function startServer(options: ServerOptions) {
               "This page belongs to another profile; reopen the workbench.",
           },
         });
+        return;
+      }
+      if (isCollectionPath(path)) {
+        if (req.headers["x-app-token"] !== token || req.headers["x-profile-id"] !== profile.profileId) { send(res, 403, { error: "forbidden" }); return; }
+        try {
+          const result = await collectionRequest(collection, path, req.method ?? "", () => body(req, 16000), requestUrl.searchParams);
+          send(res, req.method === "POST" && ["/api/collection-runs", "/api/source-checks"].includes(path) ? 202 : 200, { ...result, profileId: profile.profileId });
+        } catch (error) {
+          const failure = error instanceof CollectionError ? error : new CollectionError("LOCAL_ERROR", "本地操作失败，原有投递记录未改动。", 500);
+          send(res, failure.status, { profileId: profile.profileId, error: { code: failure.code, message: failure.message } });
+        }
         return;
       }
       if (["/api/model-settings", "/api/model-tests", "/api/model-generations"].includes(path)) {
@@ -194,7 +218,7 @@ export async function startServer(options: ServerOptions) {
           version: "0.2.0-dev",
           profileId: profile.profileId,
           instanceId: profile.instanceId,
-          schemas: { progress: 1, catalog: 1 },
+          schemas: { progress: 1, catalog: 2 },
         });
         return;
       }
@@ -321,6 +345,7 @@ export async function startServer(options: ServerOptions) {
       if (closed) return;
       closed = true;
       model.dispose();
+      await collection.close();
       try {
         await new Promise<void>((done, reject) =>
           server.close((error) => (error ? reject(error) : done())),

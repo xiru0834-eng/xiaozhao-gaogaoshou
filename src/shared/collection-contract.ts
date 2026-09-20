@@ -1,3 +1,4 @@
+import type { NewCompany } from "./catalog-contract.ts";
 /** Phase 3 boundaries. External pages and model output never carry persistence authority. */
 export class CollectionError extends Error {
   readonly code: string;
@@ -65,6 +66,8 @@ export interface SourceDefinition {
   allowedUrls: string[];
   verifiedAt: string;
   note: string;
+  /** Optional, manually reviewed registry metadata. Never model-generated. */
+  companyRecord?: NewCompany;
 }
 export type SourceState = "readable" | "robots_denied" | "robots_unknown" | "login_required" | "dynamic" | "http_error" | "timeout" | "network_error" | "unsafe_url" | "too_large" | "unsupported" | "cancelled";
 export interface SourceDocument {

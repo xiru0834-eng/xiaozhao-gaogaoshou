@@ -5,6 +5,17 @@ import { gzipSync } from "node:zlib";
 import { readWire, secureSourceUrl } from "../src/server/source-wire.ts";
 import { SourceReader } from "../src/server/source-fetch.ts";
 import type { SourceDefinition } from "../src/shared/collection-contract.ts";
+import { parseSourceHtml } from "../src/server/source-document.ts";
+
+test("semantic job headers inside main remain evidence while site banners are excluded", () => {
+  const parsed = parseSourceHtml('<header><h1>Company Navigation</h1></header><main><article><header><h1>Agent 工程师</h1><p>2027届</p></header><p>硕士以上，经验不限，全职研发</p></article></main>', "https://example.org/job");
+  assert.equal(parsed.title, "Agent 工程师"); assert.ok(parsed.text.includes("2027届")); assert.ok(!parsed.text.includes("Company Navigation"));
+});
+
+test("hidden headings and application anchors do not become evidence", () => {
+  const parsed = parseSourceHtml('<main><div hidden><h1>Fake</h1><a href="/fake">立即申请</a></div><h1>Agent 工程师</h1><div style="display:none"><a href="/hidden">投递简历</a></div><a href="https://127.0.0.1/apply">立即申请</a><p>2027届 硕士 全职</p></main>', "https://example.org/job");
+  assert.equal(parsed.title, "Agent 工程师"); assert.deepEqual(parsed.links, []); assert.ok(!parsed.text.includes("Fake"));
+});
 
 const source: SourceDefinition = { id: "fixture", company: "合成公司", name: "合成来源", kind: "detail", entryUrl: "https://jobs.example.com/job/1", allowedUrls: ["https://jobs.example.com/job/1", "https://jobs.example.com/job/2"], verifiedAt: "2026-09-20", note: "合成测试" };
 const html = '<main><h1>Agent 开发工程师</h1><p>2027届，本科及以上；经验不限；北京。</p><script>window.secret="not text";</script><a href="/apply/1">申请岗位</a></main>';

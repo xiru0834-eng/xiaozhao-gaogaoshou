@@ -20,6 +20,14 @@ export class ModelService {
     const expectedRevision = revision(value.expectedRevision);
     if (Object.keys(value).some(k => !["expectedRevision", ...(test ? [] : ["prompt"])].includes(k))) throw new ModelError("VALIDATION");
     if (!test && (typeof value.prompt !== "string" || !value.prompt.trim() || value.prompt.length > 2000)) throw new ModelError("VALIDATION");
+    return this.invoke(test ? "这是一条连接测试，请只回复：连接成功。" : (value.prompt as string).trim(), expectedRevision, test, signal);
+  }
+  /** Internal public-page extraction only. Never exposed as an arbitrary HTTP prompt endpoint. */
+  async extract(prompt: string, expectedRevision: number, signal: AbortSignal) {
+    if (!prompt.trim() || prompt.length > 20000) throw new ModelError("VALIDATION");
+    return this.invoke(prompt, revision(expectedRevision), false, signal);
+  }
+  private async invoke(prompt: string, expectedRevision: number, test: boolean, signal: AbortSignal) {
     if (this.active || this.saving) throw new ModelError("BUSY");
     const controller = new AbortController();
     this.active = controller;
@@ -33,7 +41,7 @@ export class ModelService {
       this.calls.push(now);
       return await generateText(
         { ...config, maxTokens: test ? Math.min(config.maxTokens, 64) : config.maxTokens }, apiKey,
-        test ? "这是一条连接测试，请只回复：连接成功。" : (value.prompt as string).trim(), combined, this.transport,
+        prompt, combined, this.transport,
       );
     } finally { this.active = null; }
   }

@@ -1,5 +1,5 @@
 import { DatabaseSync, backup } from "node:sqlite";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import {
@@ -18,9 +18,12 @@ import {
   type CatalogSnapshot,
 } from "../shared/catalog-contract.ts";
 import { safeFile } from "./runtime-config.ts";
+import { CollectionStore, COLLECTION_SCHEMA } from "./collection-store.ts";
+import type { SourceDefinition } from "../shared/collection-contract.ts";
 
 export class CatalogStore {
   private db: DatabaseSync;
+  private collectionStore?: CollectionStore;
   constructor(path: string) {
     mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(safeFile(dirname(path), basename(path)), {
@@ -31,7 +34,7 @@ export class CatalogStore {
       const version = Number(
         this.db.prepare("PRAGMA user_version").get()?.user_version,
       );
-      if (![0, 1].includes(version))
+      if (![0, 1, 2].includes(version))
         throw new Error("Unsupported catalog schema version");
       if (version === 0) {
         if (
@@ -195,6 +198,21 @@ export class CatalogStore {
   }
   async backup(path: string) {
     await backup(this.db, path);
+  }
+  async collections(backups: string, sources: SourceDefinition[]) {
+    if (this.collectionStore) return this.collectionStore;
+    if (this.db.prepare("PRAGMA user_version").get()?.user_version === 1) {
+      // A complete, verified v1 snapshot must exist before changing the schema.
+      const file = safeFile(backups, `before-catalog-v2-${randomUUID()}.db`);
+      await this.backup(file);
+      const check = new DatabaseSync(file, { readOnly: true });
+      try { if (check.prepare("PRAGMA integrity_check").get()?.integrity_check !== "ok") throw new Error("Migration backup failed"); }
+      finally { check.close(); }
+      this.db.exec("BEGIN IMMEDIATE");
+      try { this.db.exec(COLLECTION_SCHEMA); this.db.exec("PRAGMA user_version=2; COMMIT"); }
+      catch (error) { this.db.exec("ROLLBACK"); throw error; }
+    }
+    return this.collectionStore = new CollectionStore(this.db, sources, value => this.insert(parseCompany(value)));
   }
   close() {
     this.db.close();
