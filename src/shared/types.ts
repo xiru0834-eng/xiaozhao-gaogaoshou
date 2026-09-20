@@ -45,7 +45,7 @@ export function parseStatuses(value: unknown): StatusMap {
     throw new Error("Invalid statuses");
   const result: StatusMap = Object.create(null);
   for (const [name, status] of Object.entries(value)) {
-    if (!name || name.length > 200 || !isStatus(status))
+    if (!name.trim() || name.length > 200 || !isStatus(status))
       throw new Error("Invalid status entry");
     result[name] = status;
   }

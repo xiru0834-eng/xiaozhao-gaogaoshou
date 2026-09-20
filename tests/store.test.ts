@@ -7,7 +7,7 @@ import { Store } from "../src/server/store.ts";
 import { parseStatuses } from "../src/shared/types.ts";
 
 test("unknown status and malformed maps are rejected", () => {
-  for (const bad of [null, [], { A: "bogus" }, { "": "未投" }, { A: {} }]) {
+  for (const bad of [null, [], { A: "bogus" }, { "": "未投" }, { '   ': '未投' }, { A: {} }]) {
     assert.throws(() => parseStatuses(bad));
   }
 });

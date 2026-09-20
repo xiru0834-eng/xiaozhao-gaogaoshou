@@ -59,9 +59,14 @@ export class CatalogStore {
   }
   snapshot():CatalogSnapshot{
     const rows=this.db.prepare('SELECT * FROM companies ORDER BY sequence').all();
+    const aliases=new Map<string,{key:string;display:string}[]>();
+    for(const alias of this.db.prepare('SELECT company_id,key,display FROM aliases ORDER BY key').all()){
+      const id=String(alias.company_id);const list=aliases.get(id)??[];
+      list.push({key:String(alias.key),display:String(alias.display)});aliases.set(id,list);
+    }
     return parseCatalog({schemaVersion:1,revision:this.revision(),companies:rows.map(r=>JSON.parse(String(r.row_json)) as unknown),
       appendDates:rows.filter(r=>r.first_seen!==null).map(r=>[r.name,r.first_seen]),
-      metadata:rows.map(r=>({id:r.id,name:r.name,sequence:r.sequence,ownership:r.ownership,channel:r.channel,channelEvidence:r.evidence,aliases:this.db.prepare('SELECT display FROM aliases WHERE company_id=? AND key<>? ORDER BY key').all(r.id,normalizedName(String(r.name))).map(a=>a.display)}))});
+      metadata:rows.map(r=>({id:r.id,name:r.name,sequence:r.sequence,ownership:r.ownership,channel:r.channel,channelEvidence:r.evidence,aliases:(aliases.get(String(r.id))??[]).filter(a=>a.key!==normalizedName(String(r.name))).map(a=>a.display)}))});
   }
   integrity():string{return String(this.db.prepare('PRAGMA integrity_check').get()?.integrity_check);}
   async backup(path:string){await backup(this.db,path);}

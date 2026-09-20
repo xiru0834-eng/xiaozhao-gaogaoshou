@@ -3,6 +3,17 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, realpathSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+
+function sourceRoot(): string {
+  let directory = dirname(fileURLToPath(import.meta.url));
+  while (!existsSync(join(directory, 'package.json'))) {
+    const parent = dirname(directory);
+    if (parent === directory) throw new Error('Application source root not found');
+    directory = parent;
+  }
+  return directory;
+}
 
 function canonical(path: string): string {
   const absolute = resolve(path);
@@ -11,11 +22,11 @@ function canonical(path: string): string {
   if (parent === absolute) throw new Error('Invalid data root');
   return join(canonical(parent), basename(absolute));
 }
-export function prepareDataDir(path: string, sourceRoot = process.cwd()): string {
+export function prepareDataDir(path: string, applicationRoot = sourceRoot()): string {
   if (!isAbsolute(path)) throw new Error('Data directory must be absolute');
   const dataDir = canonical(path);
   if (/[/\\]QiuzhaoLedger(?:[/\\]|$)/i.test(dataDir)) throw new Error('Refusing legacy data directory');
-  const rel = relative(canonical(sourceRoot), dataDir);
+  const rel = relative(canonical(applicationRoot), dataDir);
   if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) throw new Error('Data must be outside the source directory');
   if (dirname(dataDir) === dataDir || dataDir.toLowerCase() === canonical(homedir()).toLowerCase()) throw new Error('Refusing broad data root');
   mkdirSync(dataDir, { recursive: true });
