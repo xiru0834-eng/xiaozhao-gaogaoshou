@@ -57,8 +57,9 @@ test("real HTTP fixture exercises completion payload, response, HTTP errors and 
 
 test("abort and timeout close the upstream connection without retries", async () => {
   let count = 0;
-  let received = Promise.withResolvers<void>();
-  let closed = Promise.withResolvers<void>();
+  const event = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done; }); return { promise, resolve }; };
+  let received = event();
+  let closed = event();
   const server = createServer((req, res) => { count++; req.resume(); received.resolve(); res.once("close", () => closed.resolve()); });
   await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -66,7 +67,7 @@ test("abort and timeout close the upstream connection without retries", async ()
   const transport = (_url: URL, _key: string, payload: string, signal: AbortSignal) => postCompletion(handler => request(`http://127.0.0.1:${address.port}`, { method: "POST", signal }, handler), payload, signal);
   try {
     for (const expected of ["TIMEOUT", "CANCELLED"]) {
-      received = Promise.withResolvers<void>(); closed = Promise.withResolvers<void>();
+      received = event(); closed = event();
       const controller = new AbortController();
       const rejected = assert.rejects(generateText(config, "test", "hello", controller.signal, transport), code(expected));
       // Wait for the wire event, not an arbitrary 100ms under parallel Windows test load.
