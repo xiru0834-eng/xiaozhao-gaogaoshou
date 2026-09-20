@@ -9,11 +9,18 @@ import { resolve, join, extname, relative, isAbsolute } from "node:path";
 import { openDataProfile } from "./data-context.ts";
 import { parseStatuses } from "../shared/types.ts";
 import { DataError } from "../shared/catalog-contract.ts";
+import { ModelError } from "../shared/model-contract.ts";
+import { ModelSettings } from "./model-settings.ts";
+import { ModelService } from "./model-service.ts";
+import type { SecretProtector } from "./model-secrets.ts";
+import type { ModelTransport } from "./model-client.ts";
 
 export interface ServerOptions {
   dataDir: string;
   webDir: string;
   port: number;
+  /** Dependency injection for tests; never exposed through HTTP or CLI flags. */
+  modelDependencies?: { secrets?: SecretProtector; transport?: ModelTransport };
 }
 const mime: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
@@ -27,6 +34,7 @@ export async function startServer(options: ServerOptions) {
   const token = randomBytes(32).toString("hex");
   const context = await openDataProfile(options.dataDir);
   const { store, catalog, backups, profile } = context;
+  const model = new ModelService(new ModelSettings(profile.dataDir, options.modelDependencies?.secrets), options.modelDependencies?.transport);
   let url = "";
   const send = (
     res: ServerResponse,
@@ -45,13 +53,13 @@ export async function startServer(options: ServerOptions) {
     });
     res.end(Buffer.isBuffer(data) ? data : JSON.stringify(data));
   };
-  async function body(req: IncomingMessage): Promise<unknown> {
+  async function body(req: IncomingMessage, limit = 200000): Promise<unknown> {
     let size = 0;
     const chunks: Buffer[] = [];
     for await (const part of req) {
       const chunk = Buffer.from(part);
       size += chunk.length;
-      if (size > 200000) throw new Error("Payload too large");
+      if (size > limit) throw new Error("Payload too large");
       chunks.push(chunk);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
@@ -84,6 +92,35 @@ export async function startServer(options: ServerOptions) {
               "This page belongs to another profile; reopen the workbench.",
           },
         });
+        return;
+      }
+      if (["/api/model-settings", "/api/model-tests", "/api/model-generations"].includes(path)) {
+        if (req.headers["x-app-token"] !== token || req.headers["x-profile-id"] !== profile.profileId) {
+          send(res, 403, { error: "forbidden" });
+          return;
+        }
+        const disconnect = new AbortController();
+        const onClose = () => { if (!res.writableEnded) disconnect.abort(); };
+        res.on("close", onClose);
+        try {
+          if (req.method === "GET" && path === "/api/model-settings") {
+            send(res, 200, { profileId: profile.profileId, settings: await model.settings.read() });
+          } else if (req.method === "POST") {
+            let input: unknown;
+            try { input = await body(req, 16000); } catch { throw new ModelError("VALIDATION"); }
+            if (path === "/api/model-settings") {
+              const settings = await model.save(input);
+              if (!res.destroyed) send(res, 200, { profileId: profile.profileId, settings });
+            } else {
+              const result = await model.run(input, path === "/api/model-tests", disconnect.signal);
+              if (!res.destroyed) send(res, 200, { profileId: profile.profileId, result });
+            }
+          } else send(res, 405, { error: "method not allowed" });
+        } catch (error) {
+          const failure = error instanceof ModelError ? error : new ModelError("UPSTREAM");
+          const status = failure.code === "VALIDATION" ? 400 : ["CONFLICT", "BUSY", "KEY_REENTRY"].includes(failure.code) ? 409 : failure.code === "LOCAL_LIMIT" ? 429 : failure.code === "NOT_CONFIGURED" ? 422 : 502;
+          if (!res.destroyed) send(res, status, { profileId: profile.profileId, error: { code: failure.code, message: failure.message } });
+        } finally { res.off("close", onClose); }
         return;
       }
       if (req.method === "POST") {
@@ -283,6 +320,7 @@ export async function startServer(options: ServerOptions) {
     close: async () => {
       if (closed) return;
       closed = true;
+      model.dispose();
       try {
         await new Promise<void>((done, reject) =>
           server.close((error) => (error ? reject(error) : done())),

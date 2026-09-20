@@ -34,6 +34,7 @@ __pycache__/
 !.env.example
 *.pem
 *.key
+model-settings.json
 .vscode/
 .idea/
 /build/
