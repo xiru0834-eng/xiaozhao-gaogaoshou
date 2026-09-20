@@ -33,6 +33,7 @@ import { statusApi } from "./api.ts";
 import { sessionFromPage } from "./session.ts";
 import { mountModelSettings } from "./model-settings.ts";
 import { mountUpdates } from "./updates.ts";
+import { mountAppearance } from "./appearance.ts";
 const session = sessionFromPage();
 mountModelSettings(session);
 mountUpdates(session, () => { void initBackend(); });
@@ -848,6 +849,7 @@ element("open-help").addEventListener("click", () => {
   help.querySelector<HTMLElement>("summary")!.focus();
 });
 document.addEventListener("keydown", (e) => {
+  if (document.querySelector('#appearance-dialog[open]')) return;
   if (!(e.target instanceof HTMLElement)) return;
   if (e.key === "Escape" && !element<HTMLDialogElement>("company-detail").open)
     document
@@ -882,24 +884,12 @@ function setDensity(compact: boolean) {
   } catch (e) {}
 }
 try {
-  const t = localStorage.getItem("qiuzhao-theme");
-  document.documentElement.dataset.theme! = t === "dark" ? "dark" : "light";
   if (localStorage.getItem("qiuzhao-density") === "compact") setDensity(true);
-} catch (e) {
-  document.documentElement.dataset.theme! = "light";
-}
+} catch (e) {}
 element("density-toggle").addEventListener("click", () =>
   setDensity(document.body.dataset.density !== "compact"),
 );
-element("theme-toggle").addEventListener("click", () => {
-  const root = document.documentElement,
-    dark = root.dataset.theme! === "dark";
-  root.dataset.theme! = dark ? "light" : "dark";
-  try {
-    localStorage.setItem("qiuzhao-theme", root.dataset.theme!);
-  } catch (e) {}
-  toast(dark ? "已切换浅色主题" : "已切换深色主题");
-});
+mountAppearance(toast);
 buildFilters();
 render();
 initBackend();
