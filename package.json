@@ -1,0 +1,22 @@
+{
+  "name": "xiaozhao-gaogaoshou",
+  "version": "0.2.0-dev",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
+  "scripts": {
+    "dev": "npm run build && npm start",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.server.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server/server/main.js",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:legacy": "python -X utf8 -m unittest -q"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  }
+}
