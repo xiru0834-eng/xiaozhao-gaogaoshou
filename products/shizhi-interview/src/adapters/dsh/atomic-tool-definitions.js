@@ -135,7 +135,7 @@ function definitionsFor(afterExecute = null) {
   }),
   atomicTool({
     name: 'interview_practice',
-    description: `对练习执行原子增删改查、结束、重新打开、导出或洞察。create/update 必须提供所选模式的完整显式配置；背八股、简历押题和场景题 complete 必须提供真实总结，模拟面试 complete 只结束并归档问答记录，刷力扣使用固定汇总。${ATOMIC_CONFIGURATION_POLICY}`,
+    description: `对练习执行原子增删改查、结束、重新打开、导出或洞察。create/update 必须提供所选模式的完整显式配置；背八股、简历押题和场景题 complete 必须提供真实总结，普通模拟面试 complete 只归档；config.coach.kind=mock 且 ending=true 的限时面试必须提供基于回答的复盘，刷力扣使用固定汇总。${ATOMIC_CONFIGURATION_POLICY}`,
     parameters: practiceParameters,
     afterExecute: syncCatalog,
     execute(application, args, sessionId) {
@@ -210,6 +210,15 @@ function definitionsFor(afterExecute = null) {
         score: { type: 'number', minimum: 0, maximum: 10 },
         feedback: { type: 'string', minLength: 1 },
         dimensions: { type: 'object', additionalProperties: { type: 'number', minimum: 0, maximum: 10 } },
+        review: { type: 'object', additionalProperties: false, required: ['items', 'nextStep'], properties: {
+          nextStep: { type: 'string', minLength: 1, maxLength: 2000 },
+          items: { type: 'array', minItems: 1, maxItems: 12, items: { type: 'object', additionalProperties: false,
+            required: ['point', 'status', 'quote', 'comment'], properties: {
+              point: { type: 'string', minLength: 1, maxLength: 300 },
+              status: { type: 'string', enum: ['met', 'partial', 'missing', 'incorrect', 'uncertain'] },
+              quote: { type: 'string', maxLength: 1000 }, comment: { type: 'string', minLength: 1, maxLength: 2000 },
+            } } },
+        } },
       },
       required: ['operation', 'question_id', 'attempt_id', 'score', 'feedback'],
       additionalProperties: false,
@@ -221,6 +230,7 @@ function definitionsFor(afterExecute = null) {
       score: args.score,
       feedback: args.feedback,
       dimensions: args.dimensions,
+      review: args.review,
     }),
   }),
   atomicTool({

@@ -1,3 +1,4 @@
+import { CoachFeedback } from './coach-feedback.js'
 import React from 'react'
 import { interviewApi } from '../shared/api.js'
 import { useCommand, useInterviewQuery } from '../shared/hooks.js'
@@ -93,7 +94,7 @@ function PracticeDetail({ practice, sessionId, onDeleted }) {
         question.attempts.map((attempt) => h('div', { className: 'di-attempt', key: attempt.id },
           h('div', { className: 'di-attempt-head' }, h('span', null, `第 ${attempt.sequence} 次作答`), h('span', null, attempt.evaluation ? `${attempt.evaluation.score}/10` : '未评价')),
           h(Markdown, null, attempt.answer),
-          attempt.evaluation ? h('div', { className: 'di-section' }, h(Markdown, null, attempt.evaluation.feedback)) : null)),
+          attempt.evaluation ? h('div', { className: 'di-section' }, h(CoachFeedback, { evaluation: attempt.evaluation })) : null)),
         question.explanation ? h('div', { className: 'di-section' },
           h('div', { className: 'di-section-label' }, question.leetcode ? '算法讲解' : '参考讲解'),
           h(Markdown, null, question.explanation.detail),

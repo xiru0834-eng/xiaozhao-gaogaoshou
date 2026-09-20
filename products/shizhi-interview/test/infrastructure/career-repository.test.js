@@ -12,7 +12,8 @@ test('the upstream catalog and progress persist independently and export a usabl
   try {
     repository = await openCareerRepository(directory)
     const catalog = repository.catalog.snapshot()
-    assert.equal(catalog.companies.length, 315)
+    assert.ok(catalog.companies.length > 0)
+    assert.equal(catalog.metadata.length, catalog.companies.length)
     const name = catalog.companies[0][0]
     const identity = repository.profileId
     const company = repository.company(name)
@@ -29,6 +30,6 @@ test('the upstream catalog and progress persist independently and export a usabl
     repository.close(); repository = await openCareerRepository(directory)
     assert.equal(repository.profileId, identity)
     assert.equal(repository.store.statuses()[name], '面试')
-    assert.equal(repository.catalog.snapshot().companies.length, 315)
+    assert.equal(repository.catalog.snapshot().companies.length, catalog.companies.length)
   } finally { repository?.close(); await rm(directory, { recursive: true, force: true }) }
 })

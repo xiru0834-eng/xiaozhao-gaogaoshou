@@ -35,7 +35,7 @@ try {
   const installed = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null
   const link = `link:${root.replaceAll('\\', '/')}`
   if (installed?.dependencies?.['@deepseek-ai/dsh-shizhi-interview'] !== link) {
-    await launch(['plugin', '--profile', 'web', 'add', link, '--store-dir', join(env.DSH_HOME, 'pnpm-store')])
+    await launch(['plugin', '--profile', 'web', 'add', link, '--store-dir', env.SHIZHI_PNPM_STORE || join(env.DSH_HOME, 'pnpm-store')])
   }
   if (!interrupted) await launch(['web', '--patch', join(root, 'scripts', 'browser-picker.yml'),
     '--no-open', '--host', '127.0.0.1', '--port', port])

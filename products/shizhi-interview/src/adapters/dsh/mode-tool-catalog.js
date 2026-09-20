@@ -52,8 +52,8 @@ export function deniedToolNamesForMode(mode = null) {
   return PLUGIN_TOOL_NAMES.filter((name) => !allowed.has(name))
 }
 
-function restrictPluginTools(agent, mode, coach = false) {
-  if (coach) return agent.ctx.tools.restrict({ allow: toolNamesForMode(mode) })
+function restrictPluginTools(agent, mode, coach = false, report = false) {
+  if (coach) return agent.ctx.tools.restrict({ allow: [...toolNamesForMode(mode), ...(report ? SUMMARY_TOOLS : [])] })
   const denied = deniedToolNamesForMode(mode)
   return denied.length === 0 ? null : agent.ctx.tools.restrict({ deny: denied })
 }
@@ -83,14 +83,15 @@ export class ModeToolCatalog {
     this.scopes.delete(agent.id)
   }
 
-  setMode(sessionId, mode = null, coach = false) {
+  setMode(sessionId, mode = null, coach = false, report = false) {
     const state = this.scopes.get(sessionId)
-    if (!state || (state.mode === mode && Boolean(state.coach) === coach)) return false
-    const restriction = restrictPluginTools(state.agent, mode, coach)
+    if (!state || (state.mode === mode && Boolean(state.coach) === coach && Boolean(state.report) === report)) return false
+    const restriction = restrictPluginTools(state.agent, mode, coach, report)
     state.restriction?.()
     state.restriction = restriction
     state.mode = mode
     state.coach = coach
+    state.report = report
     return true
   }
 
@@ -100,7 +101,7 @@ export class ModeToolCatalog {
     const task = this.application.readAtomicSession(sessionId).then((result) => {
       if (this.stopped || this.scopes.get(sessionId) !== state) return false
       const data = result.resource.data
-      return this.setMode(sessionId, data.selected ? data.practice.mode : null, Boolean(data.selected && coachTrack(data.practice.config.topic)))
+      return this.setMode(sessionId, data.selected ? data.practice.mode : null, Boolean(data.selected && (coachTrack(data.practice.config.topic) || data.practice.config.coach)), Boolean(data.practice?.config.coach?.ending))
     })
     this.pending.add(task)
     void task.then(() => this.pending.delete(task), () => this.pending.delete(task))

@@ -69,6 +69,7 @@ export function renderPracticeMarkdown(practice, include) {
       `- 编程语言：${leetcodeLanguageLabel(practice.config.language)}`,
       `- 题目地址：${practice.source.content}`,
     )
+    if (practice.config.coach?.kind === 'targeted' || practice.config.coach?.kind === 'review') lines.push(`- 岗位背景：${practice.config.coach.targetRole || ''}`, `- 岗位要求：${practice.config.coach.jobDescription || ''}`, `- 项目经历：${practice.config.coach.projectExperience || ''}`)
     if (practice.config.target) lines.push(
       `- 目标公司：${practice.config.target.companyName}`,
       `- 目标岗位：${practice.config.target.targetRole}`,
@@ -127,6 +128,11 @@ export function renderPracticeMarkdown(practice, include) {
       if (sections.has('answers')) lines.push('', attempt.answer)
       if (sections.has('evaluations') && attempt.evaluation) {
         lines.push('', `评分：${attempt.evaluation.score}/10`, '', attempt.evaluation.feedback)
+        if (attempt.evaluation.review) {
+          const labels = { met: '答对', partial: '不完整', missing: '遗漏', incorrect: '有误', uncertain: '需确认' }
+          for (const item of attempt.evaluation.review.items) lines.push('', `- ${labels[item.status]}：${item.point}`, ...(item.quote ? [`  引用：${item.quote}`] : []), `  ${item.comment}`)
+          lines.push('', `下一次优先改进：${attempt.evaluation.review.nextStep}`)
+        }
         const dimensions = Object.entries(attempt.evaluation.dimensions)
         if (dimensions.length) lines.push('', ...dimensions.map(([name, score]) => `- ${name}：${score}/10`))
       }

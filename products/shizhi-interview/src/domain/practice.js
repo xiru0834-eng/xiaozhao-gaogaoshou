@@ -1,3 +1,5 @@
+import { normalizeReview } from './coach-progress.js'
+import { normalizeCoach, interviewLimitReached } from './coach-configuration.js'
 import { assertDomain } from './errors.js'
 import { LEETCODE_TOP_100_SOURCE, leetcodeTop100Problem } from './leetcode-top-100.js'
 import { LEETCODE_LANGUAGES, leetcodeLanguageDefinition } from './leetcode-languages.js'
@@ -28,7 +30,7 @@ function normalizeQuestionPrompt(prompt) {
   return normalizedPrompt
 }
 
-function normalizeConfiguration(definition, config) {
+function normalizeBaseConfiguration(definition, config) {
   assertDomain(config && typeof config === 'object' && !Array.isArray(config), 'CONFIGURATION_REQUIRED', '必须明确提供练习配置')
   if (definition.configuration === 'topic') {
     const topic = requiredText(config.topic, 'INVALID_TOPIC', '必须明确提供练习主题')
@@ -72,6 +74,13 @@ function normalizeConfiguration(definition, config) {
   }
 }
 
+function normalizeConfiguration(definition, config) {
+  const base = normalizeBaseConfiguration(definition, config)
+  const coach = normalizeCoach(config.coach)
+  const target = config.target && !base.target ? normalizeBaseConfiguration({ configuration: 'topic' }, { topic: '_', target: config.target }).target : undefined
+  return { ...base, ...(target ? { target } : {}), ...(coach ? { coach } : {}) }
+}
+
 function practiceIdentity(definition, config) {
   if (definition.configuration === 'topic') {
     return { topic: config.topic, source: { kind: 'topic', content: config.topic } }
@@ -105,8 +114,10 @@ export function createPractice({ id, mode, config, now }) {
 export function updatePractice(practice, { mode, config, now }) {
   assertDomain(practice && typeof practice === 'object', 'PRACTICE_REQUIRED', '练习不能为空')
   const definition = modeDefinition(mode)
-  const normalizedConfig = normalizeConfiguration(definition, definition.configuration === 'topic' && practice.config.target
-    ? { target: practice.config.target, ...config } : config)
+  const normalizedConfig = normalizeConfiguration(definition, {
+    ...(practice.config.target ? { target: practice.config.target } : {}),
+    ...(mode === practice.mode && practice.config.coach ? { coach: practice.config.coach } : {}), ...config,
+  })
   const currentLeetcode = mode === 'leetcode' ? practice.questions?.[0]?.leetcode : null
   const identity = currentLeetcode
     ? { topic: currentLeetcode.title, source: { kind: 'leetcode', content: currentLeetcode.url } }
@@ -149,6 +160,8 @@ function normalizeHot100Problem(practice, input) {
 
 export function askQuestion(practice, { id, prompt, leetcode, hot100, now }) {
   activePractice(practice)
+  assertDomain(!interviewLimitReached(practice, now), 'INTERVIEW_FINISHED', '本场面试已到结束时间或题数上限，请结束并查看复盘')
+  if (practice.config.coach?.kind === 'mock' && practice.questions.length) assertDomain(practice.questions.at(-1).attempts.length > 0, 'ANSWER_REQUIRED', '请先回答当前问题')
   const questionId = requiredText(id, 'INVALID_QUESTION_ID', '题目 ID 不能为空')
   const normalizedPrompt = normalizeQuestionPrompt(prompt)
   assertDomain(
@@ -201,6 +214,7 @@ export function deleteQuestion(practice, { questionId, now }) {
 
 export function submitAnswer(practice, { questionId, attemptId, answer, now }) {
   activePractice(practice)
+  assertDomain(!practice.config.coach?.ending, 'INTERVIEW_ENDING', '面试已进入复盘，不能继续提交回答')
   const target = findQuestion(practice, questionId)
   const id = requiredText(attemptId, 'INVALID_ATTEMPT_ID', '作答 ID 不能为空')
   assertDomain(!target.attempts.some((item) => item.id === id), 'DUPLICATE_ATTEMPT', `作答已存在：${id}`)
@@ -217,7 +231,7 @@ export function submitAnswer(practice, { questionId, attemptId, answer, now }) {
   return { practice: withUpdatedAt(practice, now, { questions }), attempt }
 }
 
-export function evaluateAnswer(practice, { questionId, attemptId, score, feedback, dimensions = {}, now }) {
+export function evaluateAnswer(practice, { questionId, attemptId, score, feedback, dimensions = {}, review, previousPoints, now }) {
   activePractice(practice)
   assertModeCapability(practice, 'evaluation.create', 'EVALUATION_NOT_ALLOWED', '当前模式不提供作答评价')
   const targetQuestion = findQuestion(practice, questionId)
@@ -235,6 +249,7 @@ export function evaluateAnswer(practice, { questionId, attemptId, score, feedbac
     feedback: requiredText(feedback, 'INVALID_FEEDBACK', '评价内容不能为空'),
     dimensions: normalizedDimensions,
     evaluatedAt: now,
+    ...(review === undefined ? {} : { review: normalizeReview(review, targetQuestion, targetAttempt.answer, previousPoints) }),
   }
   const questions = practice.questions.map((question) => question.id !== targetQuestion.id ? question : {
     ...question,
@@ -288,9 +303,10 @@ export function saveExplanation(practice, { questionId, detail, memorizationPoin
 
 export function completePractice(practice, { overall, strengths, improvements, now }) {
   activePractice(practice)
-  if (practice.mode === 'mock') {
+  if (practice.mode === 'mock' && practice.config.coach?.kind !== 'mock') {
     return withUpdatedAt(practice, now, { status: 'completed', completedAt: now, summary: null })
   }
+  if (practice.config.coach?.kind === 'mock') assertDomain(practice.config.coach.ending, 'INTERVIEW_NOT_ENDED', '请先结束面试，再生成复盘')
   assertDomain(practice.mode !== 'leetcode', 'LEETCODE_ANALYSIS_NOT_ALLOWED', '力扣练习不生成面试分析总结')
   assertModeCapability(practice, 'summary.show', 'SUMMARY_NOT_ALLOWED', '当前模式不生成面试分析总结')
   assertDomain(Array.isArray(strengths) && strengths.length > 0, 'INVALID_SUMMARY_STRENGTHS', '练习总结必须包含至少一项表现亮点')

@@ -3,6 +3,8 @@ import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { defaultDatabasePath } from './paths.js'
 
+const SCHEMA_VERSION = 1
+
 function parseJson(value, fallback) {
   if (typeof value !== 'string' || !value) return fallback
   try { return JSON.parse(value) } catch { return fallback }
@@ -14,7 +16,7 @@ export class SqliteInterviewRepository {
     if (filePath !== ':memory:') mkdirSync(dirname(filePath), { recursive: true })
     this.database = new DatabaseSync(filePath)
     this.database.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;')
-    this.#initializeSchema()
+    try { this.#initializeSchema() } catch (error) { this.database.close(); throw error }
   }
 
   #initializeSchema() {
@@ -79,6 +81,17 @@ export class SqliteInterviewRepository {
       CREATE INDEX IF NOT EXISTS idx_questions_practice ON questions(practice_id, sequence);
       CREATE INDEX IF NOT EXISTS idx_attempts_question ON attempts(question_id, sequence);
     `)
+    const version = this.database.prepare('PRAGMA user_version').get().user_version
+    if (version > SCHEMA_VERSION) throw new Error('练习数据库版本较新，请升级应用')
+    if (version < SCHEMA_VERSION) {
+      this.database.exec('BEGIN IMMEDIATE')
+      try {
+        if (!this.database.prepare('PRAGMA table_info(attempts)').all().some((column) => column.name === 'evaluation_review_json')) {
+          this.database.exec('ALTER TABLE attempts ADD COLUMN evaluation_review_json TEXT')
+        }
+        this.database.exec('PRAGMA user_version = 1; COMMIT')
+      } catch (error) { this.database.exec('ROLLBACK'); throw error }
+    }
   }
 
   #readQuestion(row) {
@@ -101,6 +114,7 @@ export class SqliteInterviewRepository {
           feedback: attempt.evaluation_feedback || '',
           dimensions: parseJson(attempt.evaluation_dimensions_json, {}),
           evaluatedAt: attempt.evaluated_at,
+          ...(attempt.evaluation_review_json ? { review: JSON.parse(attempt.evaluation_review_json) } : {}),
         },
       })),
       explanation: row.explanation_detail === null ? null : {
@@ -207,8 +221,8 @@ export class SqliteInterviewRepository {
     const insertAttempt = this.database.prepare(`
       INSERT INTO attempts (
         id, question_id, sequence, answer, submitted_at,
-        evaluation_score, evaluation_feedback, evaluation_dimensions_json, evaluated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        evaluation_score, evaluation_feedback, evaluation_dimensions_json, evaluated_at, evaluation_review_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const question of practice.questions) {
       insertQuestion.run(
@@ -233,6 +247,7 @@ export class SqliteInterviewRepository {
           attempt.evaluation?.feedback ?? null,
           attempt.evaluation ? JSON.stringify(attempt.evaluation.dimensions) : null,
           attempt.evaluation?.evaluatedAt ?? null,
+          attempt.evaluation?.review ? JSON.stringify(attempt.evaluation.review) : null,
         )
       }
     }

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { ModeToolCatalog, deniedToolNamesForMode, toolNamesForMode } from '../../src/adapters/dsh/mode-tool-catalog.js'
+import { applicationFixture } from '../support/application-fixture.js'
+import { createCoachCommands } from '../../src/application/coach-commands.js'
 
 test('不同练习模式只披露所需工具目录', () => {
   const none = toolNamesForMode()
@@ -64,4 +66,30 @@ test('会话绑定或切换练习后实时更新 Agent 工具目录', async () =
   await catalog.refresh(agent.id)
   assert.equal(catalog.modeFor(agent.id), null)
   assert.equal(restrictions.at(-1).filter.deny.includes('interview_show_summary'), false)
+})
+
+test('timed mock reports expose summary tools only after ending and release restrictions', async () => {
+  const { application } = applicationFixture()
+  const restrictions = []
+  const agent = { id: 'mock-session', ctx: { tools: { restrict(filter) {
+    const entry = { filter, disposed: false }
+    restrictions.push(entry)
+    return () => { entry.disposed = true }
+  } } } }
+  const catalog = new ModeToolCatalog({ application })
+  catalog.attach(agent)
+  try {
+    const run = createCoachCommands({ application })
+    await run(agent.id, 'start', { kind: 'mock', preparation: { targetRole: '后端', projectExperience: '实现了排行榜' },
+      durationMinutes: 15, questionLimit: 4, difficulty: 'junior', interviewerStyle: '专业追问' })
+    await catalog.refresh(agent.id)
+    assert.equal(restrictions.at(-1).filter.allow.includes('interview_show_summary'), false)
+    assert.equal(restrictions.at(-1).filter.allow.includes('interview_evaluation'), false)
+    await application.endCoachInterview(agent.id)
+    await catalog.refresh(agent.id)
+    assert.equal(restrictions.at(-1).filter.allow.includes('interview_show_summary'), true)
+    assert.equal(restrictions.at(-1).filter.allow.includes('interview_evaluation'), false)
+    assert.equal(restrictions.at(-2).disposed, true)
+  } finally { await catalog.dispose() }
+  assert.equal(restrictions.every((entry) => entry.disposed), true)
 })

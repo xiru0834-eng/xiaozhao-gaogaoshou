@@ -65,10 +65,17 @@ export function registerApiRoutes(hostCtx, { application, eventBridge, exporter,
     }
   })
 
+  register('/interview/api/review-queue', async (request, response) => {
+    if (request.method !== 'GET') return sendJson(response, 405, { error: { message: '仅支持 GET' } })
+    try { sendJson(response, 200, { items: await application.reviewQueue() }) }
+    catch (error) { const output = errorResponse(error); sendJson(response, output.status, output.body) }
+  })
+
   register('/interview/api/session', async (request, response) => {
     if (request.method !== 'GET') return sendJson(response, 405, { error: { code: 'METHOD_NOT_ALLOWED', message: '仅支持 GET' } })
     try {
-      sendJson(response, 200, await application.readAtomicSession(requiredSessionId(query(request).get('session'))))
+      const sessionId = requiredSessionId(query(request).get('session'))
+      sendJson(response, 200, { ...await application.readAtomicSession(sessionId), runtime: { status: eventBridge?.status?.(sessionId) || 'unavailable' } })
     } catch (error) {
       const output = errorResponse(error); sendJson(response, output.status, output.body)
     }

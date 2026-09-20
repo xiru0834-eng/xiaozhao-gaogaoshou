@@ -36,6 +36,7 @@ export function hasModeCapability(mode, capability) {
 }
 
 export function assertModeCapability(practice, capability, code, message) {
+  if (capability === 'summary.show' && practice.config?.coach?.kind === 'mock' && practice.config.coach.ending) return
   assertDomain(hasModeCapability(practice.mode, capability), code, message)
 }
 

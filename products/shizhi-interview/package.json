@@ -17,8 +17,9 @@
     "start": "node scripts/start.mjs"
   },
   "devDependencies": {
+    "@deepseek-ai/dsh": "0.1.6-alpha.2",
     "esbuild": "^0.25.9",
-    "@deepseek-ai/dsh": "0.1.6-alpha.2"
+    "parse5": "8.0.1"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

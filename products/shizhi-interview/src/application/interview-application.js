@@ -1,3 +1,4 @@
+import { buildReviewQueue } from '../domain/coach-progress.js'
 import { DomainError, assertDomain } from '../domain/errors.js'
 import { LEETCODE_TOP_100, LEETCODE_TOP_100_GROUPS, LEETCODE_TOP_100_SOURCE, leetcodeTop100Problem } from '../domain/leetcode-top-100.js'
 import {
@@ -185,7 +186,12 @@ export class InterviewApplication {
     const { binding, practice } = await this.#session(sessionId)
     const questionId = requiredId(input.questionId, 'questionId')
     const attemptId = requiredId(input.attemptId, 'attemptId')
-    const added = evaluateAnswer(practice, { ...input, questionId, attemptId, now })
+    const coach = practice.config.coach
+    const source = coach?.sourcePracticeId ? await this.repository.getPractice(coach.sourcePracticeId) : null
+    const sourceQuestion = source?.questions.find((question) => question.id === coach.sourceQuestionId
+      && question.prompt === practice.questions.find((current) => current.id === questionId)?.prompt)
+    const previousPoints = sourceQuestion?.attempts.find((attempt) => attempt.evaluation?.review)?.evaluation.review.items.map((item) => item.point)
+    const added = evaluateAnswer(practice, { ...input, questionId, attemptId, previousPoints, now })
     await this.repository.commit({ practice: added.practice })
     return this.#result('evaluation-detail', { questionId, attemptId, ...added.evaluation }, binding, {
       references: { attemptId },
@@ -207,7 +213,7 @@ export class InterviewApplication {
     const completed = practice.mode === 'leetcode'
       ? completeLeetcodePractice(practice, { now })
       : completePractice(practice, { ...input, now })
-    await this.repository.commit({ practice: completed, unbindSessionId: binding.sessionId })
+    await this.repository.commit({ practice: completed, ...(practice.config.coach?.kind === 'mock' ? { binding } : { unbindSessionId: binding.sessionId }) })
     return this.#result('practice-detail', toPracticeDetailDto(completed), binding)
   }
 
@@ -218,7 +224,7 @@ export class InterviewApplication {
   async archiveAtomicPractice(sessionId) {
     const { binding, practice } = await this.#session(sessionId)
     const completed = archivePractice(practice, this.clock.now())
-    await this.repository.commit({ practice: completed, unbindSessionId: binding.sessionId })
+    await this.repository.commit({ practice: completed, ...(practice.config.coach?.kind === 'mock' ? { binding } : { unbindSessionId: binding.sessionId }) })
     return this.#result('practice-detail', toPracticeDetailDto(completed), binding)
   }
 
@@ -229,6 +235,25 @@ export class InterviewApplication {
     if (practice.questions.length) binding = focusSessionQuestion(binding, practice.questions.at(-1).id, now)
     await this.repository.commit({ practice, binding })
     return this.#result('session-context', toSessionContextDto(binding, practice), binding)
+  }
+
+  /** Freezes a timed interview before asking the model for its final report.
+   * @param {string} sessionId Bound session.
+   * @returns {Promise<object>} Durable ending state, retryable after a model failure.
+   */
+  async endCoachInterview(sessionId) {
+    const { practice, binding } = await this.#session(sessionId)
+    assertDomain(practice.config.coach?.kind === 'mock', 'MOCK_REQUIRED', '当前不是限时模拟面试')
+    const updated = { ...practice, updatedAt: this.clock.now(), config: { ...practice.config, coach: { ...practice.config.coach, ending: true } } }
+    await this.repository.commit({ practice: updated, binding })
+    return this.readAtomicSession(sessionId)
+  }
+
+  /** Derives review recommendations without changing practice records.
+   * @returns {Promise<object[]>} Due dates, repeated gaps and source question identifiers.
+   */
+  async reviewQueue() {
+    return buildReviewQueue(await this.repository.listPractices(), this.clock.now())
   }
 
   async drawAtomicLeetcode(sessionId) {

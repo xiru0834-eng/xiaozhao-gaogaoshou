@@ -6,9 +6,14 @@ export const h = React.createElement
 
 const MarkdownText = primitives.MarkdownText
 
+/** Renders Markdown inside a product-owned wrapper for the light interview cards.
+ * @param {object} props Text children to render.
+ * @returns {object} React element with a plain-text fallback.
+ */
 export function Markdown({ children }) {
   const text = String(children || '')
-  return MarkdownText ? h(MarkdownText, { text, content: text, className: 'di-markdown' }) : h('div', { className: 'di-preline di-markdown' }, text)
+  return h('div', { className: MarkdownText ? 'di-markdown' : 'di-preline di-markdown' },
+    MarkdownText ? h(MarkdownText, { text }) : text)
 }
 
 const ICON_PATHS = {

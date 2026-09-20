@@ -31,7 +31,7 @@ npm run coach:install
 npm run coach
 ```
 
-打开终端输出的本地私有链接，默认端口为 `4317`。源码拉取使用完整 Git 克隆，构建会校验工作台源码与已验证版本一致。`npm run coach:check` 构建并运行整合版的 111 项测试。详细配置、数据目录和功能限制见 [整合版说明](products/shizhi-interview/README.zh.md)。原有工作台的启动命令继续保留；整合版使用自己的本地数据目录，不自动导入原版的个人投递记录。
+打开终端输出的本地私有链接，默认端口为 `4317`。构建会检查工作台与陪练所需的接口，兼容接口的日常修改无需更新来源版本。`npm run coach:check` 构建并运行整合版回归测试。详细配置、数据目录和功能限制见 [整合版说明](products/shizhi-interview/README.zh.md)。原有工作台的启动命令继续保留；整合版使用自己的本地数据目录，不自动导入原版的个人投递记录。
 
 `TypeScript` · `Node.js 24.x` · `SQLite` · `本机保存` · `薄荷石墨`
 

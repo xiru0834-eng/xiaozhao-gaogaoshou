@@ -41,7 +41,7 @@ const MODE_PROMPT_POLICIES = Object.freeze({
     question: '根据上面的完整模拟面试规则、真实配置和历史记录生成下一轮面试交流：先自然承接上一轮回答或当前上下文，再只提出一个主要问题；不要像题库一样直接播报问题，不泄露答案或面试计划。',
     reveal: '当前模式不提供看答案、点评或讲解；如果用户要求这些内容，说明模拟面试只保留真实问答。',
     answerReview: '当前模式不提供评分、点评或讲解；收到正式回答后继续作为面试官追问或切换面试主题。',
-    summary: '当前模式不生成评价型总结；结束时只确认本次面试记录已保存。',
+    summary: '普通模拟面试只归档；若 config.coach.kind=mock 且 ending=true，用户已结束限时面试，允许基于原始回答生成复盘并 complete 保存。其他时候不生成评价总结。',
   }),
   resume_drill: Object.freeze({
     context: RESUME_DRILL_CONTEXT,
