@@ -21,6 +21,7 @@ import type { SourceTransport } from "./source-wire.ts";
 import { PreferencesStore } from "./job-preferences.ts";
 import { CollectionService } from "./collection-service.ts";
 import { collectionRequest, isCollectionPath } from "./collection-api.ts";
+import { ScheduleError } from "../shared/schedule-contract.ts";
 
 export interface ServerOptions {
   dataDir: string;
@@ -41,7 +42,7 @@ const mime: Record<string, string> = {
 export async function startServer(options: ServerOptions) {
   const token = randomBytes(32).toString("hex");
   const context = await openDataProfile(options.dataDir);
-  const { store, catalog, backups, profile } = context;
+  const { store, catalog, backups, profile, schedules } = context;
   const model = new ModelService(new ModelSettings(profile.dataDir, options.modelDependencies?.secrets), options.modelDependencies?.transport);
   let collection: CollectionService;
   try {
@@ -105,6 +106,17 @@ export async function startServer(options: ServerOptions) {
               "This page belongs to another profile; reopen the workbench.",
           },
         });
+        return;
+      }
+      if (path === "/api/schedules") {
+        if (req.headers["x-app-token"] !== token || req.headers["x-profile-id"] !== profile.profileId) { send(res,403,{error:"forbidden"});return; }
+        try {
+          if (req.method === "GET") send(res,200,{...schedules.snapshot(),profileId:profile.profileId});
+          else if (req.method === "POST") {
+            let value:unknown;try {value=await body(req,40000);}catch {throw new ScheduleError("日程请求格式无效或过长。");}
+            send(res,200,{...schedules.mutate(value),profileId:profile.profileId});
+          } else send(res,405,{profileId:profile.profileId,error:{message:"不支持的请求方法。"}});
+        } catch(error) {send(res,error instanceof ScheduleError?error.status:500,{profileId:profile.profileId,error:{message:error instanceof ScheduleError?error.message:"日程保存失败，内容未确认。请保留输入并重试。"}});}
         return;
       }
       if (isCollectionPath(path)) {

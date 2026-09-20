@@ -34,9 +34,11 @@ import { sessionFromPage } from "./session.ts";
 import { mountModelSettings } from "./model-settings.ts";
 import { mountUpdates } from "./updates.ts";
 import { mountAppearance } from "./appearance.ts";
+import { mountSchedules } from "./schedules.ts";
 const session = sessionFromPage();
 mountModelSettings(session);
 mountUpdates(session, () => { void initBackend(); });
+mountSchedules(session);
 // Download links cannot send custom headers, so bind them through a non-secret profile ID.
 document
   .querySelectorAll<HTMLAnchorElement>('a[href^="/api/backup"]')

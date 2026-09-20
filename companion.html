@@ -42,6 +42,7 @@
   <button id="more" class="icon-btn" aria-label="更多设置" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
  </header>
  <section class="activity-line" aria-label="今日进度"><p id="date-line">今天，一家一家来。</p><button id="today" class="today" aria-expanded="false" aria-controls="today-sheet">今日记录 <b id="today-count">—</b> 家 <span aria-hidden="true">›</span></button></section>
+ <button id="schedule-shortcut" class="activity-line" style="border:0;text-align:left;color:var(--brand);min-height:27px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block" title="打开完整版的面试日程">面试日程 · 今日／接下来 ›</button>
  <section class="toolbar" aria-label="搜索与筛选">
   <div class="search-row"><label class="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="search" placeholder="公司、岗位、城市…" aria-label="搜索公司、岗位或城市" autocomplete="off"><button class="clear" id="clear" aria-label="清空搜索" type="button" hidden>×</button></label><button id="filters-collapse" class="chip filter-collapse" aria-expanded="true" aria-controls="filter-panel" aria-label="收起筛选区域">收起</button></div>
   <div id="filter-panel">
@@ -159,6 +160,8 @@ function setSnapshot(data){
  $('today-count').textContent=data.todayUnavailable?'—':String((data.today||[]).length);
  $('today-list').innerHTML=(data.today||[]).length?data.today.map(n=>`<li>${esc(n)}<small>已记录 ✓</small></li>`).join(''):'<li>今天还没有记录。投完一家，点「记为已投」就好。</li>';
  $('date-line').textContent=`${data.date||''} · 一家一家来`;
+ $('schedule-shortcut').textContent=(data.schedule?.label||'面试日程 · 今日／接下来')+' ›';
+ $('schedule-shortcut').title=data.schedule?.label||'打开完整版的面试日程';
  if(data.shell)window.shellState(data.shell);
  if(data.warning)note(data.warning,true);
  ready=true;
@@ -217,6 +220,7 @@ window.shellState=s=>{document.body.classList.toggle('collapsed',!!s.collapsed);
 async function shell(action){if((saving||pending)&&['collapse','close'].includes(action)){toast('还有状态没保存好，先重试一下。');return;}closeSheets();try{if(ready&&['collapse','close'].includes(action)&&!document.body.classList.contains('collapsed')){clearTimeout(navigationTimer);await persistPosition('browse',capturePosition());}window.shellState(await bridge.window_action(action));}catch(e){toast('操作未完成，浏览位置可能未保存，请重试。');}}
 function step(delta){if(!filtered.length)return;const i=filtered.findIndex(c=>c.name===selected);selected=filtered[(i+delta+filtered.length)%filtered.length].name;closeSource();render();document.querySelector('.company-row[aria-pressed=true]')?.scrollIntoView({block:'nearest'});}
 $('panel-toggle').onclick=()=>setDisclosure('selection',!layout.selection);
+$('schedule-shortcut').onclick=()=>shell('schedules');
 $('filters-collapse').onclick=()=>setDisclosure('filters',!layout.filters);
 $('density').onclick=()=>{setDensity(!layout.comfortable);closeSheets();};
 $('search').addEventListener('input',render);$('clear').onclick=()=>{$('search').value='';render();$('search').focus();};

@@ -14,6 +14,7 @@ import time
 import webbrowser
 
 from companion_activity import ActivityJournal
+from companion_schedule import ScheduleClient, SCHEDULE_BASE
 from floating_model import Catalog, DockState, LedgerClient, STATUSES, fit_rect, safe_url
 from floating_native import user32, work_area
 
@@ -41,12 +42,14 @@ class CompanionAPI:
         self._lock = threading.RLock()
         self._origins = {}
         self._shell = None
+        self._schedules = ScheduleClient()
 
     def snapshot(self):
         with self._lock:
             self._catalog = Catalog.read(ROOT / 'index.html')
             statuses = self._client.statuses()
             result = self._response(statuses, catalog=True)
+            result['schedule'] = self._schedules.summary()
             try:
                 result['navigation'] = self.load_navigation()
             except (OSError, ValueError):
@@ -145,9 +148,12 @@ class CompanionAPI:
         return True
 
     def window_action(self, action):
-        if action not in ('pin', 'collapse', 'expand', 'full', 'close', 'left', 'right'):
+        if action not in ('pin', 'collapse', 'expand', 'full', 'close', 'left', 'right', 'schedules'):
             raise ValueError('不支持的窗口操作')
-        if action == 'full':
+        if action == 'schedules':
+            if not webbrowser.open(SCHEDULE_BASE + '/#schedules', new=2):
+                raise RuntimeError('无法打开日程，请先启动 TypeScript 完整版。')
+        elif action == 'full':
             webbrowser.open(self._base + '/', new=2)
         elif self._shell:
             self._shell.action(action)
