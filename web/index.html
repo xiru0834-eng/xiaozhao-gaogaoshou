@@ -6,6 +6,7 @@
 <title>校招高高手 · TypeScript 预览</title>
 
 <meta name="app-token" content="__APP_TOKEN__">
+<meta name="profile-id" content="__PROFILE_ID__">
 </head>
 
 <body>
@@ -31,7 +32,8 @@
         <button class="action icon-button" id="theme-toggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">☼</button>
         <details class="menu"><summary class="action">导出备份 ⌄</summary><div class="menu-panel">
           <button class="action" id="btn-csv" type="button">导出公司与投递 CSV</button>
-          <a class="action" href="/api/backup" download="qiuzhao-backup.db">备份 SQLite 数据库</a>
+          <a class="action" href="/api/backup" download="qiuzhao-backup.db">备份投递进度</a>
+          <a class="action" href="/api/backup?kind=catalog" download="catalog-backup.db">备份公司目录</a>
           <button class="action" id="btn-sql" type="button">导出 SQL 进度</button>
         </div></details>
       </div>
@@ -80,7 +82,7 @@
     <ul>
       <li><strong>这是独立的 TypeScript 预览。</strong>默认资料位于 <code>%LOCALAPPDATA%\XiaozhaoGaogaoshou\profiles\typescript-preview\</code>，不上传 GitHub，不与旧版悬浮助手共享进度。等待右上角显示「已写入 qiuzhao.db」后再关闭。</li>
       <li><strong>关闭重开、电脑重启或清浏览器缓存，不会删除已保存的数据库状态。</strong>请保留资料目录；日常旧台账不会自动迁移到这里。</li>
-      <li><strong>备份：</strong>服务启动时按 UTC 日期备份到资料目录的 <code>backups</code>，也可点击「备份数据库」下载副本。公司目录已迁入 <code>src/shared/catalog.ts</code>；Git 更新不覆盖个人数据库。</li>
+      <li><strong>备份：</strong>启动时按 UTC 日期分别备份进度与目录到资料目录的 <code>backups</code>。公司目录从 <code>catalog.db</code> 动态读取；Git 更新不覆盖个人进度，新公司只追加。</li>
     </ul>
     <h3>几个真会踩的坑</h3>
     <ul>

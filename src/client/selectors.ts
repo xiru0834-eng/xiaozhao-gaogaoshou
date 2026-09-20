@@ -11,7 +11,8 @@ import {
   recruitChannelEvidence,
   F,
   hasCode,
-} from "../shared/catalog.ts";
+  aliasesOf,
+} from "./catalog.ts";
 import {
   APPLIED_STATUSES,
   type CompanyRow,
@@ -151,7 +152,7 @@ export function matches(r: CompanyRow, filters: Filters) {
       " " +
       (RECRUIT_CHANNEL_NAME[recruitChannelOf(r)] || "") +
       " " +
-      recruitChannelEvidence(r)
+      recruitChannelEvidence(r) + ' ' + aliasesOf(r).join(' ')
     ).toLowerCase();
     if (!hay.includes(query)) return false;
   }

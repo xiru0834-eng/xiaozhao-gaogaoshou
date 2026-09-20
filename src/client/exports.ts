@@ -11,7 +11,7 @@ import {
   recruitChannelEvidence,
   F,
   hasCode,
-} from "../shared/catalog.ts";
+} from "./catalog.ts";
 import {
   APPLIED_STATUSES,
   type CompanyRow,
@@ -32,7 +32,7 @@ export function csvCell(v: unknown) {
   const value = String(v == null ? "" : v);
   return /[",\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
 }
-export function exportCsv(state: StatusMap) {
+export function csvText(state: StatusMap) {
   const head = [
     "公司",
     "状态",
@@ -72,9 +72,12 @@ export function exportCsv(state: StatusMap) {
         .join(","),
     );
   }
+  return '\ufeff' + lines.join('\r\n');
+}
+export function exportCsv(state: StatusMap) {
   download(
     "秋招投递进度.csv",
-    "\ufeff" + lines.join("\r\n"),
+    csvText(state),
     "text/csv;charset=utf-8",
   );
 }

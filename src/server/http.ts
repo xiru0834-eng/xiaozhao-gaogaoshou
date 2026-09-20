@@ -109,7 +109,7 @@ export async function startServer(options: ServerOptions) {
           return;
         }
         store.save(updates);
-        send(res, 200, { ok: true });
+        send(res, 200, { ok: true, profileId: profile.profileId });
         return;
       }
       if (req.method !== "GET") {
