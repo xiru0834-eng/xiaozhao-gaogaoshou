@@ -30,7 +30,9 @@ import type { CompanyRow, Status, StatusMap } from "../shared/types.ts";
 import { Progress } from "./progress.ts";
 import { statusApi } from "./api.ts";
 import { sessionFromPage } from "./session.ts";
+import { mountModelSettings } from "./model-settings.ts";
 const session = sessionFromPage();
+mountModelSettings(session);
 // Download links cannot send custom headers, so bind them through a non-secret profile ID.
 document
   .querySelectorAll<HTMLAnchorElement>('a[href^="/api/backup"]')
@@ -851,6 +853,7 @@ document.addEventListener("keydown", (e) => {
       });
   if (
     e.key === "/" &&
+    !required<HTMLElement>(".main-shell > .content").hidden &&
     !element<HTMLDialogElement>("company-detail").open &&
     !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) &&
     !e.target.isContentEditable

@@ -1,3 +1,5 @@
+import { MODEL_ERRORS, ModelError, type ModelErrorCode } from "../shared/model-contract.ts";
+
 interface Credentials {
   profileId: string;
   token: string;
@@ -28,6 +30,24 @@ export function createSession(
   }
   return {
     profileId,
+    /** No automatic retry for a potentially billable request. */
+    async modelRequest(path: string, body?: unknown, signal?: AbortSignal): Promise<Record<string, unknown>> {
+      const res = await transport(path, {
+        method: body === undefined ? "GET" : "POST", cache: "no-store",
+        headers: { ...headers(), "X-App-Token": token, "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.any([AbortSignal.timeout(135000), ...(signal ? [signal] : [])]),
+      });
+      if (res.status === 403) throw new Error("本机会话已过期，请刷新工作台并重新打开模型设置；未自动重试。");
+      const data: unknown = await res.json();
+      if (!data || typeof data !== "object" || !("profileId" in data) || data.profileId !== profileId) throw new Error("资料身份不一致，请重新打开工作台。");
+      if (!res.ok) {
+        const error = "error" in data ? data.error : null;
+        if (error && typeof error === "object" && "code" in error && typeof error.code === "string" && Object.hasOwn(MODEL_ERRORS, error.code)) throw new ModelError(error.code as ModelErrorCode);
+        throw new Error("本机模型服务请求失败，未自动重试。");
+      }
+      return data as Record<string, unknown>;
+    },
     async read(path: string) {
       return response(
         await transport(path, {

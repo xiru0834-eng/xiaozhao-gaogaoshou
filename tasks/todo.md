@@ -62,11 +62,16 @@
 
 ### T07 · 求职设置与密钥存储
 
+- [x] 2026-09-20 用户确认先实现独立模型子集，不依赖 T06：`model-settings.ts`、`model-secrets.ts`、受保护 API；Windows 加密、原子保存、保留/替换/清除、重开、失败保留与版本冲突通过。求职偏好及定时配置仍未完成，下列整体任务保持未勾选。
+
 - [ ] 依赖：T06。范围 M：`src/server/settings.ts`、`src/server/secrets.ts`、`src/server/settings-api.ts`、`tests/local-settings.test.ts`、`tasks/todo.md`。
 - [ ] 验收：默认关闭自动任务；仅必要求职条件；密钥独立保护、不回显、可清除；所有配置调用有本机会话校验。
 - [ ] 验证：临时配置重开、非法字段、第三方 Origin/无 token 请求被拒绝；日志/JSON 不含测试密钥；真实密钥不进入测试用例。
 
 ### T08 · 设置页面与模型连接测试
+
+- [x] 自定义兼容接口设置、保存、实际文本测试/试用、取消、限流、错误分类与桌面/窄屏 UI 已实现，通过本机 HTTP fixture、真实 DPAPI 及浏览器流程验收；详见 [模型验收](../docs/模型设置-需求与验收.md)。
+- [ ] 用户真实提供者的最小生成验收：等待用户在页面输入地址、模型 ID 和 Key 并发起测试，不能用合成响应代替。
 
 - [ ] 依赖：T07。范围 M：`src/server/model-client.ts`、`src/server/http.ts`、`src/client/main.ts`、`tests/model-client.test.ts`、`tasks/todo.md`。
 - [ ] 验收：可配置一种明确支持协议的模型并测试；连接错误分类；无模型时旧台账继续可用；请求限时/限输出并脱敏。
