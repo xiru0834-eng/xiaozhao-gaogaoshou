@@ -15,7 +15,7 @@ import webbrowser
 
 from companion_activity import ActivityJournal
 from floating_model import Catalog, DockState, LedgerClient, STATUSES, fit_rect, safe_url
-from floating_native import work_area
+from floating_native import user32, work_area
 
 ROOT = pathlib.Path(__file__).resolve().parent
 
@@ -164,14 +164,12 @@ class DesktopShell:
 
     def rect(self):
         rect = wintypes.RECT()
-        ctypes.windll.user32.GetWindowRect(wintypes.HWND(self.hwnd), ctypes.byref(rect))
+        user32.GetWindowRect(wintypes.HWND(self.hwnd), ctypes.byref(rect))
         return rect.left, rect.top, rect.right, rect.bottom
 
     def place(self, initial=False):
         if not self.hwnd:
             return
-        user32 = ctypes.windll.user32
-        user32.GetDpiForWindow.argtypes = [wintypes.HWND]
         scale = user32.GetDpiForWindow(self.hwnd) / 96 or 1
         x, y, right, bottom = self.rect()
         area = work_area(x, y)
@@ -211,15 +209,14 @@ class DesktopShell:
         while not self.stop.wait(.1):
             try:
                 point = wintypes.POINT()
-                ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
+                user32.GetCursorPos(ctypes.byref(point))
                 rect = self.rect()
                 x, y, right, bottom = rect
                 inside = x <= point.x < right and y <= point.y < bottom
-                dragging = bool(ctypes.windll.user32.GetAsyncKeyState(1) & 0x8000)
+                dragging = bool(user32.GetAsyncKeyState(1) & 0x8000)
                 self.dock.dragging = dragging
                 # Input focus only blocks auto-hide while our own window is active.
-                ctypes.windll.user32.GetForegroundWindow.restype = wintypes.HWND
-                if ctypes.windll.user32.GetForegroundWindow() != self.hwnd:
+                if user32.GetForegroundWindow() != self.hwnd:
                     self.dock.editing = False
                 if rect != last_rect and dragging:
                     area = work_area(x, y)

@@ -2,7 +2,9 @@
 import ctypes
 from ctypes import wintypes
 
-user32 = ctypes.windll.user32
+# ctypes.windll caches function objects process-wide. Keep our strict signatures
+# private: pywebview passes None for ignored SetWindowPos width/height when moving.
+user32 = ctypes.WinDLL('user32')
 
 
 def enable_dpi():
@@ -22,6 +24,15 @@ user32.MonitorFromPoint.argtypes = [wintypes.POINT, wintypes.DWORD]
 user32.MonitorFromPoint.restype = wintypes.HANDLE
 user32.GetMonitorInfoW.argtypes = [wintypes.HANDLE, ctypes.POINTER(MonitorInfo)]
 user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT]
+user32.SetWindowPos.restype = wintypes.BOOL
+user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+user32.GetWindowRect.restype = wintypes.BOOL
+user32.GetDpiForWindow.argtypes = [wintypes.HWND]
+user32.GetDpiForWindow.restype = wintypes.UINT
+user32.GetCursorPos.argtypes = [ctypes.POINTER(wintypes.POINT)]
+user32.GetCursorPos.restype = wintypes.BOOL
+user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
+user32.GetAsyncKeyState.restype = ctypes.c_short
 user32.GetForegroundWindow.restype = wintypes.HWND
 user32.IsChild.argtypes = [wintypes.HWND, wintypes.HWND]
 
