@@ -16,9 +16,21 @@
 .footer{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface);border-top:1px solid var(--line);flex-shrink:0;min-height:35px}.save-dot{width:5px;height:5px;flex-shrink:0;border-radius:50%;background:var(--brand)}.footer p{font-size:10px;color:var(--muted);margin:0;flex:1;line-height:1.5}.footer.error p{color:var(--alert)}.footer.error .save-dot{background:var(--alert)}.footer button{font-size:10px;color:var(--brand);padding:2px}.toast{position:fixed;bottom:45px;left:12px;right:12px;background:var(--ink);color:var(--surface);box-shadow:var(--shadow);border-radius:10px;padding:11px 13px;font-size:12px;display:flex;align-items:center;gap:8px;z-index:5}.toast span{flex:1}.toast button{color:var(--surface);text-decoration:underline;white-space:nowrap}
 .sheet{position:absolute;z-index:4;top:52px;left:8px;right:8px;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:12px;padding:16px;max-height:calc(100vh - 90px);overflow:auto}.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.sheet h2{font-size:15px;margin:0}.sheet p{font-size:11px;color:var(--muted);line-height:1.8}.sheet ul{list-style:none;padding:0;margin:12px 0}.sheet li{padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}.sheet li small{float:right;color:var(--brand)}.menu-grid{display:grid;gap:6px}.menu-grid button{text-align:left;padding:9px 10px;border-radius:8px;background:var(--bg);font-size:12px}
 .edge{display:none;width:100vw;height:100vh;align-items:center;justify-content:center;background:var(--brand);color:var(--surface);border-radius:9px 0 0 9px;border:1px solid var(--line);padding:0;flex-direction:column;gap:6px;font-size:11px;line-height:1.3}.edge img{width:22px;height:22px}body.collapsed .app{display:none}body.collapsed .edge{display:flex}:root[data-theme=dark] .edge{color:#14201b}.skeleton{height:52px;border-radius:10px;background:var(--line);opacity:.5;margin:8px}
-@media(max-height:590px){.intro{padding:9px 16px 7px}.intro h1{font-size:16px}.intro p{display:none}.today{padding:4px 8px}.today small{font-size:9px}.today b{font-size:15px}.selected{padding-top:9px}.source-note{display:none}.list{min-height:40px}.selection-title p{margin-bottom:6px;-webkit-line-clamp:1}.titlebar{height:46px}.tabs{margin-top:4px}.filters{margin:6px 0}.sheet{top:46px}.toolbar{position:relative}.filter-extra{position:absolute;top:100%;left:10px;right:10px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:3}}
-@media(max-width:340px){.toolbar{padding:0 10px}.intro,.selected,.footer{padding-left:10px;padding-right:10px}.brand small{display:none}.brand strong{font-size:12px}.titlebar{padding:7px 9px;gap:3px}.icon-btn{padding:6px;min-width:28px}.intro h1{font-size:16px}.tabs{gap:13px}.company-row{gap:7px}.initial{width:30px;height:30px;flex-basis:30px}}
-.selected{position:relative}.selection-title h2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.detail-body{position:absolute;bottom:100%;left:8px;right:8px;z-index:3;max-height:min(220px,35vh);background:var(--surface);padding:12px;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+/* List-first companion: panels stay in flow, never over company rows. */
+.titlebar{height:48px;padding:6px 10px}.brand img{width:28px;height:28px}.brand small{font-size:9px}
+.activity-line{display:flex;align-items:center;justify-content:space-between;padding:5px 12px;gap:8px;flex-shrink:0;color:var(--muted);font-size:10px}
+.activity-line p{margin:0}.today{border:0;background:transparent;padding:1px 0;gap:5px;border-radius:5px;font-size:10px}.today b{font-size:13px}.today:hover{color:var(--brand)}
+.toolbar{padding:0 12px}.search-row{display:flex;align-items:stretch;gap:6px}.search{flex:1;min-width:0;padding:7px 9px;border-radius:9px}.search svg{width:16px;height:16px}.search input{font-size:12px}.filter-collapse{min-width:42px;padding:4px 7px;font-size:10px}
+.tabs{margin-top:3px;gap:20px}.tab{padding:7px 0 6px}.filters{margin:7px 0 0;gap:6px}.chip{padding:4px 7px}.filter-extra{padding:7px 0 0}.filter-extra select{padding:4px}
+.browse-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px;color:var(--muted);font-size:10px}.filter-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.result-count{font-variant-numeric:tabular-nums}
+.list{min-height:64px;padding:0 6px 4px;scrollbar-gutter:stable}.company-row{padding:5px 7px;gap:8px;margin:0;min-height:50px;border-radius:8px}.company-row[aria-pressed=true]{border-color:var(--brand);background:var(--soft);box-shadow:inset 3px 0 var(--brand)}.company-row:hover{background:var(--hover)}.initial{width:30px;height:30px;flex-basis:30px;border-radius:8px;font-size:12px}.company-text strong{font-size:12px}.company-text small{margin-top:1px;font-size:10px}.badge{font-size:10px;padding:2px 5px}.comfortable .company-row{min-height:62px;padding-top:10px;padding-bottom:10px}
+.selected{padding:9px 12px 10px;box-shadow:none;border-top:1px solid var(--line)}.selection-head{align-items:center;margin-bottom:8px}.selection-title h2{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}.selection-caption{font-size:9px;color:var(--muted);display:block}.panel-toggle{display:flex;align-items:center;gap:4px;flex-shrink:0;padding:6px 8px;border:1px solid var(--line);border-radius:7px;color:var(--brand);font-size:10px}.panel-toggle:hover{background:var(--soft)}.panel-toggle svg{width:12px;height:12px;transition:transform .15s}.panel-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+.selection-body{max-height:min(220px,calc(100vh - 448px));overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;margin-bottom:8px;padding-right:3px}.role-line{font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.6}.code-box{padding:7px 9px;margin-bottom:4px}.code-meta code{font-size:13px}.source-note{margin:0 0 8px;font-size:9px}.workflow{margin:0 0 8px;flex-wrap:wrap;gap:6px}.workflow label{display:flex;align-items:center;gap:6px;flex:1;min-width:0}.workflow select{min-width:0;max-width:120px;flex:1}.workflow .btn{font-size:10px;min-height:30px;padding:5px 8px}
+.detail-toggle{min-height:28px;display:block;padding:4px 0;font-size:10px}.detail-body{position:static;max-height:none;padding:7px 9px;margin:4px 0 0;background:var(--bg);border:1px solid var(--line);border-radius:7px;font-size:10px;box-shadow:none;line-height:1.7}
+.quick-actions{display:flex;gap:6px}.quick-actions .btn{min-height:32px;padding:6px 8px;font-size:11px}.quick-actions .previous{min-width:30px;padding:3px;border:1px solid var(--line);border-radius:8px}.quick-actions .next{margin:0;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);white-space:nowrap}.quick-actions .next:hover,.quick-actions .previous:hover{background:var(--soft)}
+.footer{min-height:27px;padding:5px 12px}.footer p{font-size:9px}.footer button{min-height:22px}.sheet{top:48px}.toast{top:54px;bottom:auto;font-size:11px;padding:9px 11px}.menu-grid button[aria-pressed=true]{background:var(--soft);color:var(--brand)}
+@media(max-width:340px){.brand small{display:none}.brand strong{font-size:12px}.titlebar{gap:3px;padding-left:9px;padding-right:9px}.icon-btn{padding:6px;min-width:28px}.toolbar{padding:0 10px}.tabs{gap:16px}.activity-line,.selected,.footer{padding-left:10px;padding-right:10px}.filter-collapse{min-width:38px}.search input{font-size:11px}}
+@media(max-height:590px){.titlebar{height:44px}.activity-line{padding-top:3px;padding-bottom:3px}.sheet{top:44px}.selection-body{max-height:112px}.tab{padding-top:5px;padding-bottom:5px}.filters{margin-top:5px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style></head><body>
 <div class="app">
@@ -28,27 +40,32 @@
   <button id="collapse" class="icon-btn" aria-label="收起到屏幕边缘" title="收起到屏幕边缘"><svg viewBox="0 0 24 24"><path d="M5 5v14M11 7l5 5-5 5M19 5v14"/></svg></button>
   <button id="more" class="icon-btn" aria-label="更多设置" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
  </header>
- <section class="intro"><div><h1>机会，慢慢靠近。</h1><p id="date-line">今天的进度，一起记好。</p></div><button id="today" class="today" aria-expanded="false"><span><small>今日记录投递</small><b id="today-count">—</b><small style="display:inline;margin-left:4px">家</small></span><span class="arrow">›</span></button></section>
+ <section class="activity-line" aria-label="今日进度"><p id="date-line">今天，一家一家来。</p><button id="today" class="today" aria-expanded="false" aria-controls="today-sheet">今日记录 <b id="today-count">—</b> 家 <span aria-hidden="true">›</span></button></section>
  <section class="toolbar" aria-label="搜索与筛选">
-  <label class="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="search" placeholder="找公司、Agent 岗位、城市…" aria-label="搜索公司、岗位或城市" autocomplete="off"><button class="clear" id="clear" aria-label="清空搜索" type="button" hidden>×</button></label>
+  <div class="search-row"><label class="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="search" placeholder="公司、岗位、城市…" aria-label="搜索公司、岗位或城市" autocomplete="off"><button class="clear" id="clear" aria-label="清空搜索" type="button" hidden>×</button></label><button id="filters-collapse" class="chip filter-collapse" aria-expanded="true" aria-controls="filter-panel" aria-label="收起筛选区域">收起</button></div>
+  <div id="filter-panel">
   <nav class="tabs" aria-label="常用投递状态"><button class="tab" data-tab="all" aria-pressed="true">全部 <b id="total">—</b></button><button class="tab" data-tab="未投" aria-pressed="false">待投递 <b id="todo">—</b></button><button class="tab" data-tab="applied" aria-pressed="false">已投递 <b id="applied">—</b></button></nav>
-  <div class="filters"><button id="filter-toggle" class="chip" aria-expanded="false">筛选 ▾</button><button id="only-code" class="chip" aria-pressed="false">有内推码</button><button id="recent" class="chip" aria-pressed="false">最近新增</button><span class="result-count" id="count">加载中</span></div>
+  <div class="filters"><button id="filter-toggle" class="chip" aria-expanded="false" aria-controls="filter-extra">筛选 ▾</button><button id="only-code" class="chip" aria-pressed="false">有内推码</button><button id="recent" class="chip" aria-pressed="false">最近新增</button></div>
   <div class="filter-extra" id="filter-extra" hidden><label>公司性质<select id="owner"><option>全部性质</option><option>私企</option><option>外企</option><option>央国企</option><option>科研/事业单位</option></select></label><label>具体进度<select id="stage"><option>全部进度</option><option>未投</option><option>已投</option><option>笔试</option><option>面试</option><option>Offer</option><option>结束</option><option>无合适岗位</option></select></label></div>
+  </div><div class="browse-meta"><span id="filter-summary" class="filter-summary">全部公司</span><span class="result-count" id="count" aria-live="polite">加载中</span></div>
  </section>
  <ul id="companies" class="list" aria-label="公司列表"><li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li></ul>
  <section class="selected" id="selected" aria-label="当前公司操作" hidden>
-  <div class="selection-head"><div class="selection-title"><h2 id="company-name"></h2><p id="company-roles"></p></div><button class="detail-toggle" id="details-toggle" aria-expanded="false">详情 ▾</button></div>
-  <div class="detail-body" id="details" hidden></div>
+  <div class="selection-head"><div class="selection-title"><span class="selection-caption" id="selection-caption">当前公司</span><h2 id="company-name"></h2></div><button class="panel-toggle" id="panel-toggle" aria-expanded="false" aria-controls="selection-body"><span id="panel-label">内推 / 进度</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 10 4-4 4 4"/></svg></button></div>
+  <div id="selection-body" class="selection-body" hidden>
+  <p id="company-roles" class="role-line"></p>
   <div class="code-box"><div class="code-meta"><small>公开内推码</small><code id="code"></code></div><button id="copy" class="code-copy"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 5V3H4v13h2"/></svg>复制</button></div>
   <p class="source-note">公开来源未经实测 · 先核验批次，再填写推荐码</p>
-  <div class="actions"><button class="btn primary" id="open">去官网投递 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></svg></button><button class="btn soft" id="mark">✓ 记为已投</button></div>
-  <div class="workflow"><span>当前进度</span><select id="status" aria-label="修改当前公司的投递状态"><option>未投</option><option>已投</option><option>笔试</option><option>面试</option><option>Offer</option><option>结束</option><option>无合适岗位</option></select><button class="previous" id="previous" aria-label="上一家公司">‹</button><button class="next" id="next">下一家 ›</button></div>
+  <div class="workflow"><label>进度<select id="status" aria-label="修改当前公司的投递状态"><option>未投</option><option>已投</option><option>笔试</option><option>面试</option><option>Offer</option><option>结束</option><option>无合适岗位</option></select></label><button class="btn soft" id="mark">✓ 记为已投</button></div>
+  <button class="detail-toggle" id="details-toggle" aria-expanded="false" aria-controls="details">来源与岗位说明 ▾</button><div class="detail-body" id="details" hidden></div>
+  </div>
+  <div class="quick-actions"><button class="btn primary" id="open">去官网投递 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></svg></button><button class="previous" id="previous" aria-label="上一家公司" title="上一家公司">‹</button><button class="next" id="next">下一家 ›</button></div>
  </section>
  <footer class="footer" id="footer"><span class="save-dot"></span><p id="save-message" role="status" aria-live="polite">正在连接本地台账…</p><button id="retry" hidden>重试</button></footer>
 </div>
 <button class="edge" id="edge" aria-label="展开校招高高手"><img src="__MASCOT__" alt=""><span>校<br>招</span><span>‹</span></button>
 <section id="today-sheet" class="sheet" aria-label="今日记录明细" hidden><div class="sheet-head"><h2>今天留下的脚印</h2><button class="icon-btn sheet-close" aria-label="关闭今日明细">×</button></div><p>只记录在小助手里确认并保存成功的投递，同一家每天只算一次。历史和其他窗口的操作不补猜。</p><ul id="today-list"></ul><p>按本机日期统计。误标后改回“未投”，会撤销当天这条计数。</p></section>
-<section id="menu-sheet" class="sheet" aria-label="窗口设置" hidden><div class="sheet-head"><h2>按你的习惯来</h2><button class="icon-btn sheet-close" aria-label="关闭设置">×</button></div><p>拖动顶部标题移动小窗，固定后会一直陪在网页旁。</p><div class="menu-grid"><button id="theme">切换深色 / 浅色</button><button data-window="full">打开完整台账 ↗</button><button data-window="left">贴到左边</button><button data-window="right">贴到右边</button><button data-window="close">退出小助手</button></div></section>
+<section id="menu-sheet" class="sheet" aria-label="窗口设置" hidden><div class="sheet-head"><h2>按你的习惯来</h2><button class="icon-btn sheet-close" aria-label="关闭设置">×</button></div><p>拖动顶部标题移动小窗，固定后会一直陪在网页旁。</p><div class="menu-grid"><button id="density" aria-pressed="false">列表密度：紧凑 · 切换为宽松</button><button id="theme">切换深色 / 浅色</button><button data-window="full">打开完整台账 ↗</button><button data-window="left">贴到左边</button><button data-window="right">贴到右边</button><button data-window="close">退出小助手</button></div></section>
 <div id="toast" class="toast" hidden role="status"><span id="toast-text"></span><button id="undo" hidden>撤销</button><button id="toast-close" aria-label="关闭提示">×</button></div>
 <script>
 'use strict';
@@ -56,6 +73,29 @@ const $=id=>document.getElementById(id), applied=new Set(['已投','笔试','面
 let bridge, companies=[], statuses={}, selected='', filtered=[], tab='all', onlyCode=false, recent=false, ready=false, saving=false, pending=null, undo=null, pollBusy=false, toastTimer, editVersion=0;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hasCode=r=>/^[A-Za-z0-9]{4,24}$/.test(r.code||'');
+const layout={selection:false,filters:true,comfortable:false};
+try{const saved=JSON.parse(localStorage.getItem('companion-layout-v1')||'{}');for(const key of Object.keys(layout)){if(typeof saved?.[key]==='boolean')layout[key]=saved[key];}}catch(e){}
+function rememberLayout(){try{localStorage.setItem('companion-layout-v1',JSON.stringify(layout));}catch(e){}}
+function closeSource(){
+ if($('details').contains(document.activeElement))$('details-toggle').focus();
+ $('details').hidden=true;$('details-toggle').setAttribute('aria-expanded','false');
+}
+function setDisclosure(kind,open,persist=true){
+ const panel=$(kind==='selection'?'selection-body':'filter-panel');
+ const toggle=$(kind==='selection'?'panel-toggle':'filters-collapse');
+ if(!open&&panel.contains(document.activeElement))toggle.focus();
+ layout[kind]=open;panel.hidden=!open;toggle.setAttribute('aria-expanded',open);
+ if(kind==='selection'){$('panel-label').textContent=open?'收起详情':'内推 / 进度';if(!open)closeSource();}
+ else{toggle.textContent=open?'收起':'筛选';toggle.setAttribute('aria-label',open?'收起筛选区域':'展开筛选区域');}
+ if(persist)rememberLayout();
+}
+function setDensity(comfortable,persist=true){
+ layout.comfortable=comfortable;document.body.classList.toggle('comfortable',comfortable);
+ $('density').setAttribute('aria-pressed',comfortable);
+ $('density').textContent=comfortable?'列表密度：宽松 · 切换为紧凑':'列表密度：紧凑 · 切换为宽松';
+ if(persist)rememberLayout();
+}
+setDisclosure('selection',layout.selection,false);setDisclosure('filters',layout.filters,false);setDensity(layout.comfortable,false);
 function note(text,error=false){$('save-message').textContent=text;$('footer').classList.toggle('error',error);$('retry').hidden=!error;}
 function toast(text,action=null){clearTimeout(toastTimer);$('toast-text').textContent=text;$('toast').hidden=false;undo=action;$('undo').hidden=!action;toastTimer=setTimeout(()=>$('toast').hidden=true,action?10000:3200);}
 function closeSheets(){$('today-sheet').hidden=$('menu-sheet').hidden=true;$('today').setAttribute('aria-expanded','false');$('more').setAttribute('aria-expanded','false');interaction();}
@@ -67,7 +107,7 @@ function setSnapshot(data){
  if(pending)statuses[pending.name]=pending.status;
  $('today-count').textContent=data.todayUnavailable?'—':String((data.today||[]).length);
  $('today-list').innerHTML=(data.today||[]).length?data.today.map(n=>`<li>${esc(n)}<small>已记录 ✓</small></li>`).join(''):'<li>今天还没有记录。投完一家，点「记为已投」就好。</li>';
- $('date-line').textContent=`${data.date||''} · 每一步都算数`;
+ $('date-line').textContent=`${data.date||''} · 一家一家来`;
  if(data.shell)window.shellState(data.shell);
  if(data.warning)note(data.warning,true);
  ready=true;if(changed)render();
@@ -80,9 +120,11 @@ function render(){
   return (!query||[c.name,c.roles,c.city,c.code,c.note,c.industry,c.owner].join(' ').toLowerCase().includes(query))&&
   (tab==='all'||(tab==='applied'?applied.has(st):st===tab))&&(owner==='全部性质'||c.owner===owner)&&(stage==='全部进度'||st===stage)&&(!onlyCode||hasCode(c))&&(!recent||c.added);
  });
- if(!filtered.some(c=>c.name===selected))selected=filtered[0]?.name||'';
+ if(!filtered.some(c=>c.name===selected)){selected=filtered[0]?.name||'';closeSource();}
  $('count').textContent=`${filtered.length} 家`;$('clear').hidden=!query;
  $('filter-toggle').textContent=(owner!=='全部性质'||stage!=='全部进度')?'筛选 · 已生效':'筛选 ▾';
+ const conditions=[tab==='applied'?'已投递':tab==='未投'?'待投递':'',owner==='全部性质'?'':owner,stage==='全部进度'?'':stage,onlyCode?'有内推码':'',recent?'最近新增':''].filter(Boolean);
+ $('filter-summary').textContent=conditions.join(' · ')||'全部公司';$('filter-summary').title=conditions.join(' · ')||'全部公司';
  const scroll=$('companies').scrollTop;
  $('companies').innerHTML=filtered.length?filtered.map(c=>{
   const st=statuses[c.name]||'未投',badge=applied.has(st)?'done':'';
@@ -93,6 +135,7 @@ function render(){
 function renderDetail(){
  const c=current();$('selected').hidden=!c;if(!c)return;
  const st=statuses[c.name]||'未投';
+ $('selection-caption').textContent=`当前公司 · ${st}${hasCode(c)?' · 有内推码':''}`;
  $('company-name').textContent=c.name;$('company-name').title=c.name;$('company-roles').textContent=c.roles+' · '+c.city;
  $('details').textContent=`${c.owner} · ${c.industry}\n截止：${c.deadline||'日期待核实'} / ${c.deadlineText}\n来源 / 备用码：${c.source||'未提供'}\n${c.note}\n入口：${c.url||'见备注'}`;
  $('code').textContent=hasCode(c)?c.code:'暂未收录';$('copy').disabled=!hasCode(c);
@@ -119,12 +162,15 @@ async function refresh(){
 function interaction(){if(bridge?.interaction){const tag=document.activeElement?.tagName;bridge.interaction(!document.hasFocus()?false:(['INPUT','SELECT'].includes(tag)||!$('menu-sheet').hidden||!$('today-sheet').hidden),saving||!!pending).catch(()=>{});}}
 window.shellState=s=>{document.body.classList.toggle('collapsed',!!s.collapsed);$('pin').setAttribute('aria-pressed',!!s.pinned);$('pin').title=s.pinned?'已固定，点击恢复自动收起':'固定后，离开也不收起';};
 async function shell(action){if((saving||pending)&&['collapse','close'].includes(action)){toast('还有状态没保存好，先重试一下。');return;}closeSheets();try{window.shellState(await bridge.window_action(action));}catch(e){toast('窗口操作失败，请稍后重试。');}}
-function step(delta){if(!filtered.length)return;const i=filtered.findIndex(c=>c.name===selected);selected=filtered[(i+delta+filtered.length)%filtered.length].name;render();document.querySelector('.company-row[aria-pressed=true]')?.scrollIntoView({block:'nearest'});}
+function step(delta){if(!filtered.length)return;const i=filtered.findIndex(c=>c.name===selected);selected=filtered[(i+delta+filtered.length)%filtered.length].name;closeSource();render();document.querySelector('.company-row[aria-pressed=true]')?.scrollIntoView({block:'nearest'});}
+$('panel-toggle').onclick=()=>setDisclosure('selection',!layout.selection);
+$('filters-collapse').onclick=()=>setDisclosure('filters',!layout.filters);
+$('density').onclick=()=>{setDensity(!layout.comfortable);closeSheets();};
 $('search').addEventListener('input',render);$('clear').onclick=()=>{$('search').value='';render();$('search').focus();};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;$('stage').value='全部进度';document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
 $('filter-toggle').onclick=()=>{const show=$('filter-extra').hidden;$('filter-extra').hidden=!show;$('filter-toggle').setAttribute('aria-expanded',show);};
 $('only-code').onclick=()=>{onlyCode=!onlyCode;$('only-code').setAttribute('aria-pressed',onlyCode);render();};$('recent').onclick=()=>{recent=!recent;$('recent').setAttribute('aria-pressed',recent);render();};$('owner').onchange=$('stage').onchange=render;
-$('companies').onclick=e=>{if(e.target.closest('#reset'))return reset();const b=e.target.closest('[data-name]');if(b){selected=b.dataset.name;$('details').hidden=true;$('details-toggle').setAttribute('aria-expanded','false');render();}};
+$('companies').onclick=e=>{if(e.target.closest('#reset'))return reset();const b=e.target.closest('[data-name]');if(b){selected=b.dataset.name;closeSource();render();}};
 $('copy').onclick=async()=>{if(!current())return;try{const code=await bridge.copy_code(selected);if(!window.pywebview)await navigator.clipboard.writeText(code);toast('内推码已复制，去表单粘贴吧。');}catch(e){toast('复制失败，可在详情中选择文字手动复制。');}};
 $('open').onclick=async()=>{try{await bridge.open_role(selected);toast('入口已打开，投完后再记为已投。');}catch(e){toast('入口未打开，请在详情中查看网址。');}};
 $('mark').onclick=()=>save(selected,'已投');$('status').onchange=()=>save(selected,$('status').value);$('next').onclick=()=>step(1);$('previous').onclick=()=>step(-1);
@@ -134,7 +180,7 @@ $('pin').onclick=()=>shell('pin');$('collapse').onclick=()=>shell('collapse');$(
 $('today').onclick=()=>{const show=$('today-sheet').hidden;closeSheets();$('today-sheet').hidden=!show;$('today').setAttribute('aria-expanded',show);interaction();};$('more').onclick=()=>{const show=$('menu-sheet').hidden;closeSheets();$('menu-sheet').hidden=!show;$('more').setAttribute('aria-expanded',show);interaction();};document.querySelectorAll('.sheet-close').forEach(b=>b.onclick=closeSheets);
 try{document.documentElement.dataset.theme=localStorage.getItem('companion-theme')||'light';}catch(e){}
 $('theme').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('companion-theme',t);}catch(e){}closeSheets();};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('today-sheet').hidden||!$('menu-sheet').hidden)closeSheets();else shell('collapse');}if(e.ctrlKey&&e.key==='f'){e.preventDefault();$('search').focus();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('today-sheet').hidden||!$('menu-sheet').hidden)closeSheets();else if(!$('details').hidden)closeSource();else if(layout.selection)setDisclosure('selection',false);else if(layout.filters)setDisclosure('filters',false);else shell('collapse');}if(e.ctrlKey&&e.key==='f'){e.preventDefault();$('search').focus();}});
 document.addEventListener('focusin',interaction);document.addEventListener('focusout',()=>setTimeout(interaction,0));window.addEventListener('blur',interaction);window.addEventListener('focus',()=>{interaction();refresh();});window.addEventListener('beforeunload',e=>{if(pending||saving){e.preventDefault();e.returnValue='';}});
 function start(api){if(bridge)return;bridge=api;refresh();setInterval(refresh,5000);}
 window.addEventListener('pywebviewready',()=>start(window.pywebview.api));
