@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/repository-cover.svg" width="100%" alt="校招高高手 · 下一家，准备好了。一个本机优先的校招工作台。">
+  <a href="docs/posters/01-opportunity-workspace.png"><img src="docs/posters/01-opportunity-workspace.png" width="100%" alt="校招高高手品牌海报：机会很多，下一步要清楚。薄荷色吉祥物陪伴整理抽象机会卡片，不含真实求职信息。"></a>
 </p>
 
 <p align="center">
@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="#posters">品牌海报</a> ·
   <a href="#ui">界面预览</a> ·
   <a href="#features">功能导览</a> ·
   <a href="#quick-start">快速开始</a> ·
@@ -22,6 +23,27 @@
 `TypeScript` · `Node.js 24.x` · `SQLite` · `本机保存` · `薄荷石墨`
 
 > **分享版说明** · 当前是私有仓库的邀请制源码版，非免安装 EXE、非在线多人系统。Git 更新代码；每个人的投递记录留在自己的电脑上。
+
+<a name="posters"></a>
+
+## 把下一步，留给从容的自己
+
+**整理机会 · 轻巧陪伴 · 自己掌握。** 三张品牌海报，用同一个小伙伴讲清楚我们想做的工具。
+
+<table>
+  <tr>
+    <td width="50%"><a href="docs/posters/02-desktop-companion.png"><img src="docs/posters/02-desktop-companion.png" width="100%" alt="贴边陪伴主题宣传海报：小窗陪着投，大窗用来看。"></a></td>
+    <td width="50%"><a href="docs/posters/03-local-and-model.png"><img src="docs/posters/03-local-and-model.png" width="100%" alt="本地优先主题宣传海报：记录留在本机，AI 由你开启。"></a></td>
+  </tr>
+  <tr>
+    <td><strong>02 / 给招聘网页，多留一点空间。</strong><br><sub>贴边收起、固定展开、下一家——兼容版小助手。</sub></td>
+    <td><strong>03 / 记录是自己的，模型是可选的。</strong><br><sub>本地保存与备份；主动调用模型会发送输入内容，可能计费。</sub></td>
+  </tr>
+</table>
+
+<sub>封面及以上两张为品牌创意插画，不是应用实拍；不含简历、个人投递记录、真实公司清单或内推码。实际界面见下方截图。</sub>
+
+[查看三张高清海报与文案](docs/posters/README.md) · [复用设计提示词](docs/posters/prompts.md)
 
 <a name="ui"></a>
 
