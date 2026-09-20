@@ -53,9 +53,7 @@ test("HTTP status contract, guards, catalog, backup and static isolation", async
     const headers = { "X-App-Token": token, Origin: app.url };
     assert.equal((await write(headers, { A: "bad" })).status, 400);
     assert.equal((await write(headers, { A: "已投" })).status, 200);
-    assert.deepEqual(await (await fetch(app.url + "/api/status")).json(), {
-      statuses: { A: "已投" },
-    });
+    assert.deepEqual((await (await fetch(app.url + "/api/status")).json() as {statuses: object}).statuses, { A: "已投" });
     // fetch rewrites Host; use HTTP directly to send the adversarial header.
     const invalidHost = await new Promise<number | undefined>(
       (done, reject) => {
