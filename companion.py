@@ -46,7 +46,57 @@ class CompanionAPI:
         with self._lock:
             self._catalog = Catalog.read(ROOT / 'index.html')
             statuses = self._client.statuses()
-            return self._response(statuses, catalog=True)
+            result = self._response(statuses, catalog=True)
+            try:
+                result['navigation'] = self.load_navigation()
+            except (OSError, ValueError):
+                result['navigationError'] = '浏览位置读取失败，原文件已保留。'
+            return result
+
+    @staticmethod
+    def _validate_point(point):
+        if point is None:
+            return
+        strings = ('name', 'anchor', 'query', 'owner', 'stage', 'tab')
+        if not isinstance(point, dict) or set(point) != set(strings + ('offset', 'scroll', 'onlyCode', 'recent')):
+            raise ValueError('浏览位置格式无效')
+        if any(not isinstance(point[k], str) or len(point[k]) > 500 for k in strings):
+            raise ValueError('浏览位置文字无效')
+        if any(type(point[k]) not in (int, float) or not 0 <= point[k] <= 10000000 for k in ('offset', 'scroll')):
+            raise ValueError('浏览位置坐标无效')
+        if any(type(point[k]) is not bool for k in ('onlyCode', 'recent')):
+            raise ValueError('浏览位置筛选无效')
+        if point['tab'] not in ('all', '未投', 'applied') or point['stage'] not in ('全部进度', *STATUSES):
+            raise ValueError('浏览位置进度无效')
+        if point['owner'] not in ('全部性质', '私企', '外企', '央国企', '科研/事业单位'):
+            raise ValueError('浏览位置性质无效')
+
+    def load_navigation(self):
+        with self._lock:
+            path = self._directory / 'companion-navigation-preferences.json'
+            if not path.exists():
+                return dict(bookmark=None, browse=None)
+            if path.stat().st_size > 20000:
+                raise ValueError('浏览位置文件过大')
+            data = json.loads(path.read_text(encoding='utf-8'))
+            if not isinstance(data, dict) or set(data) != {'bookmark', 'browse'}:
+                raise ValueError('浏览位置文件无效')
+            for point in data.values():
+                self._validate_point(point)
+            return data
+
+    def save_navigation(self, kind, point):
+        if kind not in ('bookmark', 'browse'):
+            raise ValueError('浏览位置类型无效')
+        self._validate_point(point)
+        with self._lock:
+            data = self.load_navigation()
+            data[kind] = point
+            path = self._directory / 'companion-navigation-preferences.json'
+            temp = path.with_suffix('.tmp')
+            temp.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+            os.replace(temp, path)
+            return True
 
     def _response(self, statuses, catalog=False):
         result = dict(statuses=statuses, today=self._journal.names() if self._journal else [],

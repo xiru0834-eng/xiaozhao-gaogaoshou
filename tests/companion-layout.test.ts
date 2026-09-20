@@ -7,7 +7,7 @@ const html = readFileSync(new URL('../companion.html', import.meta.url), 'utf8')
 const script = html.match(/<script>([\s\S]*?)<\/script>/)![1];
 
 // Execute the shipped view script; no real bridge, SQLite or personal records.
-function harness(stored = '{}') {
+function harness(stored = '{}', navigation: any = {bookmark:null,browse:null}) {
   const writes: Array<[string, string]> = [];
   const nodes = new Map<string, any>();
   const listeners: Record<string, Function> = {};
@@ -19,7 +19,7 @@ function harness(stored = '{}') {
     return { id, hidden: false, value: '', textContent: '', innerHTML: '', scrollTop: 0, dataset: {}, childNodes: [{ textContent: '' }],
       setAttribute: (key: string, value: unknown) => { attrs[key] = String(value); }, getAttribute: (key: string) => attrs[key],
       classList: { toggle: (key: string, on: boolean) => on ? classes.add(key) : classes.delete(key), contains: (key: string) => classes.has(key) },
-      addEventListener() {}, contains: (other: any) => other?.parent === id,
+      addEventListener() {}, querySelectorAll: () => [], getBoundingClientRect: () => ({top:0,bottom:50}), contains: (other: any) => other?.parent === id,
       focus() { doc.activeElement = this; }, scrollIntoView() {} };
   }
   for (const match of html.matchAll(/<[^>]+\bid="([^"]+)"[^>]*>/g)) {
@@ -37,7 +37,7 @@ function harness(stored = '{}') {
   vm.runInContext(script, context);
   const run = (code: string) => vm.runInContext(code, context);
   const companies = ['测试甲', '测试乙'].map(name => ({ name, owner: '私企', city: '上海', roles: 'Agent', code: 'ABCD', url: 'https://example.com', industry: 'AI' }));
-  run(`setSnapshot(${JSON.stringify({ companies, statuses: {}, today: [], date: '2026-09-20' })})`);
+  run(`setSnapshot(${JSON.stringify({ companies, statuses: {}, today: [], date: '2026-09-20', navigation })})`);
   return { run, nodes, writes, doc, listeners };
 }
 
@@ -98,4 +98,57 @@ test('switching companies resets source disclosure, empty results hide actions',
   assert.equal(h.nodes.get('details').hidden, true);
   h.nodes.get('search').value = '无匹配公司'; h.run('render()');
   assert.equal(h.nodes.get('selected').hidden, true);
+});
+
+const point = {name:'测试乙',anchor:'测试乙',offset:0,scroll:50,query:'测试',owner:'私企',stage:'全部进度',tab:'未投',onlyCode:true,recent:false};
+test('initial snapshot restores browse position once; polling does not reset it', () => {
+  const h = harness('{}', {bookmark:null,browse:point});
+  assert.equal(h.run('selected'), '测试乙');
+  assert.equal(h.nodes.get('owner').value, '私企');
+  assert.equal(h.nodes.get('companies').scrollTop, 50);
+  h.run('selected="测试甲"; setSnapshot({statuses:{},navigation:{browse:null}})');
+  assert.equal(h.run('selected'), '测试甲');
+});
+test('bookmark restores filters and never writes application statuses or overwrites bookmark', () => {
+  const h = harness('{}', {bookmark:point,browse:null});
+  h.run('statuses={"测试乙":"已投"}; restorePosition(bookmark,true)');
+  assert.equal(h.run('selected'), '测试乙');
+  assert.equal(h.run('tab'), 'all'); // Status changed since marking: explicitly relax filters.
+  assert.equal(h.run('statuses["测试乙"]'), '已投');
+  assert.equal(h.run('bookmark.tab'), '未投');
+  assert.match(h.nodes.get('toast-text').textContent, /筛选/);
+});
+test('removed company leaves current context intact and gives an explanation', () => {
+  const h = harness();
+  h.run(`restorePosition(${JSON.stringify({...point,name:'已移除'})},true)`);
+  assert.equal(h.run('selected'), '测试甲');
+  assert.match(h.nodes.get('toast-text').textContent, /不在/);
+});
+test('anchor uses visible list row, not unrelated selected detail company', () => {
+  const h = harness();
+  h.nodes.get('companies').scrollTop = 57;
+  h.nodes.get('companies').querySelectorAll = () => [{dataset:{name:'测试乙'},getBoundingClientRect:()=>({top:-7,bottom:43})}];
+  const value = h.run('capturePosition()');
+  assert.equal(value.name, '测试甲');
+  assert.equal(value.anchor, '测试乙');
+  assert.equal(value.offset, 7);
+});
+
+test('manual bookmark acknowledges durable save; failure retains original marker', async () => {
+  const h = harness('{}', {bookmark:point,browse:null});
+  h.run('bridge={save_navigation:async()=>{throw Error("disk full")}}');
+  await h.run('markBookmark("测试甲")');
+  assert.equal(h.run('bookmark.name'), '测试乙');
+  assert.match(h.nodes.get('toast-text').textContent, /失败/);
+  h.run('bridge={save_navigation:async()=>true}');
+  await h.run('markBookmark("测试甲")');
+  assert.equal(h.run('bookmark.name'), '测试甲');
+  await h.run('markBookmark(null)');
+  assert.equal(h.nodes.get('bookmark-tools').hidden, true);
+});
+test('exit waits for browse save before closing native shell', async () => {
+  const h = harness();
+  h.run('globalThis.calls=[];bridge={save_navigation:async()=>{calls.push("saved")},window_action:async()=>{calls.push("closed");return {}}}');
+  await h.run('shell("close")');
+  assert.equal(h.run('calls.join(",")'), 'saved,closed');
 });

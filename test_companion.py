@@ -84,6 +84,32 @@ class CompanionAPITests(unittest.TestCase):
             self.api.copy_code('unknown')
         self.client.save.assert_not_called()
 
+    def test_navigation_reopens_without_touching_statuses(self):
+        point = dict(name='腾讯', anchor='腾讯', offset=7, scroll=57,
+                     query='', owner='全部性质', stage='全部进度', tab='all', onlyCode=False, recent=False)
+        self.api.save_navigation('bookmark', point)
+        self.api.save_navigation('browse', {**point, 'name': '百度'})
+        reopened = CompanionAPI('http://127.0.0.1:18764', pathlib.Path(self.tmp.name))
+        self.assertEqual(reopened.load_navigation()['bookmark'], point)
+        self.assertEqual(reopened.load_navigation()['browse']['name'], '百度')
+        self.api.save_navigation('bookmark', None)
+        self.assertIsNone(self.api.load_navigation()['bookmark'])
+        self.assertEqual(self.api.load_navigation()['browse']['name'], '百度')
+        self.client.save.assert_not_called()
+
+    def test_navigation_rejects_unknown_fields_and_preserves_corrupt_file(self):
+        with self.assertRaises(ValueError):
+            self.api.save_navigation('../other', {})
+        with self.assertRaises(ValueError):
+            self.api.save_navigation('bookmark', {'name': '腾讯', 'statuses': {'腾讯': '已投'}})
+        path = pathlib.Path(self.tmp.name) / 'companion-navigation-preferences.json'
+        path.write_text('broken', encoding='utf-8')
+        with self.assertRaises(ValueError):
+            self.api.load_navigation()
+        with self.assertRaises(ValueError):
+            self.api.save_navigation('bookmark', None)
+        self.assertEqual(path.read_text(), 'broken')
+
     def test_undo_removes_confirmed_daily_count(self):
         self.api.save_status('腾讯', '已投')
         self.client.statuses.return_value = {'腾讯': '已投'}

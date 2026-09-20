@@ -32,6 +32,7 @@
 @media(max-width:340px){.brand small{display:none}.brand strong{font-size:12px}.titlebar{gap:3px;padding-left:9px;padding-right:9px}.icon-btn{padding:6px;min-width:28px}.toolbar{padding:0 10px}.tabs{gap:16px}.activity-line,.selected,.footer{padding-left:10px;padding-right:10px}.filter-collapse{min-width:38px}.search input{font-size:11px}}
 @media(max-height:590px){.titlebar{height:44px}.activity-line{padding-top:3px;padding-bottom:3px}.sheet{top:44px}.selection-body{max-height:112px}.tab{padding-top:5px;padding-bottom:5px}.filters{margin-top:5px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+.bookmark-tools{display:flex;align-items:center;gap:3px;min-width:0;max-width:65%;margin-left:auto}.bookmark-return{font-size:10px;color:var(--brand);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px;min-height:28px}.bookmark-return svg{width:13px;height:13px;margin-right:3px}.bookmark-clear{font-size:14px;min-width:26px;min-height:28px;color:var(--muted)}.bookmark-tools button:hover{background:var(--soft);border-radius:5px}.company-item{display:flex;align-items:center;gap:2px}.company-item .company-row{flex:1;min-width:0}.bookmark-mark{flex:0 0 28px;min-height:32px;padding:5px;color:var(--muted);border-radius:6px}.bookmark-mark svg{width:15px;height:15px}.bookmark-mark:hover,.bookmark-mark[aria-pressed=true]{color:var(--brand);background:var(--soft)}.bookmark-mark[aria-pressed=true] svg{fill:var(--soft);stroke-width:2.4}
 </style></head><body>
 <div class="app">
  <header class="titlebar">
@@ -47,7 +48,7 @@
   <nav class="tabs" aria-label="常用投递状态"><button class="tab" data-tab="all" aria-pressed="true">全部 <b id="total">—</b></button><button class="tab" data-tab="未投" aria-pressed="false">待投递 <b id="todo">—</b></button><button class="tab" data-tab="applied" aria-pressed="false">已投递 <b id="applied">—</b></button></nav>
   <div class="filters"><button id="filter-toggle" class="chip" aria-expanded="false" aria-controls="filter-extra">筛选 ▾</button><button id="only-code" class="chip" aria-pressed="false">有内推码</button><button id="recent" class="chip" aria-pressed="false">最近新增</button></div>
   <div class="filter-extra" id="filter-extra" hidden><label>公司性质<select id="owner"><option>全部性质</option><option>私企</option><option>外企</option><option>央国企</option><option>科研/事业单位</option></select></label><label>具体进度<select id="stage"><option>全部进度</option><option>未投</option><option>已投</option><option>笔试</option><option>面试</option><option>Offer</option><option>结束</option><option>无合适岗位</option></select></label></div>
-  </div><div class="browse-meta"><span id="filter-summary" class="filter-summary">全部公司</span><span class="result-count" id="count" aria-live="polite">加载中</span></div>
+  </div><div class="browse-meta"><span id="filter-summary" class="filter-summary">全部公司</span><div class="bookmark-tools" id="bookmark-tools" hidden><button id="bookmark-return" class="bookmark-return" title="恢复书签公司、筛选和列表位置"></button><button id="bookmark-clear" class="bookmark-clear" aria-label="清除位置书签" title="清除位置书签">×</button></div><span class="result-count" id="count" aria-live="polite">加载中</span></div>
  </section>
  <ul id="companies" class="list" aria-label="公司列表"><li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li></ul>
  <section class="selected" id="selected" aria-label="当前公司操作" hidden>
@@ -71,6 +72,56 @@
 'use strict';
 const $=id=>document.getElementById(id), applied=new Set(['已投','笔试','面试','Offer','结束']);
 let bridge, companies=[], statuses={}, selected='', filtered=[], tab='all', onlyCode=false, recent=false, ready=false, saving=false, pending=null, undo=null, pollBusy=false, toastTimer, editVersion=0;
+let bookmark=null,navigationLoaded=false,navigationTimer,navigationQueue=Promise.resolve(),bookmarkBusy=false,restoring=false;
+const bookmarkIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>';
+function capturePosition(name=selected){
+ const list=$('companies'),top=list.getBoundingClientRect().top;
+ const row=Array.from(list.querySelectorAll('[data-name]')).find(r=>r.getBoundingClientRect().bottom>top);
+ return {name,anchor:row?.dataset.name||name,offset:row?Math.max(0,top-row.getBoundingClientRect().top):0,scroll:list.scrollTop,query:$('search').value.slice(0,500),owner:$('owner').value,stage:$('stage').value,tab,onlyCode,recent};
+}
+function persistPosition(kind,point){
+ const write=navigationQueue.catch(()=>{}).then(()=>{
+  if(!bridge?.save_navigation)throw Error('Navigation storage unavailable');
+  return bridge.save_navigation(kind,point);
+ });
+ navigationQueue=write;
+ return write;
+}
+function rememberBrowse(){
+ clearTimeout(navigationTimer);
+ if(!ready||!navigationLoaded||restoring||document.body.classList.contains('collapsed'))return;
+ navigationTimer=setTimeout(()=>persistPosition('browse',capturePosition()).catch(()=>toast('浏览位置暂未保存，请稍后再试。')),200);
+}
+function updateBookmark(){
+ $('bookmark-tools').hidden=!bookmark;
+ $('bookmark-return').innerHTML=bookmarkIcon+esc(bookmark?'回到 · '+bookmark.name:'');
+ $('bookmark-return').title=bookmark?'回到书签：'+bookmark.name+'（同时恢复筛选）':'';
+}
+async function markBookmark(name){
+ if(bookmarkBusy||!ready)return;
+ bookmarkBusy=true;
+ const point=name?capturePosition(name):null;
+ try{await persistPosition('bookmark',point);bookmark=point;render();toast(name?'已标记：'+name+'。上方可随时回到这里。':'位置书签已清除');}
+ catch(e){toast('书签保存失败，原书签未改变。请重试。');}
+ finally{bookmarkBusy=false;}
+}
+function restorePosition(point,manual=false){
+ if(!point||typeof point.name!=='string')return;
+ if(point.name&&!companies.some(c=>c.name===point.name)){if(manual)toast('这家公司已不在当前台账中，可重新标记。');return;}
+ restoring=true;
+ $('search').value=point.query||'';$('owner').value=point.owner||'全部性质';$('stage').value=point.stage||'全部进度';
+ tab=point.tab||'all';onlyCode=!!point.onlyCode;recent=!!point.recent;selected=point.name;
+ render();
+ let relaxed=false;
+ if(manual&&!filtered.some(c=>c.name===point.name)){reset();selected=point.name;render();relaxed=true;}
+ document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===tab));
+ $('only-code').setAttribute('aria-pressed',onlyCode);$('recent').setAttribute('aria-pressed',recent);
+ const list=$('companies');list.scrollTop=Math.max(0,Number(point.scroll)||0);
+ const anchor=Array.from(list.querySelectorAll('[data-name]')).find(r=>r.dataset.name===point.anchor);
+ if(anchor)list.scrollTop+=anchor.getBoundingClientRect().top-list.getBoundingClientRect().top+Math.max(0,Number(point.offset)||0);
+ if(manual){document.querySelector('.company-row[aria-pressed=true]')?.scrollIntoView({block:'nearest'});toast(relaxed?'公司状态已变化，已放宽筛选并定位书签。':'已回到书签：'+point.name);}
+ restoring=false;rememberBrowse();
+}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hasCode=r=>/^[A-Za-z0-9]{4,24}$/.test(r.code||'');
 const layout={selection:false,filters:true,comfortable:false};
@@ -110,7 +161,9 @@ function setSnapshot(data){
  $('date-line').textContent=`${data.date||''} · 一家一家来`;
  if(data.shell)window.shellState(data.shell);
  if(data.warning)note(data.warning,true);
- ready=true;if(changed)render();
+ ready=true;
+ if(!navigationLoaded){navigationLoaded=true;bookmark=data.navigation?.bookmark||null;if(data.navigationError)toast(data.navigationError);render();restorePosition(data.navigation?.browse);}
+ else if(changed)render();
 }
 function render(){
  $('total').textContent=companies.length;$('todo').textContent=companies.filter(c=>(statuses[c.name]||'未投')==='未投').length;$('applied').textContent=companies.filter(c=>applied.has(statuses[c.name])).length;
@@ -128,9 +181,9 @@ function render(){
  const scroll=$('companies').scrollTop;
  $('companies').innerHTML=filtered.length?filtered.map(c=>{
   const st=statuses[c.name]||'未投',badge=applied.has(st)?'done':'';
-  return `<li><button class="company-row" data-name="${esc(c.name)}" aria-pressed="${c.name===selected}" title="${esc(c.name)}"><span class="initial" aria-hidden="true">${esc(c.name[0])}</span><span class="company-text"><strong>${esc(c.name)}</strong><small>${esc(c.owner)} · ${esc(c.city)}${c.added?' · 新增':''}</small></span><span class="badge ${badge} ${st==='面试'?'interview':''}">${esc(st)}</span></button></li>`;
+  return `<li class="company-item"><button class="company-row" data-name="${esc(c.name)}" aria-pressed="${c.name===selected}" title="${esc(c.name)}"><span class="initial" aria-hidden="true">${esc(c.name[0])}</span><span class="company-text"><strong>${esc(c.name)}</strong><small>${esc(c.owner)} · ${esc(c.city)}${c.added?' · 新增':''}</small></span><span class="badge ${badge} ${st==='面试'?'interview':''}">${esc(st)}</span></button><button class="bookmark-mark" data-bookmark="${esc(c.name)}" aria-label="标记这里：${esc(c.name)}" title="标记这里，下次一键返回" aria-pressed="${bookmark?.name===c.name}">${bookmarkIcon}</button></li>`;
  }).join(''):'<li class="empty"><b>这组条件下，暂时没找到。</b><p>试试换个关键词，或放宽筛选。</p><button id="reset">清空全部筛选</button></li>';
- $('companies').scrollTop=scroll;renderDetail();
+ $('companies').scrollTop=scroll;renderDetail();updateBookmark();rememberBrowse();
 }
 function renderDetail(){
  const c=current();$('selected').hidden=!c;if(!c)return;
@@ -161,7 +214,7 @@ async function refresh(){
 }
 function interaction(){if(bridge?.interaction){const tag=document.activeElement?.tagName;bridge.interaction(!document.hasFocus()?false:(['INPUT','SELECT'].includes(tag)||!$('menu-sheet').hidden||!$('today-sheet').hidden),saving||!!pending).catch(()=>{});}}
 window.shellState=s=>{document.body.classList.toggle('collapsed',!!s.collapsed);$('pin').setAttribute('aria-pressed',!!s.pinned);$('pin').title=s.pinned?'已固定，点击恢复自动收起':'固定后，离开也不收起';};
-async function shell(action){if((saving||pending)&&['collapse','close'].includes(action)){toast('还有状态没保存好，先重试一下。');return;}closeSheets();try{window.shellState(await bridge.window_action(action));}catch(e){toast('窗口操作失败，请稍后重试。');}}
+async function shell(action){if((saving||pending)&&['collapse','close'].includes(action)){toast('还有状态没保存好，先重试一下。');return;}closeSheets();try{if(ready&&['collapse','close'].includes(action)&&!document.body.classList.contains('collapsed')){clearTimeout(navigationTimer);await persistPosition('browse',capturePosition());}window.shellState(await bridge.window_action(action));}catch(e){toast('操作未完成，浏览位置可能未保存，请重试。');}}
 function step(delta){if(!filtered.length)return;const i=filtered.findIndex(c=>c.name===selected);selected=filtered[(i+delta+filtered.length)%filtered.length].name;closeSource();render();document.querySelector('.company-row[aria-pressed=true]')?.scrollIntoView({block:'nearest'});}
 $('panel-toggle').onclick=()=>setDisclosure('selection',!layout.selection);
 $('filters-collapse').onclick=()=>setDisclosure('filters',!layout.filters);
@@ -170,7 +223,9 @@ $('search').addEventListener('input',render);$('clear').onclick=()=>{$('search')
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;$('stage').value='全部进度';document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
 $('filter-toggle').onclick=()=>{const show=$('filter-extra').hidden;$('filter-extra').hidden=!show;$('filter-toggle').setAttribute('aria-expanded',show);};
 $('only-code').onclick=()=>{onlyCode=!onlyCode;$('only-code').setAttribute('aria-pressed',onlyCode);render();};$('recent').onclick=()=>{recent=!recent;$('recent').setAttribute('aria-pressed',recent);render();};$('owner').onchange=$('stage').onchange=render;
-$('companies').onclick=e=>{if(e.target.closest('#reset'))return reset();const b=e.target.closest('[data-name]');if(b){selected=b.dataset.name;closeSource();render();}};
+$('companies').onclick=e=>{if(e.target.closest('#reset'))return reset();const mark=e.target.closest('[data-bookmark]');if(mark)return markBookmark(mark.dataset.bookmark);const b=e.target.closest('[data-name]');if(b){selected=b.dataset.name;closeSource();render();}};
+$('companies').addEventListener('scroll',rememberBrowse,{passive:true});
+$('bookmark-return').onclick=()=>restorePosition(bookmark,true);$('bookmark-clear').onclick=()=>markBookmark(null);
 $('copy').onclick=async()=>{if(!current())return;try{const code=await bridge.copy_code(selected);if(!window.pywebview)await navigator.clipboard.writeText(code);toast('内推码已复制，去表单粘贴吧。');}catch(e){toast('复制失败，可在详情中选择文字手动复制。');}};
 $('open').onclick=async()=>{try{await bridge.open_role(selected);toast('入口已打开，投完后再记为已投。');}catch(e){toast('入口未打开，请在详情中查看网址。');}};
 $('mark').onclick=()=>save(selected,'已投');$('status').onchange=()=>save(selected,$('status').value);$('next').onclick=()=>step(1);$('previous').onclick=()=>step(-1);
