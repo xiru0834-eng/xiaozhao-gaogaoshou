@@ -91,12 +91,14 @@ export function mountModelSettings(session: DataSession) {
   }
   launch.addEventListener("click", () => {
     if (!page.hidden) { close(); return; }
+    if (!window.dispatchEvent(new CustomEvent("workspace:navigate", { cancelable: true, detail: "models" }))) return;
     page.hidden = false; workbench.hidden = true; workspace.dataset.page = "models";
     breadcrumb.textContent = "模型设置";
     launch.setAttribute("aria-pressed", "true"); required<HTMLElement>("#model-heading", page).focus();
     window.scrollTo({ top: 0 }); void load();
   });
   button("back").addEventListener("click", close);
+  window.addEventListener("workspace:navigate", event => { if ((event as CustomEvent).detail !== "models" && !page.hidden && !close()) event.preventDefault(); });
   // Restore the workbench before its existing navigation handlers run.
   for (const selector of [".brand", "#open-help"]) required(selector).addEventListener("click", event => {
     if (!page.hidden && !close()) { event.preventDefault(); event.stopImmediatePropagation(); }

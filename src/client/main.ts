@@ -32,8 +32,10 @@ import { Progress } from "./progress.ts";
 import { statusApi } from "./api.ts";
 import { sessionFromPage } from "./session.ts";
 import { mountModelSettings } from "./model-settings.ts";
+import { mountUpdates } from "./updates.ts";
 const session = sessionFromPage();
 mountModelSettings(session);
+mountUpdates(session, () => { void initBackend(); });
 // Download links cannot send custom headers, so bind them through a non-secret profile ID.
 document
   .querySelectorAll<HTMLAnchorElement>('a[href^="/api/backup"]')

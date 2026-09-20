@@ -1,4 +1,5 @@
 import { MODEL_ERRORS, ModelError, type ModelErrorCode } from "../shared/model-contract.ts";
+import { CollectionError } from "../shared/collection-contract.ts";
 
 interface Credentials {
   profileId: string;
@@ -30,6 +31,23 @@ export function createSession(
   }
   return {
     profileId,
+    /** Run creation and acceptance are idempotent on the server; never retry silently. */
+    async collectionRequest(path: string, body?: unknown): Promise<Record<string, unknown>> {
+      const res = await transport(path, {
+        method: body === undefined ? "GET" : "POST", cache: "no-store",
+        headers: { ...headers(), "X-App-Token": token, "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000),
+      });
+      if (res.status === 403) throw new CollectionError("SESSION", "本机会话已过期，请刷新页面。不会自动重发采集请求。");
+      const data: unknown = await res.json();
+      if (!data || typeof data !== "object" || !("profileId" in data) || data.profileId !== profileId) throw new CollectionError("PROFILE", "资料档案不一致，请重新打开工作台。");
+      if (!res.ok) {
+        const error = "error" in data ? data.error : null;
+        if (error && typeof error === "object" && "message" in error && typeof error.message === "string" && error.message.length <= 300) throw new CollectionError("REQUEST", error.message);
+        throw new CollectionError("REQUEST", "本地请求失败。请刷新记录核对结果，未自动重试。");
+      }
+      return data as Record<string, unknown>;
+    },
     /** No automatic retry for a potentially billable request. */
     async modelRequest(path: string, body?: unknown, signal?: AbortSignal): Promise<Record<string, unknown>> {
       const res = await transport(path, {
