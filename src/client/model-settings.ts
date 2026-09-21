@@ -11,7 +11,7 @@ export function mountModelSettings(session: DataSession) {
   const originalBreadcrumb = breadcrumb.textContent;
   workbench.after(page);
   const launch = document.createElement("button");
-  launch.type = "button"; launch.className = "action"; launch.textContent = "模型设置";
+  launch.type = "button"; launch.id = "open-model"; launch.className = "action"; launch.textContent = "模型设置";
   launch.setAttribute("aria-pressed", "false");
   required(".header-tools").prepend(launch);
   const form = node<HTMLFormElement>("form");

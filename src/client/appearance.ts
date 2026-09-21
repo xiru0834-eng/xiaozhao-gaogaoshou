@@ -1,5 +1,6 @@
-import { paletteFor, readAppearance, saveAppearance, skinOf, type Appearance, type AppearanceStorage } from './appearance-model.ts';
+import { SKINS, characterArtwork, paletteFor, readAppearance, saveAppearance, skinOf, type Appearance, type AppearanceStorage } from './appearance-model.ts';
 import { appearanceView } from './appearance-view.ts';
+import { companionScene } from './companion-scenes.ts';
 import { required } from './dom.ts';
 import './appearance.css';
 
@@ -26,19 +27,42 @@ export function mountAppearance(notify: (message: string) => void) {
   const { dialog, node } = appearanceView();
   document.body.append(dialog);
   let opener: HTMLElement = launch;
+  const presence = document.querySelector<HTMLElement>('#workbench-companion');
+  if (presence) {
+    const choices = presence.querySelector<HTMLElement>('.companion-choices')!;
+    for (const skin of SKINS) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.dataset.companion = skin.id;
+      button.setAttribute('aria-label', `切换${skin.name}陪伴主题`);
+      button.title = `${skin.name} · ${skin.mood}`;
+      const art = document.createElement('span'); art.className = 'character-sprite';
+      art.setAttribute('aria-hidden', 'true'); character(art, skin.id);
+      button.append(art); choices.append(button);
+      button.addEventListener('click', () => {
+        if (current.skin === skin.id) return;
+        current = {...current, skin: skin.id}; apply();
+        const saved = saveAppearance(storage, current);
+        notify(saved ? `已换上「${skin.name}」` : '已切换搭档；浏览器存储不可用，本次会话有效。');
+      });
+    }
+  }
 
   function character(target: HTMLElement, id: Appearance['skin']) {
-    const skin = skinOf(id);
-    target.style.backgroundImage = `url("${skin.image || originalImage}")`;
-    target.style.backgroundPosition = skin.position;
-    // The blue cell needs a small inner crop so the neighboring ponytail cannot bleed in.
-    target.style.backgroundSize = skin.id === 'blue' ? '210% 210%' : skin.image ? '200% 200%' : 'contain';
+    const art = characterArtwork(id, originalImage);
+    target.style.backgroundImage = `url("${art.image}")`;
+    target.style.backgroundPosition = art.position;
+    target.style.backgroundSize = art.size;
   }
 
   function color(target: HTMLElement, value: Appearance) {
     target.dataset.skin = value.skin; target.dataset.theme = value.mode;
     target.style.colorScheme = value.mode;
     for (const [key, val] of Object.entries(paletteFor(value.skin, value.mode))) target.style.setProperty(`--${key}`, val);
+    const art = characterArtwork(value.skin, originalImage);
+    target.style.setProperty('--companion-art', `url("${art.image}")`);
+    target.style.setProperty('--companion-position', art.position);
+    target.style.setProperty('--companion-size', art.size);
+    target.style.setProperty('--companion-scene', `url("${companionScene(value.skin).art}")`);
   }
   function apply() {
     const skin = skinOf(current.skin);
@@ -52,6 +76,18 @@ export function mountAppearance(notify: (message: string) => void) {
     companion.querySelector('strong')!.textContent = skin.name;
     companion.querySelector('small')!.textContent = skin.caption;
     companion.setAttribute('aria-label', `${skin.name}，更换主题`);
+    if (presence) {
+      const scene = companionScene(skin.id);
+      presence.querySelector<HTMLElement>('.companion-scene-name')!.textContent = scene.name;
+      const painting = required<HTMLImageElement>('#companion-painting');
+      if (painting.getAttribute('src') !== scene.art) painting.src = scene.art;
+      presence.hidden = !current.characters;
+      presence.querySelector<HTMLElement>('.companion-name')!.textContent = skin.name;
+      presence.querySelector<HTMLElement>('.companion-quote')!.textContent = skin.caption;
+      presence.querySelectorAll<HTMLButtonElement>('[data-companion]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.companion === current.skin));
+      });
+    }
     launch.title = `当前：${skin.name} · ${current.mode === 'dark' ? '深色' : '浅色'}`;
     toggle.textContent = current.mode === 'dark' ? '☾' : '☼';
     toggle.setAttribute('aria-label', current.mode === 'dark' ? '切换到浅色主题' : '切换到深色主题');
@@ -80,7 +116,7 @@ export function mountAppearance(notify: (message: string) => void) {
   }
   function open(source: HTMLElement) {
     opener = source; draft = { ...current }; preview();
-    // Loading the workbench alone does not download unused character packs.
+    // All portraits reuse the same atlas; no remote assets are requested.
     dialog.querySelectorAll<HTMLElement>('[data-image]').forEach(el => character(el, skinOf(el.dataset.image).id));
     dialog.showModal();
     dialog.querySelector<HTMLInputElement>('[name="skin-choice"]:checked')!.focus();

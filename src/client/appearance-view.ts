@@ -19,7 +19,7 @@ export function appearanceView() {
         <fieldset class="skin-choices"><legend>挑一个今天的心情</legend>
         ${SKINS.map((skin, i) => `<label class="skin-choice${skin.id === 'mint' ? ' is-original' : ''}">
           <input type="radio" name="skin-choice" value="${skin.id}">
-          <span class="skin-thumb" style="--thumb:${skin.swatch}">${skin.image ? `<span class="character-sprite" data-image="${skin.id}" aria-hidden="true"></span>` : '<span aria-hidden="true">✦</span>'}</span>
+          <span class="skin-thumb" style="--thumb:${skin.swatch}"><span class="character-sprite" data-image="${skin.id}" aria-hidden="true"></span></span>
           <span class="skin-choice-label"><strong>${skin.name}</strong><small>${skin.mood}</small></span>
           <span class="skin-index" aria-hidden="true">0${i + 1}</span><span class="skin-check" aria-hidden="true">✓</span>
         </label>`).join('')}
@@ -28,8 +28,8 @@ export function appearanceView() {
           <label><input type="radio" name="skin-mode" value="light"><span>☼ 浅色</span></label>
           <label><input type="radio" name="skin-mode" value="dark"><span>☾ 深色</span></label>
         </fieldset>
-        <label class="skin-character-option"><span><strong>角色陪伴</strong><small>只在侧栏显示，不遮挡公司清单</small></span><input data-a="characters" type="checkbox" role="switch" aria-label="角色陪伴"></label>
-        <p class="appearance-note">同一个 Q 版画风，四种独立性格。原创角色由 AI 辅助绘制；外观只存当前浏览器，不修改投递数据。</p>
+        <label class="skin-character-option"><span><strong>角色陪伴</strong><small>点缀概览与模块，不遮挡表单和公司清单</small></span><input data-a="characters" type="checkbox" role="switch" aria-label="角色陪伴"></label>
+        <p class="appearance-note">五位搭档，各有自己的性格。原创角色由 AI 辅助绘制；外观只存当前浏览器，不修改投递数据。</p>
       </div>
     </div>
     <footer class="appearance-footer"><button class="text-button" data-a="reset" type="button">恢复薄荷石墨</button><span data-a="preview-note" role="status">仅预览，应用后生效</span><button class="action primary" data-a="apply" type="button">使用这套皮肤</button></footer>`;

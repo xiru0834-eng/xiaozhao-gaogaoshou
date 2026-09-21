@@ -1,5 +1,7 @@
 import type { DataSession } from "./session.ts";
 import { schedulesView } from "./schedules-view.ts";
+import { mountRecruitmentTasks } from './recruitment-tasks.ts';
+import { TASK_KINDS, TASK_STATES, taskMarkers, timingLabel, type RecruitmentTask } from '../shared/recruitment-task-contract.ts';
 import {
   validateSchedule,
   dateKey,
@@ -52,6 +54,13 @@ export function mountSchedules(session: DataSession) {
     epoch = 0,
     retryRequest: { signature: string; id: string } | null = null;
   const form = node<HTMLFormElement>("form");
+  let taskItems: RecruitmentTask[] = [];
+  const tasks = mountRecruitmentTasks(page, session, () => {});
+  const taskTab = document.createElement('button');
+  taskTab.dataset.view = 'tasks'; taskTab.textContent = '求职任务';
+  taskTab.disabled=true;
+  page.querySelector('.schedule-segment')!.append(taskTab);
+  node('kind').insertAdjacentHTML('beforeend', '<option value="assessment">测评</option>');
   const field = (name: string) =>
     form.elements.namedItem(name) as
       | HTMLInputElement
@@ -80,11 +89,24 @@ export function mountSchedules(session: DataSession) {
     feedback("正在读取本机日程…");
     try {
       const data = await session.collectionRequest("/api/schedules");
+      const health=await session.collectionRequest('/health');
+      const features=health.features as {recruitmentTasks?:number}|undefined;
+      const supportsTasks=features?.recruitmentTasks===2;
+      const allTasks: RecruitmentTask[] = []; let cursor: number | null = 0;
+      while(supportsTasks&&cursor!==null) {
+        const result = (await session.collectionRequest('/api/recruitment-tasks?limit=100&cursor='+cursor)).data as {items:RecruitmentTask[];nextCursor:number|null};
+        allTasks.push(...result.items); cursor = result.nextCursor;
+      }
       if (current !== epoch) return;
       snapshot = readSnapshot(data);
+      taskItems = allTasks;
+      taskTab.disabled=!supportsTasks;
+      taskTab.title=supportsTasks?'':'后台仍是旧版，请重新启动 TypeScript 预览服务后刷新。';
+      if(!supportsTasks&&view==='tasks')view='calendar';
       loaded = true;
       render();
-      feedback("仅保存在本机 · 日程状态与投递进度独立");
+      if(view === 'tasks') void tasks.load();
+      feedback(supportsTasks?"仅保存在本机 · 日程状态与投递进度独立":"现有日程可正常使用；邮件转任务需要重新启动 TypeScript 预览服务后刷新。");
     } catch (e) {
       if (current === epoch)
         feedback(e instanceof Error ? e.message : "读取失败，请重试。", true);
@@ -95,6 +117,7 @@ export function mountSchedules(session: DataSession) {
       }
     }
   }
+  window.addEventListener('schedules:changed',()=>{if(!page.hidden&&!dirty&&!busy)void load();});
   function readSnapshot(data: Record<string, unknown>): ScheduleSnapshot {
     if (!Number.isSafeInteger(data.revision) || !Array.isArray(data.items))
       throw Error("日程响应无效，未替换当前记录。");
@@ -115,6 +138,7 @@ export function mountSchedules(session: DataSession) {
     )
       return;
     page.hidden = false;
+    if(location.hash!=='#schedules')history.replaceState(null,'',location.pathname+location.search+'#schedules');
     workbench.hidden = true;
     document.querySelector<HTMLElement>(".workspace")!.dataset.page =
       "schedules";
@@ -210,10 +234,18 @@ export function mountSchedules(session: DataSession) {
   function render() {
     const items = filtered(),
       now = today();
+    const query = node<HTMLInputElement>('search').value.trim().toLowerCase(), kind = node<HTMLSelectElement>('kind').value, state = node<HTMLSelectElement>('state').value;
+    const relatedTasks = taskItems.filter(t => (kind === 'all' || t.kind === kind) && (state === 'all' || state === 'planned' && ['pending','in_progress'].includes(t.state) || state === t.state) && (!query || [t.title,t.company,t.role,t.notes].join(' ').toLowerCase().includes(query)));
+    const markers = relatedTasks.flatMap(t => taskMarkers(t,zone).map(m => ({...m,task:t})));
+    const taskHtml = (t:RecruitmentTask,label='') => `<button class="schedule-event" data-recruitment-task="${t.id}"><span class="schedule-event-meta"><span>${TASK_KINDS[t.kind]} · ${escape(label || timingLabel(t.timing))}</span><span class="schedule-tag">${TASK_STATES[t.state]}</span></span><strong>${escape(t.title)}</strong><small>${escape([t.company,t.role].filter(Boolean).join(' · '))}</small></button>`;
     node("count").textContent =
       `${items.length} 场安排 · ${items.filter((i) => i.status === "planned" && (!scheduleDay(i, zone) || scheduleDay(i, zone) >= now)).length} 场待参加`;
     node("calendar").hidden = view !== "calendar";
     node("list").hidden = view !== "list";
+    tasks.panel.hidden = view !== 'tasks';
+    node('search').closest<HTMLElement>('label')!.hidden = view === 'tasks';
+    node('kind').hidden = node('state').hidden = view === 'tasks';
+    node('count').textContent += ` · ${relatedTasks.length} 项任务`;
     page
       .querySelectorAll<HTMLElement>("[data-view]")
       .forEach((b) =>
@@ -231,7 +263,8 @@ export function mountSchedules(session: DataSession) {
           .toISOString()
           .slice(0, 10),
         events = items.filter((i) => scheduleDay(i, zone) === key);
-      html += `<button class="schedule-date ${key.slice(0, 7) !== month ? "is-other" : ""} ${key === now ? "is-today" : ""}" data-date="${key}" aria-pressed="${key === selectedDay}" ${key === now ? 'aria-current="date"' : ""} aria-label="${key}，${events.length} 场安排"><span>${Number(key.slice(-2))}</span>${events
+      const taskDates = markers.filter(m => m.date === key), total = events.length + taskDates.length;
+      html += `<button class="schedule-date ${key.slice(0, 7) !== month ? "is-other" : ""} ${key === now ? "is-today" : ""}" data-date="${key}" aria-pressed="${key === selectedDay}" ${key === now ? 'aria-current="date"' : ""} aria-label="${key}，${total} 项安排"><span>${Number(key.slice(-2))}</span>${events
         .slice(0, 2)
         .map(
           (i) =>
@@ -239,7 +272,7 @@ export function mountSchedules(session: DataSession) {
         )
         .join(
           "",
-        )}${events.length > 2 ? `<span class="schedule-more">另 ${events.length - 2} 场</span>` : ""}</button>`;
+        )}${taskDates.slice(0,Math.max(0,2-events.length)).map(m=>`<span class="schedule-pill ${m.task.kind} ${['completed','cancelled'].includes(m.task.state)?'is-done':''}">${escape(m.label+' '+m.task.title)}</span>`).join('')}${total > 2 ? `<span class="schedule-more">另 ${total - 2} 项</span>` : ""}</button>`;
     }
     node("grid").innerHTML = html;
     node("day-number").textContent = String(Number(selectedDay.slice(-2)));
@@ -250,13 +283,14 @@ export function mountSchedules(session: DataSession) {
       timeZone: "UTC",
     }).format(new Date(selectedDay + "T12:00:00Z"));
     const dayItems = items.filter((i) => scheduleDay(i, zone) === selectedDay);
-    node("day-events").innerHTML = dayItems.length
-      ? dayItems.map(eventHtml).join("")
+    const dayTasks = markers.filter(m => m.date === selectedDay);
+    node("day-events").innerHTML = dayItems.length || dayTasks.length
+      ? dayItems.map(eventHtml).join("") + dayTasks.map(m=>taskHtml(m.task,m.label+(m.time?' · '+m.time:' · 仅日期'))).join('')
       : empty(
           "这一天，还没有安排",
           "给准备留一点从容。<br>点击「＋ 添加」记下下一场机会。",
         );
-    const undated = items.filter((i) => !i.date).length;
+    const undated = items.filter((i) => !i.date).length + relatedTasks.filter(t=>!taskMarkers(t,zone).length).length;
     node("undated").hidden = !undated;
     node("undated").textContent = `另有 ${undated} 场日期待定 →`;
     const groups = new Map<string, Schedule[]>();
@@ -297,6 +331,7 @@ export function mountSchedules(session: DataSession) {
           )
           .join("")
       : empty("还没有匹配的日程", "新建一场安排，或调整上方筛选。");
+    if(relatedTasks.length)node('list').insertAdjacentHTML('afterbegin',`<section><h2>求职任务 <span>· ${relatedTasks.length} 项</span></h2>${relatedTasks.map(t=>taskHtml(t)).join('')}</section>`);
   }
   page.addEventListener("click", (event) => {
     const target = event.target as Element;
@@ -310,11 +345,14 @@ export function mountSchedules(session: DataSession) {
     }
     const item = target.closest<HTMLElement>("[data-event]");
     if (item) edit(snapshot.items.find((i) => i.id === item.dataset.event)!);
+    const task = target.closest<HTMLElement>('[data-recruitment-task]');
+    if(task)void tasks.editId(task.dataset.recruitmentTask!);
   });
   for (const el of page.querySelectorAll<HTMLElement>("[data-view]"))
     el.onclick = () => {
       view = el.dataset.view!;
       render();
+      if(view === 'tasks')void tasks.load();
     };
   node("search").oninput = render;
   node("kind").onchange = render;
@@ -348,7 +386,7 @@ export function mountSchedules(session: DataSession) {
       new Blob(
         [
           JSON.stringify(
-            { version: 1, exportedAt: new Date().toISOString(), ...snapshot },
+            { version: 2, exportedAt: new Date().toISOString(), ...snapshot, recruitmentTasks: taskItems },
             null,
             2,
           ),

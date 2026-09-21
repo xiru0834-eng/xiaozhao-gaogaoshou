@@ -11,6 +11,12 @@ export const SKINS = [
 ] as const;
 export function skinOf(id: unknown) { return SKINS.find(s => s.id === id) ?? SKINS[0]; }
 
+export function characterArtwork(id: SkinId, originalImage: string) {
+  const skin = skinOf(id);
+  return {image: skin.image || originalImage, position: skin.position,
+    size: id === 'blue' ? '210% 210%' : skin.image ? '200% 200%' : 'contain'};
+}
+
 const KEY = 'qiuzhao-appearance-v1';
 export function readAppearance(storage?: AppearanceStorage): Appearance {
   const result: Appearance = { skin: 'mint', characters: true, mode: 'light' };

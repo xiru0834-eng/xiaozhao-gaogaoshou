@@ -5,11 +5,23 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startServer } from '../src/server/http.ts';
-import { SKINS, readAppearance, saveAppearance, paletteFor, skinOf } from '../src/client/appearance-model.ts';
+import { SKINS, readAppearance, saveAppearance, paletteFor, skinOf, characterArtwork } from '../src/client/appearance-model.ts';
 
 function memory(values: Record<string, string> = {}) {
   return { getItem: (key: string) => values[key] ?? null, setItem: (key: string, value: string) => { values[key] = value; } };
 }
+
+test('all five companions use their existing art and keep atlas cells separate', () => {
+  const original = 'data:image/png;base64,original';
+  const art = SKINS.map(skin => characterArtwork(skin.id, original));
+  assert.equal(new Set(art.map(a => `${a.image}|${a.position}|${a.size}`)).size, 5);
+  assert.deepEqual(art[0], {image: original, position: '0% 0%', size: 'contain'});
+  assert.equal(art[1].size, '210% 210%');
+  assert.equal(art[2].position, '100% 0%');
+  assert.equal(art[3].position, '0% 100%');
+  assert.equal(art[4].position, '100% 100%');
+  assert.ok(SKINS.every(skin => skin.caption.length > 0 && skin.mood.length > 0));
+});
 test('fresh appearance preserves mint and existing dark preference', () => {
   assert.deepEqual(readAppearance(memory()), { skin: 'mint', characters: true, mode: 'light' });
   assert.deepEqual(readAppearance(memory({ 'qiuzhao-theme': 'dark' })), { skin: 'mint', characters: true, mode: 'dark' });

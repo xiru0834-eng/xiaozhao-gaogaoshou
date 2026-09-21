@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>校招高高手 · TypeScript 预览</title>
+<title>校招高高手 · 求职工作台</title>
 
 <meta name="app-token" content="__APP_TOKEN__">
 <meta name="profile-id" content="__PROFILE_ID__">
@@ -28,7 +28,7 @@
       <div class="connection"><span class="savenote" id="savenote" role="status" aria-live="polite">正在连接 qiuzhao.db…</span><button class="text-button" id="retry-connection" type="button" hidden>重连</button></div>
       <div class="header-tools">
         <button class="action icon-button" id="theme-toggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">☼</button>
-        <details class="menu"><summary class="action">导出备份 ⌄</summary><div class="menu-panel">
+        <details class="menu" id="export-menu"><summary class="action">导出备份 ⌄</summary><div class="menu-panel">
           <button class="action" id="btn-csv" type="button">导出公司与投递 CSV</button>
           <a class="action" href="/api/backup" download="qiuzhao-backup.db">备份投递进度</a>
           <a class="action" href="/api/backup?kind=catalog" download="catalog-backup.db">备份公司目录</a>
@@ -37,16 +37,27 @@
       </div>
     </header>
     <div class="content workbench">
-      <div class="masthead">
-        <div><div class="page-title"><h1>机会清单<span class="title-dot" aria-hidden="true">✦</span></h1><span class="edition">AI / Agent</span></div><p class="dek"><span id="h-count">—</span> 家公司，慢慢找到你的下一站。</p></div>
-        <div class="summary-stats" role="group" aria-label="当前筛选概览">
-          <span class="summary-caption">当前筛选概览</span>
-          <button class="stat is-soon" id="summary-soon" data-summary-filter="soon" type="button" aria-pressed="false" title="叠加或取消 7 天内截止筛选"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 5.5V10l3 2"/></svg><span>7 天内截止</span><b id="s-soon">—</b></button>
-          <button class="stat is-code" id="summary-code" data-summary-filter="code" type="button" aria-pressed="false" title="叠加或取消有推荐码筛选"><span>有推荐码</span><b id="s-code">—</b></button>
-          <div class="stat is-offer"><span>Offer</span><b id="s-offer">0</b></div>
+      <div class="masthead" id="opportunity-intro">
+        <div class="horizon" id="companion-scenery" aria-hidden="true"><img id="companion-painting" alt="" width="2048" height="683" decoding="async"></div>
+        <div class="hero-copy"><div class="page-title"><h1>机会清单<span class="title-dot" aria-hidden="true">✦</span></h1><span class="edition">AI / Agent</span></div><p class="dek"><span id="h-count">—</span> 家公司，慢慢找到你的下一站。</p>
+        <section class="workbench-companion" id="workbench-companion" aria-label="角色陪伴" hidden>
+          <div class="companion-message"><div class="companion-signature"><strong class="companion-name"></strong><span class="companion-scene-name"></span></div><p class="companion-quote"></p></div>
+          <div class="companion-choices" role="group" aria-label="快速切换五位搭档"></div>
+        </section>
         </div>
       </div>
-      <nav class="chips status-tabs" id="status-filters" aria-label="投递状态筛选"></nav>
+      <div class="summary-stats" id="opportunity-stats" role="group" aria-label="公司概览：总数为完整目录，其余随当前筛选变化">
+        <button class="stat is-total" type="button" data-reset-filters title="清空筛选，查看全部公司"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9H3v12h18V9h-4M10 7h4m-4 4h4m-4 4h4m-3 6v-3h2v3"/></svg></span><span class="metric-copy"><b id="s-total">—</b><span>全部公司</span></span><small>完整目录</small><span class="metric-arrow" aria-hidden="true">›</span></button>
+        <button class="stat is-soon" id="summary-soon" data-summary-filter="soon" type="button" aria-pressed="false" title="叠加或取消 7 天内截止筛选"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="metric-copy"><b id="s-soon">—</b><span>7 天内截止</span></span><small>当前筛选</small><span class="metric-arrow" aria-hidden="true">›</span></button>
+        <button class="stat is-code" id="summary-code" data-summary-filter="code" type="button" aria-pressed="false" title="叠加或取消有推荐码筛选"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4V5Z"/><path d="M15 5v3m0 3v2m0 3v3"/></svg></span><span class="metric-copy"><b id="s-code">—</b><span>有推荐码</span></span><small>当前筛选</small><span class="metric-arrow" aria-hidden="true">›</span></button>
+        <div class="stat is-offer"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 3h10v7a5 5 0 0 1-10 0V3Zm0 2H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4m-5 3v6m-4 0h8"/></svg></span><span class="metric-copy"><b id="s-offer">0</b><span>收获 Offer</span></span><small>当前筛选</small></div>
+      </div>
+      <div class="browse-tabs"><nav class="chips status-tabs" id="status-filters" aria-label="投递状态筛选"></nav><button type="button" class="overview-toggle" id="overview-toggle" aria-expanded="true" aria-controls="opportunity-intro opportunity-stats opportunity-notice" title="收起装饰与统计，把空间留给公司清单">收起概览 ↑</button></div>
+      <aside class="deadline-notice" id="opportunity-notice" aria-label="截止提醒">
+        <span class="notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 3h10m-10 18h10M8 3v4c0 2 4 3 4 5s-4 3-4 5v4m8-18v4c0 2-4 3-4 5s4 3 4 5v4"/><path d="m9 18 3-2 3 2"/></svg></span>
+        <div><h2 id="deadline-notice-title">别错过，这一批机会</h2><p id="deadline-notice-detail">正在读取目录中的截止信息…</p></div>
+        <button type="button" id="deadline-notice-action" data-summary-filter="soon" aria-pressed="false">查看近期截止<span aria-hidden="true"> →</span></button>
+      </aside>
       <section class="control-deck" aria-label="查找公司与调整视图">
       <div class="tools">
         <label class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
@@ -54,14 +65,14 @@
           <kbd class="shortcut">/</kbd><button id="clear-search" type="button" aria-label="清空搜索" hidden>×</button>
         </label>
         <details class="filter-menu" id="advanced-filters">
-          <summary title="按公司性质、行业和国企渠道组合筛选"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><path d="M7 3v4m6 1v4m-6 1v4"/></svg>筛选<span id="filter-count" hidden></span></summary>
+          <summary title="按公司性质、行业和国企渠道组合筛选"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><path d="M7 3v4m6 1v4m-6 1v4"/></svg>筛选条件<span id="filter-count" hidden></span></summary>
           <div class="filter-panel advanced-panel" aria-label="组合筛选">
             <section><h3 id="owner-label">公司性质</h3><div class="chips" id="ownership-filters"></div></section>
             <section><h3 id="industry-label">行业方向</h3><div class="chips" id="filters"></div></section>
             <section><h3 id="channel-label">国企渠道</h3><div class="chips" id="channel-filters"></div></section>
           </div>
         </details>
-        <details class="menu" id="view-options"><summary class="action" title="分组、排序与列表密度"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 7h14M8 7v10"/></svg>视图</summary>
+        <details class="menu" id="view-options"><summary class="action" title="分组、排序与列表密度"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 4v12m-2-2 2 2 2-2M9 5h8M9 10h6M9 15h4"/></svg>排序与分组</summary>
           <div class="menu-panel view-tools">
             <h3>整理这份清单</h3>
             <label class="select-control">分组<select id="group-select" aria-label="列表分组"><option value="dl">按截止日期</option><option value="cat">按行业</option><option value="owner">按公司性质</option><option value="none">不分组</option></select></label>
@@ -69,6 +80,10 @@
             <button class="action" id="density-toggle" type="button" aria-pressed="false" title="在机会卡片与紧凑清单之间切换">切换紧凑清单</button>
           </div>
         </details>
+        <div class="layout-switch" role="group" aria-label="公司展示方式">
+          <button type="button" data-density-view="comfortable" aria-label="卡片视图" aria-pressed="true" title="卡片视图"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="12" y="3" width="5" height="5" rx="1"/><rect x="3" y="12" width="5" height="5" rx="1"/><rect x="12" y="12" width="5" height="5" rx="1"/></svg></button>
+          <button type="button" data-density-view="compact" aria-label="紧凑列表视图" aria-pressed="false" title="紧凑列表视图"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10M3 5h1M3 10h1M3 15h1"/></svg></button>
+        </div>
       </div>
       <div id="active-filters" class="active-filters" aria-label="已选筛选条件"></div>
       <div class="result-summary">
@@ -86,7 +101,7 @@
     </ul>
     <h3>状态存在哪里</h3>
     <ul>
-      <li><strong>这是独立的 TypeScript 预览。</strong>默认资料位于 <code>%LOCALAPPDATA%\XiaozhaoGaogaoshou\profiles\typescript-preview\</code>，不上传 GitHub，不与旧版悬浮助手共享进度。等待右上角显示「已写入 qiuzhao.db」后再关闭。</li>
+      <li><strong>个人资料只保存在本机。</strong>新版桌宠、悬浮台账与工作台使用同一份桌面资料；开发预览和旧版资料仍然独立，不会自动互相覆盖。等待右上角显示「已写入 qiuzhao.db」后再关闭。</li>
       <li><strong>关闭重开、电脑重启或清浏览器缓存，不会删除已保存的数据库状态。</strong>请保留资料目录；日常旧台账不会自动迁移到这里。</li>
       <li><strong>备份：</strong>启动时按 UTC 日期分别备份进度与目录到资料目录的 <code>backups</code>。公司目录从 <code>catalog.db</code> 动态读取；Git 更新不覆盖个人进度，新公司只追加。</li>
     </ul>

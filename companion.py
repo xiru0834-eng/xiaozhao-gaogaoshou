@@ -24,7 +24,8 @@ ROOT = pathlib.Path(__file__).resolve().parent
 def page_html():
     html = (ROOT / 'companion.html').read_text(encoding='utf-8')
     mascot = base64.b64encode((ROOT / 'assets/mascot-48.png').read_bytes()).decode()
-    return html.replace('__MASCOT__', 'data:image/png;base64,' + mascot)
+    cast = base64.b64encode((ROOT / 'assets/companion-cast.png').read_bytes()).decode()
+    return html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', 'data:image/png;base64,' + cast)
 
 
 class CompanionAPI:
@@ -166,7 +167,7 @@ class CompanionAPI:
 
 
 class DesktopShell:
-    def __init__(self, api, test=False):
+    def __init__(self, api, test=False, *, html=None):
         sys.path.insert(0, str(ROOT / 'vendor'))
         import webview
         self.webview = webview
@@ -189,7 +190,7 @@ class DesktopShell:
         self.hwnd = None
         self.last_signal = 0
         self.signal = api._directory / 'companion-show.signal'
-        self.window = webview.create_window('校招高高手' + (' · UI 测试' if test else ''), html=page_html(), js_api=api,
+        self.window = webview.create_window('校招高高手' + (' · UI 测试' if test else ''), html=html if html is not None else page_html(), js_api=api,
             width=self.width, height=self.height, min_size=(28, 88), frameless=True, easy_drag=False,
             on_top=True, shadow=True, resizable=False, background_color='#F3F6F5')
         self.window.events.loaded += self.loaded

@@ -152,3 +152,31 @@ test('exit waits for browse save before closing native shell', async () => {
   await h.run('shell("close")');
   assert.equal(h.run('calls.join(",")'), 'saved,closed');
 });
+
+test('pocket themes preserve company context and store only appearance', () => {
+  const h = harness();
+  const before = h.run('JSON.stringify({selected,statuses,tab})');
+  for (const skin of ['mint', 'blue', 'sakura', 'violet', 'amber']) {
+    h.run(`setCompanionSkin('${skin}')`);
+    assert.equal(h.doc.documentElement.dataset.skin, skin);
+    assert.equal(h.run('JSON.stringify({selected,statuses,tab})'), before);
+  }
+  assert.ok(h.writes.every(([key]) => key === 'companion-skin-v1'));
+});
+
+test('invalid pocket theme safely falls back to mint', () => {
+  const h = harness();
+  h.run('setCompanionSkin("not-a-skin", false)');
+  assert.equal(h.doc.documentElement.dataset.skin, 'mint');
+  assert.equal(h.nodes.get('partner-name').textContent, '薄荷石墨');
+});
+
+test('collapsed bookmark direction mirrors the native dock side', () => {
+  const h = harness();
+  h.run('window.shellState({collapsed:true,pinned:false,side:"left"})');
+  assert.equal(h.doc.body.dataset.side, 'left');
+  assert.equal(h.nodes.get('edge-direction').textContent, '›');
+  h.run('window.shellState({collapsed:false,pinned:true,side:"right"})');
+  assert.equal(h.doc.body.dataset.side, 'right');
+  assert.equal(h.doc.body.classList.contains('collapsed'), false);
+});

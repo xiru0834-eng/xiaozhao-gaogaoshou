@@ -31,6 +31,31 @@ export function createSession(
   }
   return {
     profileId,
+    /** Settings and billable starts must never be silently replayed. */
+    async dailyRequest(path: string, method = 'GET', body?: unknown): Promise<Record<string, unknown>> {
+      const res = await transport(path, {
+        method, cache: 'no-store', headers: {...headers(), 'X-App-Token': token, 'Content-Type': 'application/json'},
+        body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000),
+      });
+      if (res.status === 403) throw new Error('本机会话已过期，请刷新页面；未自动重试。');
+      const data: unknown = await res.json();
+      if (!data || typeof data !== 'object' || !('profileId' in data) || data.profileId !== profileId)
+        throw new Error('资料档案不一致，请重新打开工作台。');
+      if (!res.ok) {
+        const error = 'error' in data ? data.error : null;
+        throw new Error(error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.length <= 400
+          ? error.message : '每日更新请求失败，请刷新核对结果，未自动重试。');
+      }
+      return data as Record<string, unknown>;
+    },
+    async mailRequest(body?:unknown):Promise<Record<string,any>>{
+      const res=await transport('/api/mail',{method:body===undefined?'GET':'POST',cache:'no-store',headers:{...headers(),'X-App-Token':token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(60000)});
+      const data=await res.json();
+      if(res.status===403)throw new Error('本机会话已过期，请刷新页面。未自动重试。');
+      if(data.profileId!==profileId)throw new Error('资料档案不一致，请重新打开工作台。');
+      if(!res.ok)throw new Error(typeof data.error?.message==='string'?data.error.message:'邮件请求失败，未自动重试。');
+      return data;
+    },
     /** Run creation and acceptance are idempotent on the server; never retry silently. */
     async collectionRequest(path: string, body?: unknown): Promise<Record<string, unknown>> {
       const res = await transport(path, {

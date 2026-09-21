@@ -55,7 +55,8 @@ body:has(.appearance-dialog[open]) { overflow:hidden; }
 .skin-choice-label strong { display:block; font-size:13px; color:var(--ink); }
 .skin-choice-label small { display:block; margin-top:5px; font-size:10px; color:var(--muted); }
 .skin-choice.is-original { grid-column:1/-1; height:44px; padding-inline:10px; gap:10px; }
-.skin-choice.is-original .skin-thumb { height:25px; width:25px; border-radius:50%; font-size:16px; }
+.skin-choice.is-original .skin-thumb { height:32px; width:32px; border-radius:50%; background:#fff; }
+.skin-choice.is-original .skin-thumb .character-sprite { width:32px; height:32px; border-radius:50%; }
 .skin-choice.is-original .skin-choice-label { display:flex; align-items:center; gap:10px; }
 .skin-choice.is-original small { margin:0; }
 .skin-index { margin-left:auto; color:var(--muted); font-size:10px; align-self:flex-start; padding-top:8px; }
