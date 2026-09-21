@@ -20,6 +20,19 @@
 
 **校招高高手**是面向 AI / Agent 求职的 Windows 本地工作台。用轻巧的界面管理公司与公开招聘线索，打开官网投递，再记下自己的进度。模型是可选工具，不配置也能用台账。
 
+## 本分支：校招工作台 × 拾知面试陪练
+
+公司清单为首页，在公司卡片点 **准备面试**，填写目标岗位后可练习计算机网络、数据库、Java 和 Redis，支持语音或文字回答、AI 点评、按公司查看练习记录。顶部可切换独立陪练与普通聊天，模型统一在 **设置 → 模型** 中配置。公司清单是历史快照，基础题不代表公司真题。
+
+整合版需要 Node.js 22.19+（或 24+）、Git 和 pnpm。在仓库根目录运行：
+
+```powershell
+npm run coach:install
+npm run coach
+```
+
+打开终端输出的本地私有链接，默认端口为 `4317`。构建会检查工作台与陪练所需的接口，兼容接口的日常修改无需更新来源版本。`npm run coach:check` 构建并运行整合版回归测试。详细配置、数据目录和功能限制见 [整合版说明](products/shizhi-interview/README.zh.md)。原有工作台的启动命令继续保留；整合版使用自己的本地数据目录，不自动导入原版的个人投递记录。
+
 `TypeScript` · `Node.js 24.x` · `SQLite` · `本机保存` · `薄荷石墨`
 
 > **分享版说明** · 当前是公开源码分享版，非免安装 EXE、非在线多人系统。Git 更新代码；每个人的投递记录留在自己的电脑上。
@@ -116,20 +129,23 @@
 
 ## 启动源码版
 
-准备 **Windows、Git、Node.js 24.14 或更高的 24.x**。在 PowerShell 中运行：
+准备 **Windows、Git、Node.js 24.14 或更高的 24.x，以及 pnpm**。在 PowerShell 中运行：
 
 ```powershell
 git clone https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
 cd xiaozhao-gaogaoshou
 npm ci
-npm run build
+npm run coach:install
 npm start
 ```
 
-打开 **http://127.0.0.1:18765/**，进入 TypeScript 工作台。第一次是空白投递进度，公共目录以 315 家公司的历史快照初始化。
+默认启动 **校招高高手 × 拾知融合版**，打开 Harness 输出的本地私有链接（端口 `4317`）。同一页面包含公司工作台、日历、任务、邮件核对和面试陪练；内置 56 道题，其中 24 道为智能体应用开发题。支持语音作答、逐项点评、薄弱点复习和模拟面试。运行环境还需 pnpm；模型、语音及保留原数据的方法见[融合版说明](products/shizhi-interview/README.zh.md)。首次公共目录以 315 家公司的历史快照初始化。
+
+保留独立 TypeScript 工作台供桌面接入和独立开发：`npm run build` 后运行 `npm run start:workbench`，地址为 `http://127.0.0.1:18765/`。
 
 | 入口 | 当前用途 | 数据关系 |
 | :--- | :--- | :--- |
+| `4317` · 默认融合版 | 完整工作台与语音面试陪练 | 默认使用 `products/shizhi-interview/.dsh-home/`，可通过 `DSH_HOME` 保留已有数据 |
 | `18765` · TypeScript 工作台 | 新版界面、独立资料、模型设置 | 默认资料在 `%LOCALAPPDATA%\XiaozhaoGaogaoshou\profiles\typescript-preview\` |
 | `18763` · Python 兼容版 | 旧完整台账与原生贴边助手 | 与 TypeScript 版不自动共享进度 |
 | `18766` · 可选桌面接入版 | 五角色桌宠、悬浮助手和 TypeScript 服务 | 须显式迁移并配置独立资料；不是拉取即覆盖旧库 |
@@ -145,7 +161,7 @@ npm start
 git status --short
 git pull --ff-only
 npm ci
-npm run build
+npm run coach:install
 ```
 
 在原服务终端按 `Ctrl+C`，然后重新运行 `npm start`。有本地改动或历史分叉时先停止处理，不强制覆盖。关闭网页不等于停止后台服务。
@@ -162,6 +178,7 @@ Git 拉取不会自动搜索新岗位，也不是实时更新推送；不要删�
 
 | 模块 | 当前状态 | 说明 |
 | :--- | :--- | :--- |
+| 面试陪练 | 已整合 | 24 道 Agent 题及 32 道基础题、语音作答、逐项点评、复习与模拟面试；按公司关联历史。 |
 | 工作台与组合筛选 | 已实现 | 机会卡片、紧凑清单、明暗主题、进度保存和导出。 |
 | 阶段 1 · 数据基础 | 已实现 | 独立资料、追加式目录、事务导入、备份、资料身份和进程锁；真实旧库迁移需主动执行。 |
 | 阶段 2 · 模型接入 | 已实现 | 自定义接口保存、测试与非流式生成；已验证一套真实接口，不承诺兼容每一家服务，自己的配置仍需测试。 |

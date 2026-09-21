@@ -74,7 +74,17 @@ export function backupDir(directory: string): string {
   return path;
 }
 export function acquireProfile(path: string) {
-  const dataDir = prepareDataDir(path);
+  return lockProfile(prepareDataDir(path));
+}
+
+/** Locks a host-owned data directory, retaining its existing profile identity.
+ * @param dataDir Absolute directory already selected and created by its host.
+ * @param initialProfileId Identity to adopt when no durable runtime identity exists.
+ * @returns Exclusive profile lock; callers must close it after all stores close.
+ */
+export function lockProfile(dataDir: string, initialProfileId?: string) {
+  if (!isAbsolute(dataDir)) throw new Error("Data directory must be absolute");
+  if (initialProfileId !== undefined && !/^[0-9a-f-]{36}$/.test(initialProfileId)) throw new Error("Invalid profile identity");
   const db = new DatabaseSync(safeFile(dataDir, "runtime.db"), { timeout: 0 });
   try {
     db.exec("BEGIN EXCLUSIVE");
@@ -83,13 +93,14 @@ export function acquireProfile(path: string) {
     );
     db.prepare("INSERT OR IGNORE INTO identity VALUES (?,?)").run(
       "profile",
-      randomUUID(),
+      initialProfileId ?? randomUUID(),
     );
     const profileId = db
       .prepare("SELECT value FROM identity WHERE id=?")
       .get("profile")?.value;
     if (typeof profileId !== "string" || !/^[0-9a-f-]{36}$/.test(profileId))
       throw new Error("Invalid profile identity");
+    if (initialProfileId && profileId !== initialProfileId) throw new Error("Profile identity mismatch");
     db.exec("COMMIT");
     db.exec("BEGIN EXCLUSIVE");
     let closed = false;

@@ -1,0 +1,8 @@
+node_modules/
+lib/
+client/client.js
+client/career/
+.dsh-home/
+.env
+*.tgz
+coverage/

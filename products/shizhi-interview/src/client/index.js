@@ -1,0 +1,91 @@
+import React from 'react'
+import { COACH_STYLES } from './shared/coach-styles.js'
+import {
+  CompactResultCard,
+  PracticeSummaryCard,
+  QuestionResourceCard,
+  ReviewResourceCard,
+  ToolErrorCard,
+} from './features/live-interview.js'
+import { InsightsCard, PracticeLibrary } from './features/practice-library.js'
+import { PracticeSetupCard } from './features/practice-config.js'
+import { TimelinePanel } from './features/timeline.js'
+import { LeetcodeCatalog } from './features/leetcode.js'
+import { WorkspaceSidebarEntry } from './features/workspace-dock.js'
+import { ProductConversation } from './features/product-home.js'
+import { createHomeActions, registerProductHome } from './shared/home-session.js'
+import { INTERVIEW_TOOL_NAMES } from '../protocol/interview-tool-names.js'
+import { installStyles } from './shared/styles.js'
+import { h, parseInteractionResult, toolCallState, toolErrorAudience, toolErrorMessage } from './shared/ui.js'
+
+export const name = 'shizhi-interview'
+export const inject = ['slots', 'sessions', 'uiWorkspace']
+
+export function resolveToolView(toolName, block) {
+  const state = toolCallState(block)
+  if (state === 'running') return { kind: 'hidden' }
+  if (state === 'error' && toolErrorAudience(block) === 'agent') return { kind: 'hidden' }
+  if (state === 'error') return { kind: 'error', message: toolErrorMessage(block) }
+  const result = parseInteractionResult(block)
+  if (!result || result.error?.audience === 'agent' || !result.artifact) return { kind: 'hidden' }
+  return { ...result.artifact, revision: result.revision, toolName }
+}
+
+function ToolResourceView({ toolName, sessionId, block }) {
+  const view = resolveToolView(toolName, block)
+  switch (view.kind) {
+    case 'error': return h(ToolErrorCard, { message: view.message })
+    case 'practice-setup': return h(PracticeSetupCard, { key: view.presentationId, sessionId })
+    case 'question': return h(QuestionResourceCard, { key: view.presentationId, artifact: view, revision: view.revision, sessionId })
+    case 'review': return h(ReviewResourceCard, { key: view.presentationId, artifact: view, revision: view.revision, sessionId })
+    case 'library': return h(PracticeLibrary, { sessionId, initialPracticeId: view.practiceId })
+    case 'insights': return h(InsightsCard)
+    case 'leetcode-catalog': return h(LeetcodeCatalog, { sessionId })
+    case 'deleted': return h(CompactResultCard, { title: '练习已删除', detail: '档案和对应会话游标已经清理。' })
+    case 'exported': return h(CompactResultCard, { title: 'Markdown 已生成', detail: '打开练习档案可以下载本次导出。' })
+    case 'finished': return h(PracticeSummaryCard, { artifact: view, revision: view.revision })
+    default: return null
+  }
+}
+
+export function apply(ctx) {
+  const coachStyle = document.createElement('style')
+  coachStyle.textContent = COACH_STYLES
+  document.head.appendChild(coachStyle)
+  ctx.effect(() => () => coachStyle.remove())
+  installStyles()
+  const slots = ctx.get('slots')
+  if (!slots) return
+  const actions = createHomeActions(ctx.get('sessions'), ctx.get('uiWorkspace'))
+  slots.inject('main.conversation', () => registerProductHome(slots, ctx.get('sessions'),
+    (props) => h(ProductConversation, { ...props, actions })))
+
+  for (const toolName of INTERVIEW_TOOL_NAMES) {
+    slots.inject('tool.call.toolview', () => slots.register(
+      { name: 'tool.call.toolview', key: toolName },
+      (props) => h(ToolResourceView, { toolName, sessionId: props.sessionId, block: props.block }),
+    ))
+  }
+
+  slots.inject('sidebar.footer.action', () => slots.register(
+    { name: 'sidebar.footer.action', id: 'interview-workspace', order: 20 },
+    (props) => h(WorkspaceSidebarEntry, { wide: props.wide, useSessions: props.useSessions,
+      createSession: actions.createSession,
+    }),
+  ))
+
+  slots.inject('conversation.input.dock', () => slots.register(
+    { name: 'conversation.input.dock', id: 'interview-timeline', order: 25 },
+    (props) => {
+      const revisionSignal = typeof props.useSession === 'function'
+        ? props.useSession((snapshot) => {
+            const order = snapshot?.chat?.order || []
+            return `${order.length}:${order.at(-1) || ''}`
+          })
+        : ''
+      return h(TimelinePanel, { sessionId: props.sessionId, revisionSignal })
+    },
+  ))
+}
+
+export { ToolResourceView }

@@ -1,0 +1,316 @@
+import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
+import { defaultDatabasePath } from './paths.js'
+
+const SCHEMA_VERSION = 1
+
+function parseJson(value, fallback) {
+  if (typeof value !== 'string' || !value) return fallback
+  try { return JSON.parse(value) } catch { return fallback }
+}
+
+export class SqliteInterviewRepository {
+  constructor(filePath = defaultDatabasePath()) {
+    this.filePath = filePath
+    if (filePath !== ':memory:') mkdirSync(dirname(filePath), { recursive: true })
+    this.database = new DatabaseSync(filePath)
+    this.database.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;')
+    try { this.#initializeSchema() } catch (error) { this.database.close(); throw error }
+  }
+
+  #initializeSchema() {
+    this.database.exec(`
+      CREATE TABLE IF NOT EXISTS practices (
+        id TEXT PRIMARY KEY,
+        mode TEXT NOT NULL,
+        topic TEXT NOT NULL,
+        source_kind TEXT NOT NULL,
+        source_content TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active', 'completed')),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        completed_at INTEGER,
+        summary_json TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS questions (
+        id TEXT PRIMARY KEY,
+        practice_id TEXT NOT NULL REFERENCES practices(id) ON DELETE CASCADE,
+        sequence INTEGER NOT NULL,
+        prompt TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        leetcode_json TEXT,
+        explanation_detail TEXT,
+        explanation_memo TEXT,
+        explained_at INTEGER,
+        UNIQUE (practice_id, sequence)
+      );
+
+      CREATE TABLE IF NOT EXISTS attempts (
+        id TEXT PRIMARY KEY,
+        question_id TEXT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+        sequence INTEGER NOT NULL,
+        answer TEXT NOT NULL,
+        submitted_at INTEGER NOT NULL,
+        evaluation_score REAL,
+        evaluation_feedback TEXT,
+        evaluation_dimensions_json TEXT,
+        evaluated_at INTEGER,
+        UNIQUE (question_id, sequence)
+      );
+
+      CREATE TABLE IF NOT EXISTS session_bindings (
+        session_id TEXT PRIMARY KEY,
+        practice_id TEXT NOT NULL UNIQUE REFERENCES practices(id) ON DELETE CASCADE,
+        current_question_id TEXT,
+        revision INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS leetcode_progress (
+        slug TEXT PRIMARY KEY,
+        completed INTEGER NOT NULL CHECK (completed IN (0, 1)),
+        completed_at INTEGER,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_practices_updated_at ON practices(updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_practices_mode_status ON practices(mode, status);
+      CREATE INDEX IF NOT EXISTS idx_questions_practice ON questions(practice_id, sequence);
+      CREATE INDEX IF NOT EXISTS idx_attempts_question ON attempts(question_id, sequence);
+    `)
+    const version = this.database.prepare('PRAGMA user_version').get().user_version
+    if (version > SCHEMA_VERSION) throw new Error('练习数据库版本较新，请升级应用')
+    if (version < SCHEMA_VERSION) {
+      this.database.exec('BEGIN IMMEDIATE')
+      try {
+        if (!this.database.prepare('PRAGMA table_info(attempts)').all().some((column) => column.name === 'evaluation_review_json')) {
+          this.database.exec('ALTER TABLE attempts ADD COLUMN evaluation_review_json TEXT')
+        }
+        this.database.exec('PRAGMA user_version = 1; COMMIT')
+      } catch (error) { this.database.exec('ROLLBACK'); throw error }
+    }
+  }
+
+  #readQuestion(row) {
+    const attemptRows = this.database.prepare(`
+      SELECT * FROM attempts WHERE question_id = ? ORDER BY sequence ASC
+    `).all(row.id)
+    const leetcode = parseJson(row.leetcode_json, null)
+    return {
+      id: row.id,
+      sequence: row.sequence,
+      prompt: row.prompt,
+      createdAt: row.created_at,
+      attempts: attemptRows.map((attempt) => ({
+        id: attempt.id,
+        sequence: attempt.sequence,
+        answer: attempt.answer,
+        submittedAt: attempt.submitted_at,
+        evaluation: attempt.evaluation_score === null ? null : {
+          score: attempt.evaluation_score,
+          feedback: attempt.evaluation_feedback || '',
+          dimensions: parseJson(attempt.evaluation_dimensions_json, {}),
+          evaluatedAt: attempt.evaluated_at,
+          ...(attempt.evaluation_review_json ? { review: JSON.parse(attempt.evaluation_review_json) } : {}),
+        },
+      })),
+      explanation: row.explanation_detail === null ? null : {
+        detail: row.explanation_detail,
+        memorizationPoints: row.explanation_memo || '',
+        createdAt: row.explained_at,
+      },
+      ...(leetcode ? { leetcode } : {}),
+    }
+  }
+
+  async getPractice(id) {
+    const row = this.database.prepare('SELECT * FROM practices WHERE id = ?').get(id)
+    if (!row) return null
+    const questionRows = this.database.prepare(`
+      SELECT * FROM questions WHERE practice_id = ? ORDER BY sequence ASC
+    `).all(id)
+    return {
+      id: row.id,
+      mode: row.mode,
+      topic: row.topic,
+      source: { kind: row.source_kind, content: row.source_content },
+      config: parseJson(row.config_json, {}),
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      completedAt: row.completed_at,
+      summary: parseJson(row.summary_json, null),
+      questions: questionRows.map((question) => this.#readQuestion(question)),
+    }
+  }
+
+  async listPractices(filters = {}) {
+    const clauses = []
+    const values = []
+    if (filters.mode) { clauses.push('mode = ?'); values.push(filters.mode) }
+    if (filters.status) { clauses.push('status = ?'); values.push(filters.status) }
+    if (filters.query) {
+      clauses.push('(LOWER(topic) LIKE ? OR LOWER(source_content) LIKE ? OR LOWER(config_json) LIKE ?)')
+      const query = `%${String(filters.query).toLowerCase()}%`
+      values.push(query, query, query)
+    }
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+    const rows = this.database.prepare(`SELECT id FROM practices ${where} ORDER BY updated_at DESC`).all(...values)
+    return Promise.all(rows.map((row) => this.getPractice(row.id)))
+  }
+
+  async getSessionBinding(sessionId) {
+    const row = this.database.prepare('SELECT * FROM session_bindings WHERE session_id = ?').get(sessionId)
+    return this.#readSessionBinding(row)
+  }
+
+  async getSessionBindingByPractice(practiceId) {
+    const row = this.database.prepare('SELECT * FROM session_bindings WHERE practice_id = ?').get(practiceId)
+    return this.#readSessionBinding(row)
+  }
+
+  #readSessionBinding(row) {
+    return row ? {
+      sessionId: row.session_id,
+      practiceId: row.practice_id,
+      currentQuestionId: row.current_question_id,
+      revision: row.revision,
+      updatedAt: row.updated_at,
+    } : null
+  }
+
+  #writePractice(practice) {
+    this.database.prepare(`
+      INSERT INTO practices (
+        id, mode, topic, source_kind, source_content, config_json, status,
+        created_at, updated_at, completed_at, summary_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        mode = excluded.mode,
+        topic = excluded.topic,
+        source_kind = excluded.source_kind,
+        source_content = excluded.source_content,
+        config_json = excluded.config_json,
+        status = excluded.status,
+        updated_at = excluded.updated_at,
+        completed_at = excluded.completed_at,
+        summary_json = excluded.summary_json
+    `).run(
+      practice.id,
+      practice.mode,
+      practice.topic,
+      practice.source.kind,
+      practice.source.content,
+      JSON.stringify(practice.config),
+      practice.status,
+      practice.createdAt,
+      practice.updatedAt,
+      practice.completedAt,
+      practice.summary ? JSON.stringify(practice.summary) : null,
+    )
+    this.database.prepare('DELETE FROM questions WHERE practice_id = ?').run(practice.id)
+    const insertQuestion = this.database.prepare(`
+      INSERT INTO questions (
+        id, practice_id, sequence, prompt, created_at,
+        leetcode_json, explanation_detail, explanation_memo, explained_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    const insertAttempt = this.database.prepare(`
+      INSERT INTO attempts (
+        id, question_id, sequence, answer, submitted_at,
+        evaluation_score, evaluation_feedback, evaluation_dimensions_json, evaluated_at, evaluation_review_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    for (const question of practice.questions) {
+      insertQuestion.run(
+        question.id,
+        practice.id,
+        question.sequence,
+        question.prompt,
+        question.createdAt,
+        question.leetcode ? JSON.stringify(question.leetcode) : null,
+        question.explanation?.detail ?? null,
+        question.explanation?.memorizationPoints ?? null,
+        question.explanation?.createdAt ?? null,
+      )
+      for (const attempt of question.attempts) {
+        insertAttempt.run(
+          attempt.id,
+          question.id,
+          attempt.sequence,
+          attempt.answer,
+          attempt.submittedAt,
+          attempt.evaluation?.score ?? null,
+          attempt.evaluation?.feedback ?? null,
+          attempt.evaluation ? JSON.stringify(attempt.evaluation.dimensions) : null,
+          attempt.evaluation?.evaluatedAt ?? null,
+          attempt.evaluation?.review ? JSON.stringify(attempt.evaluation.review) : null,
+        )
+      }
+    }
+  }
+
+  #writeSessionBinding(binding) {
+    this.database.prepare('DELETE FROM session_bindings WHERE session_id = ? OR practice_id = ?')
+      .run(binding.sessionId, binding.practiceId)
+    this.database.prepare(`
+      INSERT INTO session_bindings (
+        session_id, practice_id, current_question_id, revision, updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+    `).run(
+      binding.sessionId,
+      binding.practiceId,
+      binding.currentQuestionId,
+      binding.revision,
+      binding.updatedAt,
+    )
+  }
+
+  async commit({ practice, practices = [], binding, unbindSessionId }) {
+    this.database.exec('BEGIN IMMEDIATE')
+    try {
+      for (const item of [...practices, ...(practice ? [practice] : [])]) this.#writePractice(item)
+      if (unbindSessionId) this.database.prepare('DELETE FROM session_bindings WHERE session_id = ?').run(unbindSessionId)
+      if (binding) this.#writeSessionBinding(binding)
+      this.database.exec('COMMIT')
+    } catch (error) {
+      this.database.exec('ROLLBACK')
+      throw error
+    }
+  }
+
+  async deletePractice(id) {
+    this.database.prepare('DELETE FROM practices WHERE id = ?').run(id)
+  }
+
+  async clearSessionBinding(sessionId) {
+    this.database.prepare('DELETE FROM session_bindings WHERE session_id = ?').run(sessionId)
+  }
+
+  async listLeetcodeProgress() {
+    return this.database.prepare('SELECT * FROM leetcode_progress ORDER BY slug ASC').all().map((row) => ({
+      slug: row.slug,
+      completed: Boolean(row.completed),
+      completedAt: row.completed_at,
+      updatedAt: row.updated_at,
+    }))
+  }
+
+  async saveLeetcodeProgress(progress) {
+    this.database.prepare(`
+      INSERT INTO leetcode_progress (slug, completed, completed_at, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(slug) DO UPDATE SET
+        completed = excluded.completed,
+        completed_at = excluded.completed_at,
+        updated_at = excluded.updated_at
+    `).run(progress.slug, progress.completed ? 1 : 0, progress.completedAt, progress.updatedAt)
+  }
+
+  close() {
+    this.database.close()
+  }
+}
