@@ -14,8 +14,9 @@ import time
 import webbrowser
 
 from companion_activity import ActivityJournal
+from companion_schedule import ScheduleClient, SCHEDULE_BASE
 from floating_model import Catalog, DockState, LedgerClient, STATUSES, fit_rect, safe_url
-from floating_native import work_area
+from floating_native import user32, work_area
 
 ROOT = pathlib.Path(__file__).resolve().parent
 
@@ -23,7 +24,8 @@ ROOT = pathlib.Path(__file__).resolve().parent
 def page_html():
     html = (ROOT / 'companion.html').read_text(encoding='utf-8')
     mascot = base64.b64encode((ROOT / 'assets/mascot-48.png').read_bytes()).decode()
-    return html.replace('__MASCOT__', 'data:image/png;base64,' + mascot)
+    cast = base64.b64encode((ROOT / 'assets/companion-cast.png').read_bytes()).decode()
+    return html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', 'data:image/png;base64,' + cast)
 
 
 class CompanionAPI:
@@ -41,12 +43,64 @@ class CompanionAPI:
         self._lock = threading.RLock()
         self._origins = {}
         self._shell = None
+        self._schedules = ScheduleClient()
 
     def snapshot(self):
         with self._lock:
             self._catalog = Catalog.read(ROOT / 'index.html')
             statuses = self._client.statuses()
-            return self._response(statuses, catalog=True)
+            result = self._response(statuses, catalog=True)
+            result['schedule'] = self._schedules.summary()
+            try:
+                result['navigation'] = self.load_navigation()
+            except (OSError, ValueError):
+                result['navigationError'] = '浏览位置读取失败，原文件已保留。'
+            return result
+
+    @staticmethod
+    def _validate_point(point):
+        if point is None:
+            return
+        strings = ('name', 'anchor', 'query', 'owner', 'stage', 'tab')
+        if not isinstance(point, dict) or set(point) != set(strings + ('offset', 'scroll', 'onlyCode', 'recent')):
+            raise ValueError('浏览位置格式无效')
+        if any(not isinstance(point[k], str) or len(point[k]) > 500 for k in strings):
+            raise ValueError('浏览位置文字无效')
+        if any(type(point[k]) not in (int, float) or not 0 <= point[k] <= 10000000 for k in ('offset', 'scroll')):
+            raise ValueError('浏览位置坐标无效')
+        if any(type(point[k]) is not bool for k in ('onlyCode', 'recent')):
+            raise ValueError('浏览位置筛选无效')
+        if point['tab'] not in ('all', '未投', 'applied') or point['stage'] not in ('全部进度', *STATUSES):
+            raise ValueError('浏览位置进度无效')
+        if point['owner'] not in ('全部性质', '私企', '外企', '央国企', '科研/事业单位'):
+            raise ValueError('浏览位置性质无效')
+
+    def load_navigation(self):
+        with self._lock:
+            path = self._directory / 'companion-navigation-preferences.json'
+            if not path.exists():
+                return dict(bookmark=None, browse=None)
+            if path.stat().st_size > 20000:
+                raise ValueError('浏览位置文件过大')
+            data = json.loads(path.read_text(encoding='utf-8'))
+            if not isinstance(data, dict) or set(data) != {'bookmark', 'browse'}:
+                raise ValueError('浏览位置文件无效')
+            for point in data.values():
+                self._validate_point(point)
+            return data
+
+    def save_navigation(self, kind, point):
+        if kind not in ('bookmark', 'browse'):
+            raise ValueError('浏览位置类型无效')
+        self._validate_point(point)
+        with self._lock:
+            data = self.load_navigation()
+            data[kind] = point
+            path = self._directory / 'companion-navigation-preferences.json'
+            temp = path.with_suffix('.tmp')
+            temp.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+            os.replace(temp, path)
+            return True
 
     def _response(self, statuses, catalog=False):
         result = dict(statuses=statuses, today=self._journal.names() if self._journal else [],
@@ -95,9 +149,12 @@ class CompanionAPI:
         return True
 
     def window_action(self, action):
-        if action not in ('pin', 'collapse', 'expand', 'full', 'close', 'left', 'right'):
+        if action not in ('pin', 'collapse', 'expand', 'full', 'close', 'left', 'right', 'schedules'):
             raise ValueError('不支持的窗口操作')
-        if action == 'full':
+        if action == 'schedules':
+            if not webbrowser.open(SCHEDULE_BASE + '/#schedules', new=2):
+                raise RuntimeError('无法打开日程，请先启动 TypeScript 完整版。')
+        elif action == 'full':
             webbrowser.open(self._base + '/', new=2)
         elif self._shell:
             self._shell.action(action)
@@ -110,7 +167,7 @@ class CompanionAPI:
 
 
 class DesktopShell:
-    def __init__(self, api, test=False):
+    def __init__(self, api, test=False, *, html=None):
         sys.path.insert(0, str(ROOT / 'vendor'))
         import webview
         self.webview = webview
@@ -133,7 +190,7 @@ class DesktopShell:
         self.hwnd = None
         self.last_signal = 0
         self.signal = api._directory / 'companion-show.signal'
-        self.window = webview.create_window('校招高高手' + (' · UI 测试' if test else ''), html=page_html(), js_api=api,
+        self.window = webview.create_window('校招高高手' + (' · UI 测试' if test else ''), html=html if html is not None else page_html(), js_api=api,
             width=self.width, height=self.height, min_size=(28, 88), frameless=True, easy_drag=False,
             on_top=True, shadow=True, resizable=False, background_color='#F3F6F5')
         self.window.events.loaded += self.loaded
@@ -164,14 +221,12 @@ class DesktopShell:
 
     def rect(self):
         rect = wintypes.RECT()
-        ctypes.windll.user32.GetWindowRect(wintypes.HWND(self.hwnd), ctypes.byref(rect))
+        user32.GetWindowRect(wintypes.HWND(self.hwnd), ctypes.byref(rect))
         return rect.left, rect.top, rect.right, rect.bottom
 
     def place(self, initial=False):
         if not self.hwnd:
             return
-        user32 = ctypes.windll.user32
-        user32.GetDpiForWindow.argtypes = [wintypes.HWND]
         scale = user32.GetDpiForWindow(self.hwnd) / 96 or 1
         x, y, right, bottom = self.rect()
         area = work_area(x, y)
@@ -211,15 +266,14 @@ class DesktopShell:
         while not self.stop.wait(.1):
             try:
                 point = wintypes.POINT()
-                ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
+                user32.GetCursorPos(ctypes.byref(point))
                 rect = self.rect()
                 x, y, right, bottom = rect
                 inside = x <= point.x < right and y <= point.y < bottom
-                dragging = bool(ctypes.windll.user32.GetAsyncKeyState(1) & 0x8000)
+                dragging = bool(user32.GetAsyncKeyState(1) & 0x8000)
                 self.dock.dragging = dragging
                 # Input focus only blocks auto-hide while our own window is active.
-                ctypes.windll.user32.GetForegroundWindow.restype = wintypes.HWND
-                if ctypes.windll.user32.GetForegroundWindow() != self.hwnd:
+                if user32.GetForegroundWindow() != self.hwnd:
                     self.dock.editing = False
                 if rect != last_rect and dragging:
                     area = work_area(x, y)

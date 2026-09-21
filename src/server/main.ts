@@ -28,7 +28,7 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535 || port === 18763)
 const webDir = fileURLToPath(new URL("../../web/", import.meta.url));
 const app = await startServer({ dataDir, port, webDir });
 console.log(
-  `校招高高手 · TypeScript 预览 ${app.url}\n独立数据目录：${dataDir}\nCtrl+C 停止；未迁移原版个人数据。`,
+  `校招高高手 · 本地工作台 ${app.url}\n当前资料目录：${dataDir}\nCtrl+C 停止；其他资料不会自动合并。`,
 );
 let stopping = false;
 async function stop() {

@@ -115,6 +115,7 @@ export class Store {
       this.db.prepare("PRAGMA integrity_check").get()?.integrity_check,
     );
   }
+  schemaVersion() { return Number(this.db.prepare('PRAGMA user_version').get()!.user_version); }
   close(): void {
     this.db.close();
   }
