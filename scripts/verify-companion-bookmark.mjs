@@ -11,6 +11,7 @@ try {
  await page.goto('http://127.0.0.1:18768/');
  await page.getByRole('button',{name:'标记这里：腾讯',exact:true}).waitFor();
  await page.getByRole('button',{name:'待投递',exact:false}).click();
+ await page.getByRole('button',{name:'展开筛选区域',exact:true}).click();
  await page.getByRole('button',{name:'筛选 ▾',exact:true}).click();
  await page.getByLabel('公司性质').selectOption('私企');
  await page.getByRole('button',{name:'标记这里：三环集团',exact:true}).click();

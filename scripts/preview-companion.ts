@@ -13,6 +13,7 @@ const companies = DATA.map(row => ({
 }));
 const original = await readFile(new URL('../companion.html', import.meta.url), 'utf8');
 const mascot = (await readFile(new URL('../assets/mascot-48.png', import.meta.url))).toString('base64');
+const cast = (await readFile(new URL('../assets/companion-cast.png', import.meta.url))).toString('base64');
 const bridge = `<script>
 (() => {
  const companies = ${JSON.stringify(companies).replaceAll('<', '\\u003c')};
@@ -37,7 +38,7 @@ const server = createServer(async (req, res) => {
   try {
     const html = req.url?.startsWith('/before') ? original : await readFile(new URL('../companion.html', import.meta.url), 'utf8');
     res.writeHead(200, {'Content-Type':'text/html; charset=utf-8', 'Cache-Control':'no-store'});
-    res.end(html.replaceAll('__MASCOT__', `data:image/png;base64,${mascot}`).replace('<script>', bridge+'<script>'));
+    res.end(html.replaceAll('__MASCOT__', `data:image/png;base64,${mascot}`).replaceAll('__CAST__', `data:image/png;base64,${cast}`).replace('<script>', bridge+'<script>'));
   } catch {res.writeHead(500).end('Preview unavailable');}
 });
 server.listen(port,'127.0.0.1',()=>console.log(`Synthetic companion preview http://127.0.0.1:${port}`));

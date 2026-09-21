@@ -39,3 +39,10 @@ model-settings.json
 .idea/
 /build/
 /dist/
+
+# Machine-specific QA evidence, account settings and migration receipts.
+/artifacts/
+/qa-web-*.png
+desktop-settings.json
+desktop-migration.json
+mail-settings.json
