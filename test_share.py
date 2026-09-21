@@ -30,7 +30,9 @@ class SharingTests(unittest.TestCase):
         paths = ['qiuzhao.db', 'backups/daily.db', 'companion-activity.json',
                  'companion-window.json', 'startup.log', 'webview-profile/Default/Cookies',
                  'private/resume.pdf', 'interview_notes.db', '.env', '.venv/pyvenv.cfg',
-                 'companion-activity.tmp']
+                 'companion-activity.tmp', 'artifacts/qa/result.json',
+                 'qa-web-shell.png', 'desktop-settings.json',
+                 'desktop-migration.json', 'mail-settings.json']
         result = subprocess.run(['git', 'check-ignore', '-z', '--stdin'],
                                 input='\0'.join(paths).encode(), cwd=ROOT,
                                 capture_output=True, check=True)

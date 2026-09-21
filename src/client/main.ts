@@ -8,7 +8,8 @@ import {
 } from "./selectors.ts";
 import { element, required } from "./dom.ts";
 import "./styles.css";
-import "./workbench.css";
+import "./opportunities.css";
+import { roleKeywords, deadlineNotice, mountWorkbenchMenus, mountWorkbenchOverview } from "./opportunity-view.ts";
 import {
   DATA,
   CATS,
@@ -32,8 +33,20 @@ import { Progress } from "./progress.ts";
 import { statusApi } from "./api.ts";
 import { sessionFromPage } from "./session.ts";
 import { mountModelSettings } from "./model-settings.ts";
+import { mountUpdates } from "./updates.ts";
+import { mountAppearance } from "./appearance.ts";
+import { mountSchedules } from "./schedules.ts";
+import { mountMail } from "./mail.ts";
+import { mountDaily } from "./daily.ts";
+import "./module-surfaces.css";
+import { mountWorkbenchShell } from "./workbench-shell.ts";
+import "./workbench-shell.css";
 const session = sessionFromPage();
 mountModelSettings(session);
+mountUpdates(session, () => { void initBackend(); });
+mountSchedules(session);
+mountMail(session);
+mountDaily(session);
 // Download links cannot send custom headers, so bind them through a non-secret profile ID.
 document
   .querySelectorAll<HTMLAnchorElement>('a[href^="/api/backup"]')
@@ -250,9 +263,11 @@ function rowHtml(r: CompanyRow) {
     esc(r[F.roles]) +
     '">' +
     esc(r[F.roles]) +
-    "</div></div>" +
+    '</div></div><div class="role-tags" aria-label="岗位原文关键词">' +
+    roleKeywords(r[F.roles]).map(word => '<span>' + esc(word) + '</span>').join('') + '</div>' +
     '<div class="codewrap">' +
     codeButton(r) +
+    '<button class="card-source" type="button" data-detail="' + esc(name) + '" aria-label="查看 ' + esc(name) + ' 推荐码核验说明">核验说明 ›</button>' +
     '</div>' +
     '<div class="cell-when' +
     (d !== null && d >= 0 && d <= 7 ? " soon" : "") +
@@ -286,11 +301,11 @@ function detailHtml(r: CompanyRow) {
     idx = rows.findIndex((x) => x[F.n] === name),
     added = APPEND_DATES.get(name);
   return (
-    '<h2 id="detail-title">' +
+    '<div class="detail-company-heading"><span class="detail-avatar" aria-hidden="true">' + esc(name.slice(0, 1)) + '</span><div><h2 id="detail-title">' +
     esc(name) +
     '</h2><p class="intro">' +
     esc(r[F.roles]) +
-    "</p>" +
+    "</p></div></div>" +
     '<dl class="detail-properties"><dt>公司性质</dt><dd>' +
     esc(OWNERSHIPNAME[ownershipOf(r)]) +
     "</dd><dt>行业方向</dt><dd>" +
@@ -433,6 +448,12 @@ function stats() {
   const { soon, codes, offers } = summarizeRows(DATA.filter(matches));
   element("s-all").textContent = String(DATA.length);
   element("h-count").textContent = String(DATA.length);
+  element("s-total").textContent = String(DATA.length);
+  const notice = deadlineNotice(soon, onlySoon);
+  element("deadline-notice-title").textContent = notice.title;
+  element("deadline-notice-detail").textContent = notice.detail;
+  element("deadline-notice-action").textContent = notice.action + " →";
+  element("deadline-notice-action").setAttribute("aria-pressed", String(notice.pressed));
   element("s-code").textContent = String(codes);
   element("s-soon").textContent = String(soon);
   element("s-sent").textContent = String(sent);
@@ -639,6 +660,11 @@ document.addEventListener("change", (e) => {
 });
 document.addEventListener("click", (e) => {
   if (!(e.target instanceof Element)) return;
+  const density = e.target.closest<HTMLElement>("[data-density-view]");
+  if (density) {
+    setDensity(density.dataset.densityView === "compact");
+    return;
+  }
   const summary = e.target.closest<HTMLElement>("[data-summary-filter]");
   if (summary) {
     if (summary.dataset.summaryFilter! === "soon") onlySoon = !onlySoon;
@@ -846,6 +872,7 @@ element("open-help").addEventListener("click", () => {
   help.querySelector<HTMLElement>("summary")!.focus();
 });
 document.addEventListener("keydown", (e) => {
+  if (document.querySelector('#appearance-dialog[open]')) return;
   if (!(e.target instanceof HTMLElement)) return;
   if (e.key === "Escape" && !element<HTMLDialogElement>("company-detail").open)
     document
@@ -872,6 +899,9 @@ function setDensity(compact: boolean) {
   const b = element("density-toggle");
   b.setAttribute("aria-pressed", String(compact));
   b.textContent = compact ? "切换机会卡片" : "切换紧凑清单";
+  document.querySelectorAll<HTMLElement>("[data-density-view]").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.densityView === (compact ? "compact" : "comfortable")));
+  });
   try {
     localStorage.setItem(
       "qiuzhao-density",
@@ -880,24 +910,15 @@ function setDensity(compact: boolean) {
   } catch (e) {}
 }
 try {
-  const t = localStorage.getItem("qiuzhao-theme");
-  document.documentElement.dataset.theme! = t === "dark" ? "dark" : "light";
   if (localStorage.getItem("qiuzhao-density") === "compact") setDensity(true);
-} catch (e) {
-  document.documentElement.dataset.theme! = "light";
-}
+} catch (e) {}
 element("density-toggle").addEventListener("click", () =>
   setDensity(document.body.dataset.density !== "compact"),
 );
-element("theme-toggle").addEventListener("click", () => {
-  const root = document.documentElement,
-    dark = root.dataset.theme! === "dark";
-  root.dataset.theme! = dark ? "light" : "dark";
-  try {
-    localStorage.setItem("qiuzhao-theme", root.dataset.theme!);
-  } catch (e) {}
-  toast(dark ? "已切换浅色主题" : "已切换深色主题");
-});
+mountAppearance(toast);
+mountWorkbenchShell();
+mountWorkbenchMenus();
+mountWorkbenchOverview(required('.workbench'));
 buildFilters();
 render();
 initBackend();

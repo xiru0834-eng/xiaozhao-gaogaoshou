@@ -1,4 +1,5 @@
 import { CollectionError, JOB_FIELDS, record, exactKeys, evidenceQuote, type JobFields, type JobPreferences, type JobAssessment, type Decision } from "../shared/collection-contract.ts";
+import { validDate } from "../shared/catalog-contract.ts";
 
 export function validateExtraction(input: unknown, text: string): JobFields {
   const value = record(input); exactKeys(value, ["fields"]);
@@ -40,6 +41,9 @@ export function assessJob(fields: JobFields, preferences: JobPreferences, applic
   const adjacent = /测试|测开|运维|SRE|产品经理|数据分析|产品运营|游戏策划/i.test(title);
   check(!title ? "unknown" : relevant && !adjacent ? "eligible" : "ineligible", "岗位名称未明确匹配 AI / Agent / RAG 研发方向。");
   check(graduationRule(q("graduation"), preferences.graduationMonth), "毕业届别/窗口不符或证据不足，需核对。");
+  const cohorts = new Set([...documentText.matchAll(/(20\d{2})\s*届/g)].map(m => m[1]));
+  if (cohorts.size > 1 || (cohorts.size === 1 && !cohorts.has(preferences.graduationMonth.slice(0, 4)))) check("unknown", "完整原文存在其他届别，需人工核对适用范围。");
+  if (/20\d{2}[年./-]\d{1,2}月?\s*(?:至|到|~|～|—|–|-)\s*20\d{2}[年./-]\d{1,2}/.test(documentText) && /毕业/.test(documentText) && graduationRule(documentText, preferences.graduationMonth) !== "eligible") check("unknown", "完整原文的毕业日期窗口未确认匹配。");
   check(degreeRule(q("degree"), preferences.degree), "学历要求不符或无法明确解析。");
   const experience = q("experience");
   const hardExperience = (value: string) => value.split(/[\n。；;]+/).some(line => /(?:[1-9]\d*|一|二|三|四|五|六|七|八|九|十)\s*年.{0,20}(?:经验|开发|工作)/.test(line) && !/优先|加分|非必须|不要求/.test(line));
@@ -49,11 +53,19 @@ export function assessJob(fields: JobFields, preferences: JobPreferences, applic
   else check(/全职|正式|校招|校园招聘|应届|full.?time/i.test(q("employment")) ? "eligible" : "unknown", "用工类型尚未明确。");
   if (preferences.cities.length) check(preferences.cities.some(city => q("locations").includes(city)) ? "eligible" : "unknown", "城市偏好未核实匹配。");
   // Scan the complete evidence too: a model cannot omit an inconvenient hard requirement.
-  if (/博士(?:研究生)?(?:学历|学位|及以上)/.test(documentText) && preferences.degree !== "doctor" && !/博士.{0,8}优先/.test(documentText)) check("ineligible", "完整原文包含博士硬要求。");
+  const lines = documentText.split(/[\n。；;]+/);
+  if (preferences.degree !== "doctor" && lines.some(line => /博士(?:研究生)?(?:学历|学位|及以上)/.test(line) && !/优先|加分/.test(line))) check("ineligible", "完整原文包含博士硬要求。");
+  const majorLines = lines.filter(line => /(?:相关)?专业/.test(line) && !/专业不限|不限专业|专业技能|专业能力/.test(line));
+  if (majorLines.some(line => !line.includes(preferences.major) && !(/软件工程|计算机|人工智能/.test(preferences.major) && /计算机|软件工程|人工智能/.test(line)))) check("unknown", "原文另有专业要求，请人工核验是否接受当前专业。");
   const status = q("status");
   const closed = /招聘已结束|已停止招聘|岗位已关闭|职位已下架|停止接受申请/.test(status) || /招聘已结束|岗位已关闭|职位已下架/.test(documentText);
   const available = /立即申请|申请岗位|投递简历|立即投递|简历请发送|apply now/i.test(status);
-  const availability = closed ? "closed" : available && applicationPresent ? "open" : "unknown";
+  const deadline = q("deadline") || lines.find(line => /截止|申请结束/.test(line)) || "";
+  const dates = [...deadline.matchAll(/(20\d{2})[年./-](\d{1,2})[月./-](\d{1,2})日?/g)].map(([, y, m, d]) => `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`);
+  const definiteDeadline = dates.length === 1 && validDate(dates[0]) ? dates[0] : null;
+  const expired = definiteDeadline !== null && definiteDeadline < new Date().toISOString().slice(0, 10);
+  const availability = closed || expired ? "closed" : deadline && !definiteDeadline ? "unknown" : available && applicationPresent ? "open" : "unknown";
+  if (expired) reasons.push("原文的明确截止日期已过，需确认是否补招。");
   if (availability !== "open") reasons.push(availability === "closed" ? "原文明确招聘已结束。" : "尚无明确开放及申请入口证据。");
   const eligibility = checks.includes("ineligible") ? "ineligible" : checks.includes("unknown") ? "unknown" : "eligible";
   return { eligibility, availability, reasons, recommended: eligibility === "eligible" && availability === "open" };

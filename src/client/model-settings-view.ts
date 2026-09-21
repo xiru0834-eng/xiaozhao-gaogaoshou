@@ -1,4 +1,5 @@
 import { required } from "./dom.ts";
+import { moduleIdentity, moduleCompanion } from "./module-identity.ts";
 import "./model-settings.css";
 
 export function modelSettingsView() {
@@ -8,14 +9,15 @@ export function modelSettingsView() {
   page.setAttribute("aria-labelledby", "model-heading");
   // Static markup only. All provider/user content is rendered with textContent/value.
   page.innerHTML = `
-    <div class="model-page-heading">
-      <div><button type="button" class="text-button" data-model="back">← 返回投递工作台</button><h1 id="model-heading" tabindex="-1">连接你的模型</h1><p>把接口接好，再让 AI 帮上忙。台账不依赖模型，随时都能用。</p></div>
+    <button type="button" class="text-button module-back" data-model="back">← 返回投递工作台</button>
+    <div class="model-page-heading module-heading">
+      ${moduleIdentity('models')}<div class="module-heading-copy"><h1 id="model-heading" tabindex="-1">连接你的模型</h1><p>先接通，再试一句。把 AI 变成得心应手的小助手。</p></div>${moduleCompanion}
       <span class="model-badge" data-model="badge">尚未配置</span>
     </div>
     <p class="model-notice">本轮支持 OpenAI 兼容的 Chat Completions 文本接口；不自动搜岗，不发送你的简历或投递记录。</p>
     <div class="model-layout">
       <form class="model-form" data-model="form">
-        <h2>连接配置</h2><p class="model-subtitle">填入服务商提供的信息。保存只在本机，不会调用模型。</p>
+        <div class="module-section-title"><span aria-hidden="true">01</span><h2>连接配置</h2><small>仅本机保存</small></div><p class="model-subtitle">填入服务商提供的信息。保存不会调用模型。</p>
         <fieldset data-model="fields" disabled>
           <label for="model-url">API 地址 <span>Base URL</span></label>
           <input id="model-url" data-model="url" type="url" required maxlength="500" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false" aria-describedby="model-endpoint-help">
@@ -36,7 +38,7 @@ export function modelSettingsView() {
         <p class="model-help">测试会发送一条固定短消息，最多 64 个输出 tokens，可能产生费用。不会自动重试。</p>
       </form>
       <section class="model-lab" aria-labelledby="model-lab-title">
-        <h2 id="model-lab-title">试着聊一句</h2><p class="model-subtitle">直接验证能否生成回答，只发送你在这里输入的内容。</p>
+        <div class="module-section-title"><span aria-hidden="true">02</span><h2 id="model-lab-title">试着聊一句</h2><small>独立试用区</small></div><p class="model-subtitle">直接验证能否生成回答，只发送你在这里输入的内容。</p>
         <label for="model-prompt">测试内容</label><textarea id="model-prompt" data-model="prompt" rows="4" maxlength="2000" placeholder="例如：用一句话解释 RAG。" disabled></textarea>
         <div class="model-buttons"><button class="action primary" data-model="generate" type="button" disabled>发送并生成</button><button class="action" data-model="cancel" type="button" hidden>停止请求</button></div>
         <p class="model-help">最多 2,000 字符；单次独立对话，不存历史。关闭页面会取消等待，但不保证免计费。</p>

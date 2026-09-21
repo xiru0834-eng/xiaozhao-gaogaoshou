@@ -33,3 +33,9 @@ test("extraction accepts exact quotes only, rejects additions/hallucination and 
   assert.throws(() => validateExtraction({ fields: { ...quotes, command: "erase" } }, body));
   assert.throws(() => validateExtraction({ fields: { ...quotes, degree: { quote: "本科及以上" } } }, body));
 });
+test("omitted conflicting cohorts, restrictive majors and expired dates cannot receive a recommendation", () => {
+  assert.equal(assessJob(fields(), preferences, true, body + "\n仅限2026届毕业生").recommended, false);
+  assert.equal(assessJob(fields(), preferences, true, body + "\n必须为临床医学相关专业").recommended, false);
+  assert.equal(assessJob(fields(), preferences, true, body + "\n博士学历为硬性要求\n博士经验优先").recommended, false);
+  assert.equal(assessJob(fields(), preferences, true, body + "\n截止时间2020年1月1日").availability, "closed");
+});
