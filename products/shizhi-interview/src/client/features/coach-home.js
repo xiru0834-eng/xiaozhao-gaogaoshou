@@ -1,6 +1,6 @@
 /** Daily practice, targeted preparation and timed interviews in one workspace. */
 import React from 'react'
-import { COACH_TRACKS, coachReference, coachTrack } from '../../domain/coach-catalog.js'
+import { coachReference, coachTrack } from '../../domain/coach-catalog.js'
 import { interviewApi } from '../shared/api.js'
 import { useInterviewQuery } from '../shared/hooks.js'
 import { h, Button, ErrorNotice, Markdown } from '../shared/ui.js'
@@ -9,6 +9,7 @@ import { SpeakButton, VoiceAnswer } from './voice-answer.js'
 import { CoachFeedback, AnswerComparison } from './coach-feedback.js'
 import { CoachPreparation } from './coach-preparation.js'
 import { CoachRevision } from './coach-revision.js'
+import { CoachCatalog } from './coach-catalog.js'
 
 /** Renders durable practice state; agent lifecycle never substitutes for saved results.
  * @param {object} props Session, session creator and optional company context.
@@ -119,10 +120,6 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
         draft.trim() ? h('p', { className: 'sz-hint' }, t('finishDraftHint')) : null) : null) : null,
     h(CoachRevision, { busy: navigationDisabled, version: practice?.updatedAt, onReview: (item) => run('review-start', { sourcePracticeId: item.practiceId, sourceQuestionId: item.questionId }) }),
     h(CoachPreparation, { targetRole, busy: navigationDisabled, onStart: (payload) => run('start', payload) }),
-    h('section', { className: 'sz-catalog' }, h('div', { className: 'sz-section-heading' }, h('h2', null, t('catalog')), h('span', null, t('catalogHint'))),
-      h('div', { className: 'sz-tracks' }, COACH_TRACKS.map((item, index) => h('button', { type: 'button', key: item.id,
-        className: `sz-track sz-track-${item.id}`, disabled: navigationDisabled || Boolean(company && !targetRole.trim()), onClick: () => run('start', { track: item.id }),
-        'aria-label': `${t('start')} · ${item.title}` }, h('div', { className: 'sz-track-top' }, h('span', null, item.icon), h('span', null, `0${index + 1} ↗`)),
-        h('h3', null, item.title), h('p', null, item.subtitle), h('span', null, item.questions.length, ' ', t('questions')))))),
+    h(CoachCatalog, { disabled: navigationDisabled || Boolean(company && !targetRole.trim()), onStart: (payload) => run('start', payload) }),
     h('p', { className: 'sz-local' }, t('local')))
 }

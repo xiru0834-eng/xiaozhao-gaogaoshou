@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-The home page combines the company catalog and application tracker from Xiaozhao Gaogaoshou with Shizhi interview practice. Filter companies, record application progress, and select **准备面试** to practice for a confirmed target role. Choose from 32 original questions across networking, databases, Java, and Redis; speak or type an answer, review feedback, and try again. SQLite stores data locally. AI feedback uses the model configured in Harness.
+The home page combines the company catalog and application tracker from Xiaozhao Gaogaoshou with Shizhi interview practice. Filter companies, record application progress, and select **准备面试** to practice for a confirmed target role. Choose from 56 original questions across agent application development, networking, databases, Java, and Redis; speak or type an answer, review feedback, and try again. SQLite stores data locally. AI feedback uses the model configured in Harness.
 
 ## Table of Contents
 
@@ -48,6 +48,8 @@ Submitting saves the answer before requesting model feedback. The card distingui
 **今天复习什么** groups history by topic and question and highlights repeated omissions. Suggested intervals are one day for weak answers and seven days otherwise, with early review allowed; these are fixed rules, not a validated personalized memory algorithm. Uncertain judgments are marked separately rather than classified as mastered or incorrect. Legacy reviews use scores for filtering. **重新练这题** creates a linked practice without changing the source archive and supports comparison with its answer.
 
 Expand **按目标岗位练习 / 模拟面试**, provide a role plus job requirements or project experience, and start targeted questions and follow-ups. Mock interviews also require project experience and offer 10/15/20 minutes, at most 4/6/8 questions, difficulty, and interviewer style. Defaults are 15 minutes and six questions, without coding; elapsed time includes model waits. Each saved answer leads to another question until the time or question limit triggers a final report; early ending is available. The current answer remains submittable after time expires. Submit or clear drafts before ending or switching practices. Reports distinguish demonstrated ability, insufficient evidence, and unexamined topics using saved answers. Failed reports can be retried, or answers archived alone. Scores and reference answers remain hidden during the interview.
+
+The agent application bank contains 24 original oral questions for campus and junior roles, grouped into agent fundamentals, tools/MCP, RAG, context/security, workflow reliability, and evaluation/project discussion. Expand **浏览题库与选题** to start from any question; subsequent questions follow catalog order and skip those already practiced in the current session. Reviews use fixed reference criteria with links to official reading. These are not employer questions, and the cues do not prescribe a single wording for a correct answer. Maintain the content in [the agent catalog](src/domain/agent-catalog.js).
 
 ### Voice input
 

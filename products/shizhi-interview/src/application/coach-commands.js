@@ -51,7 +51,9 @@ export function createCoachCommands({ application, eventBridge, resolveCompany }
       } else if (kind === 'standard') {
         const track = COACH_TRACKS.find((item) => item.id === payload.track)
         if (!track) throw new DomainError('INVALID_TRACK', '请选择一个练习方向')
-        mode = 'bagu'; config = { topic: `拾知 · ${track.title}`, coach }; prompt = track.questions[0][0]
+        const questionIndex = payload.questionIndex === undefined ? 0 : payload.questionIndex
+        if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= track.questions.length) throw new DomainError('INVALID_QUESTION', '请选择题库中存在的问题')
+        mode = 'bagu'; config = { topic: `拾知 · ${track.title}`, coach }; prompt = track.questions[questionIndex][0]
       } else throw new DomainError('INVALID_TRACK', '请选择有效的练习方式')
       if (target) config.target = target
       await application.createAtomicPractice(sessionId, { mode, config })
@@ -88,7 +90,9 @@ export function createCoachCommands({ application, eventBridge, resolveCompany }
       const track = coachTrack(practice.config.topic)
       if (!track) throw new DomainError('CUSTOM_TOPIC', '自定义主题请使用针对回答追问')
       const used = new Set(practice.questions.map((item) => item.prompt))
-      const next = track.questions.find(([prompt]) => !used.has(prompt))
+      const position = track.questions.findIndex(([prompt]) => prompt === question.prompt)
+      const ordered = [...track.questions.slice(position + 1), ...track.questions.slice(0, position + 1)]
+      const next = ordered.find(([prompt]) => !used.has(prompt))
       if (!next) throw new DomainError('TRACK_FINISHED', '本方向的题目已练完，可以回看记录或结束本次练习')
       await application.createAtomicQuestion(sessionId, { prompt: next[0] })
     } else if (command === 'retry') {

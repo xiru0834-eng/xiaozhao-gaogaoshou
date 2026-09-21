@@ -1,4 +1,6 @@
 /** Original oral-practice prompts and reference cues, grouped by learning topic. */
+import { AGENT_TRACK } from './agent-catalog.js'
+
 export const COACH_TRACKS = Object.freeze([
   { id: 'network', title: '计算机网络', subtitle: 'HTTP · TCP · HTTPS', icon: '↗', source: 'https://developer.mozilla.org/en-US/docs/Web/HTTP', questions: [
     ['HTTP 的 GET 和 POST 有哪些语义区别？', '安全性与幂等性是方法语义；GET 用于读取，POST 提交处理；不能仅凭方法声称数据加密或安全。'],
@@ -40,6 +42,7 @@ export const COACH_TRACKS = Object.freeze([
     ['Redis 主从复制是否能保证所有写入都不丢失？', '异步复制与故障切换窗口；确认语义与持久化不同；根据一致性需求设计业务。'],
     ['热点 Key 和大 Key 会造成哪些问题？', '负载倾斜、网络与内存开销、慢操作；监控定位；拆分、局部缓存或数据结构调整须评估一致性。'],
   ] },
+  AGENT_TRACK,
 ])
 
 /** Resolves a configured topic to the built-in track, or null for a custom topic.

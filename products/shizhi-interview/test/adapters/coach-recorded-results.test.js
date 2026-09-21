@@ -9,6 +9,7 @@ import { compareAttempts } from '../../src/domain/coach-progress.js'
 import { applicationFixture } from '../support/application-fixture.js'
 
 const recorded = JSON.parse(readFileSync(new URL('../fixtures/recorded-coach-results.json', import.meta.url), 'utf8'))
+const agentReview = JSON.parse(readFileSync(new URL('../fixtures/recorded-agent-review.json', import.meta.url), 'utf8'))
 
 function replayFixture() {
   const { application } = applicationFixture()
@@ -60,4 +61,23 @@ test('recorded four-question interview permits a final report but no mid-intervi
   assert.equal(practice.questions.length, 4)
   const shown = await call('interview_show_summary', { practice_id: practice.id })
   assert.equal(shown.artifact.kind, 'finished')
+})
+
+test('recorded agent-bank review preserves selected-question criteria, quotations and explanation', async () => {
+  const { application, sessionId, call, run } = replayFixture()
+  const started = await run(sessionId, 'start', { track: agentReview.track, questionIndex: agentReview.questionIndex })
+  const { practice, currentQuestion } = started.resource.data
+  const recordedQuestion = agentReview.question
+  assert.equal(currentQuestion.prompt, recordedQuestion.prompt)
+  const saved = await call('interview_attempt', { operation: 'create', question_id: currentQuestion.id, answer: recordedQuestion.answer })
+  await call('interview_evaluation', { operation: 'create', question_id: currentQuestion.id, attempt_id: saved.resource.data.id, ...recordedQuestion.evaluation })
+  await call('interview_explanation', { operation: 'create', question_id: currentQuestion.id,
+    detail: recordedQuestion.explanation.detail, memorization_points: recordedQuestion.explanation.memorizationPoints })
+  const display = await call('interview_show_review', { practice_id: practice.id, question_id: currentQuestion.id })
+  assert.equal(display.artifact.kind, 'review')
+  const actual = (await application.readAtomicSession(sessionId)).resource.data.currentQuestion
+  const { evaluatedAt: _evaluatedAt, ...evaluation } = actual.attempts[0].evaluation
+  const { createdAt: _createdAt, ...explanation } = actual.explanation
+  assert.deepEqual({ prompt: actual.prompt, answer: actual.attempts[0].answer, evaluation, explanation }, recordedQuestion)
+  assert.equal((await application.reviewQueue())[0].needsWork, false)
 })
