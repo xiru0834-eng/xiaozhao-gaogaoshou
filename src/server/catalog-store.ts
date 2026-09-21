@@ -20,6 +20,7 @@ import {
 import { safeFile } from "./runtime-config.ts";
 import { CollectionStore, COLLECTION_SCHEMA } from "./collection-store.ts";
 import type { SourceDefinition } from "../shared/collection-contract.ts";
+import { DailyStore, DAILY_SCHEMA } from "./daily-store.ts";
 
 export class CatalogStore {
   private db: DatabaseSync;
@@ -34,7 +35,7 @@ export class CatalogStore {
       const version = Number(
         this.db.prepare("PRAGMA user_version").get()?.user_version,
       );
-      if (![0, 1, 2].includes(version))
+      if (![0, 1, 2, 3].includes(version))
         throw new Error("Unsupported catalog schema version");
       if (version === 0) {
         if (
@@ -196,6 +197,7 @@ export class CatalogStore {
       this.db.prepare("PRAGMA integrity_check").get()?.integrity_check,
     );
   }
+  schemaVersion() { return Number(this.db.prepare('PRAGMA user_version').get()!.user_version); }
   async backup(path: string) {
     await backup(this.db, path);
   }
@@ -216,5 +218,20 @@ export class CatalogStore {
   }
   close() {
     this.db.close();
+  }
+  async daily(backups: string, profileId: string) {
+    const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version);
+    if (version !== 2 && version !== 3) throw new Error('Initialize collections before daily updates');
+    if (version === 2) {
+      const file = safeFile(backups, `before-catalog-v3-${randomUUID()}.db`);
+      await this.backup(file);
+      const check = new DatabaseSync(file, {readOnly:true});
+      try { if (check.prepare('PRAGMA integrity_check').get()?.integrity_check !== 'ok') throw new Error('Daily migration backup failed'); }
+      finally { check.close(); }
+      this.db.exec('BEGIN IMMEDIATE');
+      try { this.db.exec(DAILY_SCHEMA); this.db.exec('PRAGMA user_version=3; COMMIT'); }
+      catch(error) { this.db.exec('ROLLBACK'); throw error; }
+    }
+    return new DailyStore(this.db,profileId);
   }
 }

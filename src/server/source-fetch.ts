@@ -6,7 +6,7 @@ import { ModelError } from "../shared/model-contract.ts";
 import { parseSourceHtml } from "./source-document.ts";
 import { secureSourceTransport, secureSourceUrl, sourceAbort, type SourceTransport, type WirePage } from "./source-wire.ts";
 
-export interface RequestBudget { requests: number }
+export interface RequestBudget { requests: number; beforeRequest?: () => void }
 // The package is CommonJS; its default-export declaration differs under NodeNext/Bundler.
 interface RobotsPolicy { isAllowed(url: string, agent: string): boolean | undefined; getCrawlDelay(agent: string): number | undefined }
 const robotsParser = robotsParserModule as unknown as (url: string, text: string) => RobotsPolicy;
@@ -28,6 +28,7 @@ export class SourceReader {
       const wait = Math.max(0, (this.lastRequest.get(url.hostname) ?? 0) + interval - Date.now());
       if (wait) await delay(wait, undefined, { signal });
       if (signal.aborted) throw sourceAbort(signal);
+      budget.beforeRequest?.();
       budget.requests++; this.lastRequest.set(url.hostname, Date.now());
       return this.transport(url, AbortSignal.any([signal, AbortSignal.timeout(15000)]));
     };

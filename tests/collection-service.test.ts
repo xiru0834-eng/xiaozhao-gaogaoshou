@@ -82,3 +82,21 @@ test("storage failure stops collection and exposes a failure rather than an endl
     await assert.rejects(f.service.start({ ...input, requestId: "disk-retry" }), /重启/);
   } finally { await f.close(); }
 });
+
+test("shutdown waits for a preparing collection and prevents late work or new runs", async () => {
+  let network=0,release!:()=>void,entered!:()=>void;
+  const gate=new Promise<void>(r=>{release=r;}),started=new Promise<void>(r=>{entered=r;});
+  const f=await fixture(async(url,signal)=>{network++;return allowed(url,signal);});
+  const input={mode:'extract',sourceIds:['one'],requestId:'shutdown-preparing',maxModelCalls:1,expectedModelRevision:1,expectedPreferenceRevision:1};
+  try {
+    f.preferences.read=async()=>{entered();await gate;return {revision:1,preferences:{graduationMonth:'2027-01',degree:'master',major:'软件工程',cities:[],includeInternships:false,confirmed:true}};};
+    const pending=f.service.start(input);await started;
+    const rejected=assert.rejects(pending,/停止|关闭/);
+    let closed=false;const closing=f.service.close().then(()=>{closed=true;});
+    await new Promise(r=>setImmediate(r));
+    const premature=closed;release();await closing;await rejected;
+    assert.equal(premature,false,'must not close the database during startup');
+    assert.equal(network,0);assert.equal(f.store.runCount(),0);
+    await assert.rejects(f.service.start({...input,requestId:'after-close'}),/停止|关闭/);
+  }finally{release();await f.close();}
+});

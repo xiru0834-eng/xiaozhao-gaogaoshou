@@ -22,14 +22,23 @@ import { PreferencesStore } from "./job-preferences.ts";
 import { CollectionService } from "./collection-service.ts";
 import { collectionRequest, isCollectionPath } from "./collection-api.ts";
 import { ScheduleError } from "../shared/schedule-contract.ts";
+import { MailAPI } from "./mail-api.ts";
+import { MailError } from "../shared/mail-contract.ts";
+import { TaskError } from '../shared/recruitment-task-contract.ts';
+import { taskRequest } from './recruitment-task-api.ts';
+import { DailyError } from "../shared/daily-contract.ts";
+import { DailyService } from "./daily-service.ts";
+import { dailyRequest, isDailyPath } from "./daily-api.ts";
+import type { SearchTransport } from "./search-deepseek.ts";
 
 export interface ServerOptions {
   dataDir: string;
   webDir: string;
   port: number;
   /** Dependency injection for tests; never exposed through HTTP or CLI flags. */
-  modelDependencies?: { secrets?: SecretProtector; transport?: ModelTransport };
+  modelDependencies?: { secrets?: SecretProtector; transport?: ModelTransport; searchTransport?: SearchTransport };
   collectionDependencies?: { sources?: SourceDefinition[]; transport?: SourceTransport; intervalMs?: number };
+  mailDependencies?: { secrets?: SecretProtector };
 }
 const mime: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
@@ -43,12 +52,17 @@ export async function startServer(options: ServerOptions) {
   const token = randomBytes(32).toString("hex");
   const context = await openDataProfile(options.dataDir);
   const { store, catalog, backups, profile, schedules } = context;
-  const model = new ModelService(new ModelSettings(profile.dataDir, options.modelDependencies?.secrets), options.modelDependencies?.transport);
+  const model = new ModelService(new ModelSettings(profile.dataDir, options.modelDependencies?.secrets), options.modelDependencies?.transport, options.modelDependencies?.searchTransport);
   let collection: CollectionService;
   try {
     const sources = options.collectionDependencies?.sources ?? [...SOURCES];
     collection = new CollectionService(await catalog.collections(backups, sources), new PreferencesStore(profile.dataDir), sources, model, new SourceReader(options.collectionDependencies));
   } catch (error) { context.close(); throw error; }
+  let mail:MailAPI;
+  try{mail=new MailAPI(profile.dataDir,schedules,model,options.mailDependencies?.secrets);}catch(error){await collection.close();context.close();throw error;}
+  let daily:DailyService;
+  try {daily=new DailyService(await catalog.daily(backups,profile.profileId),model,collection,catalog);}
+  catch(error){await mail.close();await collection.close();context.close();throw error;}
   let url = "";
   const send = (
     res: ServerResponse,
@@ -78,7 +92,12 @@ export async function startServer(options: ServerOptions) {
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
   }
+  let closed = false;
   const server = createServer(async (req, res) => {
+    if (closed) {
+      send(res, 503, { error: "service stopping" });
+      return;
+    }
     if (
       req.headers.host !== new URL(url).host ||
       (req.headers.origin && req.headers.origin !== url) ||
@@ -108,6 +127,18 @@ export async function startServer(options: ServerOptions) {
         });
         return;
       }
+      if (isDailyPath(path)) {
+        if(req.headers['x-app-token']!==token || req.headers['x-profile-id']!==profile.profileId){send(res,403,{error:'forbidden'});return;}
+        try {const result=await dailyRequest(daily,path,req.method??'',()=>body(req,16000),requestUrl.searchParams);send(res,req.method==='POST'&&path==='/api/discovery-runs'?202:200,{...result,profileId:profile.profileId});}
+        catch(error){const failure=error instanceof DailyError?error:new DailyError('LOCAL_ERROR','每日更新操作失败，原有投递记录未改动。',500);send(res,failure.status,{profileId:profile.profileId,error:{code:failure.code,message:failure.message}});}
+        return;
+      }
+      if (path.startsWith('/api/recruitment-')) {
+        if(req.headers['x-app-token']!==token||req.headers['x-profile-id']!==profile.profileId){send(res,403,{error:'forbidden'});return;}
+        try {let payload:unknown;if(req.method==='POST'){try{payload=await body(req);}catch{throw new TaskError('VALIDATION','任务请求格式无效或超过限制。');}}send(res,200,{profileId:profile.profileId,data:taskRequest(schedules,requestUrl,req.method??'GET',payload)});}
+        catch(e){const error=e instanceof TaskError?e:new TaskError('STORAGE_UNAVAILABLE','任务保存未完成，请保留输入并核对记录。',503);send(res,error.status,{profileId:profile.profileId,error:{code:error.code,message:error.message}});}
+        return;
+      }
       if (path === "/api/schedules") {
         if (req.headers["x-app-token"] !== token || req.headers["x-profile-id"] !== profile.profileId) { send(res,403,{error:"forbidden"});return; }
         try {
@@ -117,6 +148,17 @@ export async function startServer(options: ServerOptions) {
             send(res,200,{...schedules.mutate(value),profileId:profile.profileId});
           } else send(res,405,{profileId:profile.profileId,error:{message:"不支持的请求方法。"}});
         } catch(error) {send(res,error instanceof ScheduleError?error.status:500,{profileId:profile.profileId,error:{message:error instanceof ScheduleError?error.message:"日程保存失败，内容未确认。请保留输入并重试。"}});}
+        return;
+      }
+      if(path==='/api/mail'){
+        if(req.headers['x-app-token']!==token||req.headers['x-profile-id']!==profile.profileId){send(res,403,{error:'forbidden'});return;}
+        try{
+          if(req.method==='GET')send(res,200,{...await mail.read(),profileId:profile.profileId});
+          else if(req.method==='POST'){
+            let value:unknown;try{value=await body(req,80000);}catch{throw new MailError('邮件请求无效或内容过长。');}
+            send(res,200,{...await mail.act(value),profileId:profile.profileId});
+          }else send(res,405,{profileId:profile.profileId,error:{message:'不支持的请求方法。'}});
+        }catch(e){send(res,e instanceof MailError||e instanceof ScheduleError||e instanceof TaskError?e.status:500,{profileId:profile.profileId,error:{message:e instanceof MailError||e instanceof ScheduleError||e instanceof TaskError?e.message:'邮件操作失败。请保留输入，检查连接后重试。'}});}
         return;
       }
       if (isCollectionPath(path)) {
@@ -230,7 +272,8 @@ export async function startServer(options: ServerOptions) {
           version: "0.2.0-dev",
           profileId: profile.profileId,
           instanceId: profile.instanceId,
-          schemas: { progress: 1, catalog: 2 },
+          schemas: { progress: store.schemaVersion(), catalog: catalog.schemaVersion(), schedules: schedules.schemaVersion(), mail: mail.store.schemaVersion() },
+          features: { recruitmentTasks: 2 },
         });
         return;
       }
@@ -347,23 +390,30 @@ export async function startServer(options: ServerOptions) {
       });
     });
   } catch (error) {
+    await daily.close();
+    await mail.close();
+    await collection.close();
     context.close();
     throw error;
   }
-  let closed = false;
+  void daily.tick().catch(() => {});
   return {
     url,
     close: async () => {
       if (closed) return;
       closed = true;
-      model.dispose();
-      await collection.close();
+      // Stop accepting work first; an already accepted request may still be
+      // awaiting decryption or a provider and must retain its database handles.
+      const drained = new Promise<Error | undefined>((done) => server.close(done));
       try {
-        await new Promise<void>((done, reject) =>
-          server.close((error) => (error ? reject(error) : done())),
-        );
+        model.dispose();
+        await daily.close();
+        await collection.close();
       } finally {
-        context.close();
+        const closeError = await drained;
+        try { await mail.close(); }
+        finally { context.close(); }
+        if (closeError) throw closeError;
       }
     },
   };

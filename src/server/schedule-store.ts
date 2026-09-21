@@ -1,5 +1,6 @@
 import { DatabaseSync, backup } from "node:sqlite";
 import { createHash } from "node:crypto";
+import { RecruitmentTaskStore, TASK_SCHEMA, schemaBackup } from './recruitment-task-store.ts';
 import {
   validateSchedule,
   ScheduleError,
@@ -9,17 +10,21 @@ import {
 
 export class ScheduleStore {
   private db: DatabaseSync;
+  readonly recruitment: RecruitmentTaskStore;
   constructor(path: string) {
     this.db = new DatabaseSync(path);
     try {
       const version = Number(
         this.db.prepare("PRAGMA user_version").get()!.user_version,
       );
-      if (version > 1) throw new Error("Unsupported schedule schema");
+      if (version > 2) throw new Error("Unsupported schedule schema");
+      if (version === 1) schemaBackup(this.db, path, 2);
       this.db.exec(
-        "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS meta(id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL); INSERT OR IGNORE INTO meta VALUES(1,0); CREATE TABLE IF NOT EXISTS receipts(id TEXT PRIMARY KEY, hash TEXT NOT NULL); PRAGMA user_version=1; COMMIT;",
+        "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS meta(id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL); INSERT OR IGNORE INTO meta VALUES(1,0); CREATE TABLE IF NOT EXISTS receipts(id TEXT PRIMARY KEY, hash TEXT NOT NULL);" + TASK_SCHEMA + "PRAGMA user_version=2; COMMIT;",
       );
+      this.recruitment = new RecruitmentTaskStore(this.db);
     } catch (e) {
+      if (this.db.isTransaction) this.db.exec('ROLLBACK');
       this.db.close();
       throw e;
     }
@@ -107,6 +112,7 @@ export class ScheduleStore {
   integrity() {
     return this.db.prepare("PRAGMA integrity_check").get()!.integrity_check;
   }
+  schemaVersion() { return Number(this.db.prepare('PRAGMA user_version').get()!.user_version); }
   async backup(path: string) {
     await backup(this.db, path);
   }
