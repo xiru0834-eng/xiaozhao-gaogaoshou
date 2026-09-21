@@ -27,9 +27,9 @@ test('the upstream catalog and progress persist independently and export a usabl
     const backup = new DatabaseSync(backupPath, { readOnly: true })
     try { assert.equal(backup.prepare('SELECT status FROM applications WHERE name=?').get(name).status, '面试') }
     finally { backup.close() }
-    repository.close(); repository = await openCareerRepository(directory)
+    await repository.close(); repository = await openCareerRepository(directory)
     assert.equal(repository.profileId, identity)
     assert.equal(repository.store.statuses()[name], '面试')
     assert.equal(repository.catalog.snapshot().companies.length, catalog.companies.length)
-  } finally { repository?.close(); await rm(directory, { recursive: true, force: true }) }
+  } finally { await repository?.close(); await rm(directory, { recursive: true, force: true }) }
 })

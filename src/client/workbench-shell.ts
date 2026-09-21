@@ -48,6 +48,10 @@ export function mountWorkbenchShell() {
     button.setAttribute('title', item.label);
     // Static icon paths only. Moving, not cloning, retains event listeners and dirty-state guards.
     button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${item.path}</svg><span data-nav-label>${item.label}</span><span class="nav-current-dot" aria-hidden="true"></span>`;
+    if (button.dataset.navLabel) {
+      button.querySelector('[data-nav-label]')!.textContent = button.dataset.navLabel;
+      button.title = button.dataset.navLabel;
+    }
     nav.append(button);
   }
   sidebar.querySelector('.brand')?.after(nav);

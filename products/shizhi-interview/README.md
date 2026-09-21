@@ -26,16 +26,17 @@ The home page combines the company catalog and application tracker from Xiaozhao
 
 ### Start the local product
 
-Use Node 22.19 or newer with Git, npm, and pnpm available. This product runs inside the Xiaozhao Gaogaoshou repository and uses its root `src/` and `web/` directories. The build checks the workbench entry, identity placeholders, required page elements, and both adapters; compatible UI and catalog changes can build directly. [career-upstream.json](scripts/career-upstream.json) records the initial integration's source revision without restricting everyday edits.
+Use Node 24.14 or newer within 24.x with Git, npm, and pnpm available. This product runs inside the Xiaozhao Gaogaoshou repository and uses its root `src/` and `web/` directories. The build checks the workbench entry, identity placeholders, required page elements, and both adapters; compatible UI and catalog changes can build directly. [career-upstream.json](scripts/career-upstream.json) records the initial integration's source revision without restricting everyday edits.
 
 ```powershell
-git clone --branch feat/shizhi-interview-integration https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
+git clone https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
 cd xiaozhao-gaogaoshou
+npm ci
 npm run coach:install
-npm run coach
+npm start
 ```
 
-For an existing checkout, switch to this branch and skip cloning. Open the private localhost URL printed by Harness. **New session** returns to **校招工作台**; the top navigation also offers **面试陪练** and **直接聊聊**, without selecting a workspace. Each new practice gets its own session; existing records remain accessible through **拾知 · 面试陪练** in the sidebar. Company browsing, progress recording, and saving answers work without a model key; configure **Settings → Models** for chat and AI feedback. Stop the server with Ctrl+C.
+For an existing checkout, update main and skip cloning. Open the private localhost URL printed by Harness. **New session** returns to **校招工作台**; the top navigation also offers **面试陪练** and **直接聊聊**, without selecting a workspace. Each new practice gets its own session; existing records remain accessible through **拾知 · 面试陪练** in the sidebar. Company browsing, progress recording, and saving answers work without a model key; configure **Settings → Models** for chat and AI feedback. Stop the server with Ctrl+C.
 
 The launcher builds the client and installs this directory as a linked bundle in its isolated `web` profile on first launch. It then starts the official `dsh web` entry point on `127.0.0.1:4317`. `SHIZHI_PORT` changes the port; `DSH_HOME` overrides the default product-local `.dsh-home` directory. If pnpm reports a store mismatch while reusing a profile, set `SHIZHI_PNPM_STORE` to that profile's original store directory and restart. Keep the printed token URL private.
 
@@ -50,6 +51,8 @@ Submitting saves the answer before requesting model feedback. The card distingui
 Expand **按目标岗位练习 / 模拟面试**, provide a role plus job requirements or project experience, and start targeted questions and follow-ups. Mock interviews also require project experience and offer 10/15/20 minutes, at most 4/6/8 questions, difficulty, and interviewer style. Defaults are 15 minutes and six questions, without coding; elapsed time includes model waits. Each saved answer leads to another question until the time or question limit triggers a final report; early ending is available. The current answer remains submittable after time expires. Submit or clear drafts before ending or switching practices. Reports distinguish demonstrated ability, insufficient evidence, and unexamined topics using saved answers. Failed reports can be retried, or answers archived alone. Scores and reference answers remain hidden during the interview.
 
 The agent application bank contains 24 original oral questions for campus and junior roles, grouped into agent fundamentals, tools/MCP, RAG, context/security, workflow reliability, and evaluation/project discussion. Expand **浏览题库与选题** to start from any question; subsequent questions follow catalog order and skip those already practiced in the current session. Reviews use fixed reference criteria with links to official reading. These are not employer questions, and the cues do not prescribe a single wording for a correct answer. Maintain the content in [the agent catalog](src/domain/agent-catalog.js).
+
+The embedded workbench includes job collection, daily updates, mail review, recruitment tasks, the calendar, and character themes. **采集与邮件模型** configures these workbench services independently of Harness interview/chat models; existing interview credentials stay in Harness. Daily updates remain opt-in, and mail access requires the user's own account authorization. Native desktop companions retain their separate optional launcher.
 
 ### Voice input
 
@@ -72,9 +75,9 @@ For [Speaches transcription](https://speaches.ai/usage/speech-to-text/) or anoth
 
 ### Data and checks
 
-Paths in this section are relative to `products/shizhi-interview`. By default, practice data lives in `.dsh-home/profiles/web/data/shizhi-interview/interview.sqlite`. The adjacent `career/` directory contains `catalog.db`, `qiuzhao.db`, and `profile-id`. The workbench export menu downloads catalog and progress backups separately; keep the whole product data directory to preserve company-linked practice history. Harness stores conversations under the same isolated home. Git ignores credentials, generated bundles, dependencies, and local data. To retain data from an existing Shizhi installation, stop it and set `DSH_HOME` to that installation's data home before starting this checkout; do not run two servers against the same home.
+Paths in this section are relative to `products/shizhi-interview`. By default, practice data lives in `.dsh-home/profiles/web/data/shizhi-interview/interview.sqlite`. The adjacent `career/` directory contains `catalog.db`, `qiuzhao.db`, `schedules.db`, `mail.db`, `runtime.db`, and the existing `profile-id`. The shared workbench retains the existing identity and adds a process lock; startup backs up the catalog, progress and schedule stores. The workbench export menu downloads catalog and progress backups separately; keep the whole product data directory to preserve company-linked practice history. Harness stores conversations under the same isolated home. Git ignores credentials, generated bundles, dependencies, and local data. To retain data from an existing Shizhi installation, stop it and set `DSH_HOME` to that installation's data home before starting this checkout; do not run two servers against the same home.
 
-The database migrates to SQLite `user_version=1` with a nullable structured-review field per evaluation, preserving old records; back up the data directory before upgrading. Existing records are not automatically re-evaluated; new attempts receive structured feedback.
+The interview database migrates to SQLite `user_version=1` with a nullable structured-review field per evaluation, preserving old records; back up the data directory before upgrading. Existing records are not automatically re-evaluated; new attempts receive structured feedback.
 
 ```powershell
 cd products/shizhi-interview
@@ -94,7 +97,7 @@ Practice cards use light backgrounds. The [Markdown wrapper](src/client/shared/u
 
 The bundle inserts one plugin through [cordis.patch.yml](cordis.patch.yml). [Coach commands](src/application/coach-commands.js) own the built-in practice flow; [the catalog](src/domain/coach-catalog.js) owns question prompts and source-linked reference cues. [The agent bridge](src/adapters/dsh/agent-event-bridge.js) queues logged Harness messages and existing atomic tools persist model feedback. Built-in coaching sessions restrict tools to the interview catalog. [Voice input](src/client/features/voice-answer.js) owns editable drafts; [the provider adapter](src/infrastructure/speech-provider.js) owns server-side transcription. No Harness agent-loop changes are required.
 
-[The career build](scripts/build-career.mjs) bundles the same repository's TypeScript UI, CatalogStore, and Store. A same-origin iframe isolates its styles. [HTML validation](scripts/career-html.mjs) parses the page and rewrites asset and backup URLs; missing required elements, identity placeholders, or adapters fail the build. Two client adapters route requests to authenticated Harness endpoints and send company selections to Shizhi. [Career routes](src/adapters/http/career-routes.js) validate writes and expose linked history; [the repository](src/infrastructure/career-repository.js) resolves company names to catalog-owned IDs. Optional `config.target` fields preserve company and role in the existing practice JSON; existing practice records need no migration. Shared interface changes must update the adapters and their tests together.
+[The career build](scripts/build-career.mjs) bundles the same repository's TypeScript UI and [shared workbench application](../../src/server/workbench.ts). The standalone HTTP listener and authenticated Harness routes call this same implementation for collection, models, mail, tasks and schedules. A same-origin iframe isolates its styles. [HTML validation](scripts/career-html.mjs) parses the page and rewrites asset and backup URLs; missing required elements, identity placeholders, or adapters fail the build. Two client adapters route requests to authenticated Harness endpoints and send company selections to Shizhi. [Career routes](src/adapters/http/career-routes.js) validate writes and expose linked history; [the repository](src/infrastructure/career-repository.js) resolves company names to catalog-owned IDs. Optional `config.target` fields preserve company and role in the existing practice JSON; existing practice records need no migration. Shared interface changes must update the adapters and their tests together.
 
 </details>
 
@@ -108,7 +111,7 @@ Feedback requests identify an existing question and attempt, require reading sav
 
 ## Known Limitations and Deferred Work
 
-This is a Chinese desktop-browser MVP without subscriptions, payments, accounts, or production hosting. The upstream Python companion, job crawler, automatic ranking, and standalone model-settings service are not included. Browser recognition is not guaranteed offline; a local transcription service needs separate installation. Feedback reliability still needs evaluation with real users. Question explanations are stored per question; evaluations are stored per attempt. This bundle and the original `dsh-interview` cannot be enabled together because their tool and route names overlap.
+This is a Chinese desktop-browser MVP without subscriptions, payments, accounts, or production hosting. The native Python companion is a separate optional desktop entry. Real mailbox accounts, automatic startup after closing the app, and broad recruiting-source coverage are not verified by this integration. Browser recognition is not guaranteed offline; a local transcription service needs separate installation. Feedback reliability still needs evaluation with real users. Question explanations are stored per question; evaluations are stored per attempt. This bundle and the original `dsh-interview` cannot be enabled together because their tool and route names overlap.
 
 <a id="further-exploration"></a>
 

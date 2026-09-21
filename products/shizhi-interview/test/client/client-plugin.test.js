@@ -5,7 +5,7 @@ import vm from 'node:vm'
 import { INTERVIEW_TOOL_NAMES } from '../../src/protocol/interview-tool-names.js'
 import { INTERACTION_PROTOCOL } from '../../src/protocol/interaction-protocol.js'
 
-function loadPlugin() {
+function loadPlugin(reactOverrides = {}) {
   const source = readFileSync(new URL('../../client/client.js', import.meta.url), 'utf8')
   let plugin = null
   const appended = []
@@ -15,6 +15,7 @@ function loadPlugin() {
     useState: () => [null, () => {}],
     useEffect: () => {},
     useCallback: (callback) => callback,
+    ...reactOverrides,
   }
   vm.runInNewContext(source, {
     console,
@@ -31,6 +32,33 @@ function loadPlugin() {
   })
   return { plugin, appended }
 }
+
+test('new users can render the practice catalog before a session or query result exists', () => {
+  const { plugin } = loadPlugin({
+    useState: (initial) => [initial === 'career' ? 'practice' : typeof initial === 'function' ? initial() : initial, () => {}],
+    useRef: (initial) => ({ current: initial }),
+    useMemo: (callback) => callback(),
+    useId: () => 'initial-render',
+  })
+  let home
+  const slots = {
+    inject(_name, callback) { callback() },
+    register(config, component) { if (config.name === 'main.conversation') home = component; return () => {} },
+  }
+  plugin.apply({ get: (name) => name === 'sessions'
+    ? { list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => {} } }
+    : slots, effect: (factory) => factory() })
+  const renderText = (element) => {
+    if (element === null || element === undefined || typeof element === 'boolean') return ''
+    if (Array.isArray(element)) return element.map(renderText).join(' ')
+    if (typeof element !== 'object') return String(element)
+    const [component, props, ...children] = element.args
+    return typeof component === 'function' ? renderText(component({ ...props, children })) : renderText(children)
+  }
+  const text = renderText(home({ sessionId: undefined }))
+  assert.match(text, /智能体应用开发/)
+  assert.match(text, /计算机网络/)
+})
 
 function settled(interaction, extra = {}) {
   return {

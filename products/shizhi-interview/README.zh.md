@@ -26,16 +26,17 @@ kind: "package-bundle"
 
 ### 启动本地产品
 
-使用 Node 22.19 或更新版本，并确保 Git、npm、pnpm 可用。本产品在校招高高手仓库内运行，直接使用根目录的 `src/` 和 `web/`。构建检查工作台入口、身份占位符、必要页面元素及两个适配器；兼容这些接口的界面和目录更新可以直接构建。[career-upstream.json](scripts/career-upstream.json) 保留首次整合的来源版本，不限制日常修改。
+使用 Node 24.14 或更新的 24.x 版本，并确保 Git、npm、pnpm 可用。本产品在校招高高手仓库内运行，直接使用根目录的 `src/` 和 `web/`。构建检查工作台入口、身份占位符、必要页面元素及两个适配器；兼容这些接口的界面和目录更新可以直接构建。[career-upstream.json](scripts/career-upstream.json) 保留首次整合的来源版本，不限制日常修改。
 
 ```powershell
-git clone --branch feat/shizhi-interview-integration https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
+git clone https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
 cd xiaozhao-gaogaoshou
+npm ci
 npm run coach:install
-npm run coach
+npm start
 ```
 
-已有源码目录时切换到本分支，跳过克隆。打开 Harness 输出的本地私有链接。**新建会话**返回 **校招工作台**，顶部还可切换 **面试陪练** 和 **直接聊聊**，无需选择工作区。每次开始练习会创建独立会话；已有记录仍可从侧栏的 **拾知 · 面试陪练**查看。浏览公司、记录投递与保存回答无需模型密钥；聊天与 AI 点评需要在 **设置 → 模型** 中配置密钥。按 Ctrl+C 停止服务。
+已有源码目录时更新 main，跳过克隆。打开 Harness 输出的本地私有链接。**新建会话**返回 **校招工作台**，顶部还可切换 **面试陪练** 和 **直接聊聊**，无需选择工作区。每次开始练习会创建独立会话；已有记录仍可从侧栏的 **拾知 · 面试陪练**查看。浏览公司、记录投递与保存回答无需模型密钥；聊天与 AI 点评需要在 **设置 → 模型** 中配置密钥。按 Ctrl+C 停止服务。
 
 启动脚本构建前端，首次运行时将此目录作为链接 bundle 安装进隔离的 `web` profile，再通过正式的 `dsh web` 入口启动，默认地址为 `127.0.0.1:4317`。`SHIZHI_PORT` 可修改端口，`DSH_HOME` 可覆盖默认的产品内 `.dsh-home` 目录。复用已有 profile 且 pnpm 提示存储位置不一致时，将 `SHIZHI_PNPM_STORE` 设为该 profile 原用的存储目录后重启。请勿公开包含令牌的启动链接。
 
@@ -50,6 +51,8 @@ npm run coach
 展开 **按目标岗位练习 / 模拟面试**，填写岗位及岗位要求或项目经历，即可生成专项题并继续追问。模拟面试还需项目经历，可选择 10/15/20 分钟、最多 4/6/8 题、难度与面试官风格。默认 15 分钟、6 题，不含编程题；计时包括模型等待时间。回答后继续提问，达到题数或时间上限后生成统一复盘，也可提前结束。到时仍能提交当前回答；未提交文字需提交或清空后再结束或切换练习。复盘依据已保存问答，区分已体现能力、证据不足和未考察内容。失败可重试，或仅保存问答；进行中不展示评分和参考答案。
 
 智能体应用开发题库包含 24 道原创口述题，按 Agent 基础、工具与 MCP、RAG、上下文与安全、工作流可靠性、评测与项目表达分为六组，面向校招与初级应用开发。展开 **浏览题库与选题** 可从任意一道开始，下一题按题库顺序继续并跳过本次已练题目。点评复用每题固定参考要点，并可打开官方参考资料；题目不是公司真题，参考要点也不是唯一措辞的标准答案。内容维护入口为 [智能体题库](src/domain/agent-catalog.js)。
+
+融合工作台包含岗位采集、每日更新、邮件核对、求职任务、面试日历和角色主题。**采集与邮件模型** 单独配置这些工作台服务；面试与聊天继续使用 Harness 模型设置，已有密钥保持原位置。每日更新需主动开启，邮箱需用户自行授权账号。原生桌宠保留独立可选启动入口。
 
 ### 语音输入
 
@@ -72,9 +75,9 @@ SHIZHI_ASR_API_KEY=
 
 ### 数据与检查
 
-本节路径相对于 `products/shizhi-interview`。练习数据默认位于 `.dsh-home/profiles/web/data/shizhi-interview/interview.sqlite`，旁边的 `career/` 目录保存 `catalog.db`、`qiuzhao.db` 和 `profile-id`。工作台导出菜单可分别下载公司目录和投递进度备份；完整保留产品数据目录才能保留公司关联练习。Harness 对话数据在同一个隔离 home 内。Git 忽略密钥、构建产物、依赖和本地数据。已有拾知用户可先停止旧服务，再将 `DSH_HOME` 指向原来的数据目录后启动本分支；不要同时让两个服务使用同一个数据目录。
+本节路径相对于 `products/shizhi-interview`。练习数据默认位于 `.dsh-home/profiles/web/data/shizhi-interview/interview.sqlite`，旁边的 `career/` 目录保存 `catalog.db`、`qiuzhao.db`、`schedules.db`、`mail.db`、`runtime.db` 及原有的 `profile-id`。共享工作台保留已有资料身份并加入进程锁，启动时备份公司、投递和日程存储。工作台导出菜单可分别下载公司目录和投递进度备份；完整保留产品数据目录才能保留公司关联练习。Harness 对话数据在同一个隔离 home 内。Git 忽略密钥、构建产物、依赖和本地数据。已有拾知用户可先停止旧服务，再将 `DSH_HOME` 指向原来的数据目录后启动本分支；不要同时让两个服务使用同一个数据目录。
 
-数据库升级到 SQLite `user_version=1`，为逐次点评增加可空的结构化字段，保留旧记录；升级前请备份数据目录。旧记录不会自动补写点评，重练后才有逐项反馈。
+面试练习数据库升级到 SQLite `user_version=1`，为逐次点评增加可空的结构化字段，保留旧记录；升级前请备份数据目录。旧记录不会自动补写点评，重练后才有逐项反馈。
 
 ```powershell
 cd products/shizhi-interview
@@ -94,7 +97,7 @@ npm run verify
 
 bundle 通过 [cordis.patch.yml](cordis.patch.yml) 插入一个插件。[陪练命令](src/application/coach-commands.js) 管理内置练习流程，[题库](src/domain/coach-catalog.js) 管理题目与带来源的参考要点。[智能体桥接](src/adapters/dsh/agent-event-bridge.js) 投递会记录到 Harness 日志的消息，既有原子工具保存模型反馈。内置陪练会话仅允许使用面试工具。[语音输入](src/client/features/voice-answer.js) 管理可编辑草稿，[服务适配器](src/infrastructure/speech-provider.js) 负责服务端转写，无需修改 Harness 的智能体循环。
 
-[校招构建脚本](scripts/build-career.mjs) 打包同一仓库的 TypeScript 界面、CatalogStore 和 Store；同源 iframe 隔离样式。[HTML 检查](scripts/career-html.mjs) 解析页面并改写资源和备份地址，缺少必要元素、身份占位符或适配器时构建失败。两个前端适配器将请求转给已鉴权的 Harness 路由，并将选中的公司交给拾知。[校招路由](src/adapters/http/career-routes.js) 校验写入并提供关联历史，[存储适配器](src/infrastructure/career-repository.js) 从目录解析公司的稳定标识。可选的 `config.target` 将公司与岗位保存在现有练习 JSON 内，旧练习无需迁移。修改共享接口时，同步更新适配器及对应测试。
+[校招构建脚本](scripts/build-career.mjs) 打包同一仓库的 TypeScript 界面和[共享工作台应用](../../src/server/workbench.ts)。独立 HTTP 服务与已鉴权的 Harness 路由调用同一套采集、模型、邮件、任务和日历实现；同源 iframe 隔离样式。[HTML 检查](scripts/career-html.mjs) 解析页面并改写资源和备份地址，缺少必要元素、身份占位符或适配器时构建失败。两个前端适配器将请求转给已鉴权的 Harness 路由，并将选中的公司交给拾知。[校招路由](src/adapters/http/career-routes.js) 校验写入并提供关联历史，[存储适配器](src/infrastructure/career-repository.js) 从目录解析公司的稳定标识。可选的 `config.target` 将公司与岗位保存在现有练习 JSON 内，旧练习无需迁移。修改共享接口时，同步更新适配器及对应测试。
 
 </details>
 
@@ -108,7 +111,7 @@ bundle 通过 [cordis.patch.yml](cordis.patch.yml) 插入一个插件。[陪练�
 
 ## 已知限制与后续工作
 
-这是中文桌面浏览器首版，尚无订阅、支付、账号或生产托管。没有接入上游 Python 伴随服务、岗位爬虫、自动排序和独立模型设置服务。浏览器识别不保证离线；本地转写服务需要单独安装。点评可靠性仍需真实用户评估。参考讲解按题目存储，评价按每次回答存储。本 bundle 与原版 `dsh-interview` 共享工具和路由名，不能同时启用。
+这是中文桌面浏览器首版，尚无订阅、支付、账号或生产托管。原生 Python 桌宠是独立可选桌面入口；本次整合不代表真实邮箱、关闭后台后的自动唤起或广泛招聘来源均已验收。浏览器识别不保证离线；本地转写服务需要单独安装。点评可靠性仍需真实用户评估。参考讲解按题目存储，评价按每次回答存储。本 bundle 与原版 `dsh-interview` 共享工具和路由名，不能同时启用。
 
 <a id="further-exploration"></a>
 

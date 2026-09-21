@@ -18,6 +18,7 @@ test('workbench layout and copy changes preserve integrated entry, identity and 
   assert.match(output, /href="https:\/\/example.com\/job"/)
   assert.match(output, /__APP_TOKEN__/)
   assert.match(output, /__PROFILE_ID__/)
+  assert.match(output, /name="asset-prefix" content="\/interview\/career"/)
   assert.doesNotMatch(output, /上游保存说明/)
 })
 

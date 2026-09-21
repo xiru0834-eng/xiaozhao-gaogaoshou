@@ -1,13 +1,14 @@
+import { publicAsset } from "./asset-url.ts";
 export type SkinId = 'mint' | 'blue' | 'sakura' | 'violet' | 'amber';
 export type ColorMode = 'light' | 'dark';
 export interface Appearance { skin: SkinId; mode: ColorMode; characters: boolean }
 export interface AppearanceStorage { getItem(key: string): string | null; setItem(key: string, value: string): void }
 export const SKINS = [
   { id: 'mint', name: '薄荷石墨', subtitle: '熟悉的，刚刚好', mood: '温柔 · 原版', image: '', position: '0% 0%', caption: '每一步，都算数。', detail: '蓬松绿发、星星发饰和那块熟悉的清单。', swatch: '#176953' },
-  { id: 'blue', name: '霁蓝', subtitle: '话很少，事情都记好了', mood: '三无 · 冰蓝', image: '/assets/skins/cast.png', position: '0% 0%', caption: '……整理好了。下一家。', detail: '深蓝姬发长直发，齐刘海，抱书的冷静派。', swatch: '#285da8' },
-  { id: 'sakura', name: '绯樱', subtitle: '嘴上不说，心里很在意', mood: '傲娇 · 绯红', image: '/assets/skins/cast.png', position: '100% 0%', caption: '才不是催你，别错过截止啦。', detail: '红棕高侧马尾，短外套，抱臂微微鼓腮。', swatch: '#a63354' },
-  { id: 'violet', name: '紫夜', subtitle: '慢一点，也有自己的节奏', mood: '慵懒 · 星紫', image: '/assets/skins/cast.png', position: '0% 100%', caption: '喝口热的，再看下一家吧。', detail: '银紫侧麻花辫，宽松针织衫，双手捧杯。', swatch: '#7048a5' },
-  { id: 'amber', name: '琥珀', subtitle: '把一点元气，分给今天', mood: '元气 · 暖金', image: '/assets/skins/cast.png', position: '100% 100%', caption: '准备好了吗？一起冲下一家！', detail: '蜜金双丸子头，连帽卫衣，眨眼比耶。', swatch: '#8b5b1d' },
+  { id: 'blue', name: '霁蓝', subtitle: '话很少，事情都记好了', mood: '三无 · 冰蓝', image: publicAsset('/assets/skins/cast.png'), position: '0% 0%', caption: '……整理好了。下一家。', detail: '深蓝姬发长直发，齐刘海，抱书的冷静派。', swatch: '#285da8' },
+  { id: 'sakura', name: '绯樱', subtitle: '嘴上不说，心里很在意', mood: '傲娇 · 绯红', image: publicAsset('/assets/skins/cast.png'), position: '100% 0%', caption: '才不是催你，别错过截止啦。', detail: '红棕高侧马尾，短外套，抱臂微微鼓腮。', swatch: '#a63354' },
+  { id: 'violet', name: '紫夜', subtitle: '慢一点，也有自己的节奏', mood: '慵懒 · 星紫', image: publicAsset('/assets/skins/cast.png'), position: '0% 100%', caption: '喝口热的，再看下一家吧。', detail: '银紫侧麻花辫，宽松针织衫，双手捧杯。', swatch: '#7048a5' },
+  { id: 'amber', name: '琥珀', subtitle: '把一点元气，分给今天', mood: '元气 · 暖金', image: publicAsset('/assets/skins/cast.png'), position: '100% 100%', caption: '准备好了吗？一起冲下一家！', detail: '蜜金双丸子头，连帽卫衣，眨眼比耶。', swatch: '#8b5b1d' },
 ] as const;
 export function skinOf(id: unknown) { return SKINS.find(s => s.id === id) ?? SKINS[0]; }
 

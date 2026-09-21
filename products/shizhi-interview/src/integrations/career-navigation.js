@@ -1,17 +1,24 @@
 /** Adds interview preparation to the upstream company workbench. */
 import { t } from '../client/shared/coach-locale.js'
+import { mountModelSettings as mountWorkbenchModels } from '../../../../src/client/model-settings.ts'
+import { requestWorkbenchNavigation } from '../../../../src/client/workbench-shell.ts'
 
-/** Replaces the standalone model panel with navigation to the shared coach.
+/** Retains workbench model settings and adds navigation to the shared coach.
  * @param {object} session Workbench data session.
  * @returns {void} Owns listeners for this iframe document's lifetime.
  */
 export function mountModelSettings(session) {
+  mountWorkbenchModels(session)
+  const modelButton = document.querySelector('#open-model')
+  if (modelButton) modelButton.dataset.navLabel = t('careerModelSettings')
   const send = (action, companyName) => {
     if (document.querySelector('#savenote')?.dataset.kind !== 'ready') {
       window.alert(t('careerWaitSave'))
       return
     }
-    window.parent.postMessage({ type: 'shizhi-career', action, companyName }, window.location.origin)
+    requestWorkbenchNavigation(window, () => {
+      window.parent.postMessage({ type: 'shizhi-career', action, companyName }, window.location.origin)
+    })
   }
   const addButton = (parent, text, action, companyName) => {
     const button = document.createElement('button')
@@ -52,7 +59,9 @@ export function mountModelSettings(session) {
   }
   window.addEventListener('focus', addHistory)
   window.addEventListener('message', (event) => {
-    if (event.origin === location.origin && event.source === window.parent && event.data?.type === 'shizhi-career-refresh') void addHistory()
+    if (event.origin !== location.origin || event.source !== window.parent) return
+    if (event.data?.type === 'shizhi-career-refresh') void addHistory()
+    if (event.data?.type === 'shizhi-career-navigate' && ['practice', 'chat'].includes(event.data.action)) send(event.data.action)
   })
   void addHistory()
 }

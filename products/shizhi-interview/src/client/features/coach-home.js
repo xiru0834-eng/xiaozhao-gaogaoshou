@@ -25,7 +25,7 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const [now, setNow] = React.useState(Date.now())
   const inFlight = React.useRef(false)
   const query = useInterviewQuery(`coach:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
-  const context = query.data?.resource?.data?.sessionId === sessionId ? query.data.resource.data : null
+  const context = sessionId && query.data?.resource?.data?.sessionId === sessionId ? query.data.resource.data : null
   const practice = context?.practice
   const question = context?.currentQuestion
   const latest = question?.attempts.at(-1)

@@ -32,6 +32,7 @@ export function prepareCareerHtml(source) {
   const script = requireOne('module entry /main.ts', (node) => node.tagName === 'script' && attribute(node, 'type')?.value === 'module' && attribute(node, 'src')?.value === '/main.ts')
   attribute(script, 'src').value = '/interview/career/assets/workbench.js'
   const head = requireOne('head', (node) => node.tagName === 'head')
+  head.childNodes.push(...parseFragment('<meta name="asset-prefix" content="/interview/career">').childNodes)
   head.childNodes.push(...parseFragment('<link rel="stylesheet" href="/interview/career/assets/workbench.css">').childNodes)
   const title = requireOne('title', (node) => node.tagName === 'title')
   title.childNodes = [{ nodeName: '#text', value: t('careerBrand'), parentNode: title }]
@@ -44,7 +45,7 @@ export function prepareCareerHtml(source) {
   return `${serialize(document).trimEnd()}\n`
 }
 
-/** Confirms that both standalone services were replaced by the Harness adapters.
+/** Confirms that workbench sessions and coach navigation use the Harness adapters.
  * @param {Iterable<string>} inputs Bundler input paths.
  * @returns {void} Throws if a workbench import change bypasses an adapter.
  */

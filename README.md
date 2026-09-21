@@ -129,20 +129,23 @@ npm run coach
 
 ## 启动源码版
 
-准备 **Windows、Git、Node.js 24.14 或更高的 24.x**。在 PowerShell 中运行：
+准备 **Windows、Git、Node.js 24.14 或更高的 24.x，以及 pnpm**。在 PowerShell 中运行：
 
 ```powershell
 git clone https://github.com/xiru0834-eng/xiaozhao-gaogaoshou.git
 cd xiaozhao-gaogaoshou
 npm ci
-npm run build
+npm run coach:install
 npm start
 ```
 
-打开 **http://127.0.0.1:18765/**，进入 TypeScript 工作台。第一次是空白投递进度，公共目录以 315 家公司的历史快照初始化。
+默认启动 **校招高高手 × 拾知融合版**，打开 Harness 输出的本地私有链接（端口 `4317`）。同一页面包含公司工作台、日历、任务、邮件核对和面试陪练；内置 56 道题，其中 24 道为智能体应用开发题。支持语音作答、逐项点评、薄弱点复习和模拟面试。运行环境还需 pnpm；模型、语音及保留原数据的方法见[融合版说明](products/shizhi-interview/README.zh.md)。首次公共目录以 315 家公司的历史快照初始化。
+
+保留独立 TypeScript 工作台供桌面接入和独立开发：`npm run build` 后运行 `npm run start:workbench`，地址为 `http://127.0.0.1:18765/`。
 
 | 入口 | 当前用途 | 数据关系 |
 | :--- | :--- | :--- |
+| `4317` · 默认融合版 | 完整工作台与语音面试陪练 | 默认使用 `products/shizhi-interview/.dsh-home/`，可通过 `DSH_HOME` 保留已有数据 |
 | `18765` · TypeScript 工作台 | 新版界面、独立资料、模型设置 | 默认资料在 `%LOCALAPPDATA%\XiaozhaoGaogaoshou\profiles\typescript-preview\` |
 | `18763` · Python 兼容版 | 旧完整台账与原生贴边助手 | 与 TypeScript 版不自动共享进度 |
 | `18766` · 可选桌面接入版 | 五角色桌宠、悬浮助手和 TypeScript 服务 | 须显式迁移并配置独立资料；不是拉取即覆盖旧库 |
@@ -158,7 +161,7 @@ npm start
 git status --short
 git pull --ff-only
 npm ci
-npm run build
+npm run coach:install
 ```
 
 在原服务终端按 `Ctrl+C`，然后重新运行 `npm start`。有本地改动或历史分叉时先停止处理，不强制覆盖。关闭网页不等于停止后台服务。
@@ -175,6 +178,7 @@ Git 拉取不会自动搜索新岗位，也不是实时更新推送；不要删�
 
 | 模块 | 当前状态 | 说明 |
 | :--- | :--- | :--- |
+| 面试陪练 | 已整合 | 24 道 Agent 题及 32 道基础题、语音作答、逐项点评、复习与模拟面试；按公司关联历史。 |
 | 工作台与组合筛选 | 已实现 | 机会卡片、紧凑清单、明暗主题、进度保存和导出。 |
 | 阶段 1 · 数据基础 | 已实现 | 独立资料、追加式目录、事务导入、备份、资料身份和进程锁；真实旧库迁移需主动执行。 |
 | 阶段 2 · 模型接入 | 已实现 | 自定义接口保存、测试与非流式生成；已验证一套真实接口，不承诺兼容每一家服务，自己的配置仍需测试。 |

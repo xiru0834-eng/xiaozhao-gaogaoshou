@@ -92,11 +92,18 @@ export function ProductConversation(props) {
     const unsubscribe = interviewApi.subscribe(refresh)
     return () => { alive = false; unsubscribe() }
   }, [company, tab])
+  const switchView = (next) => {
+    if (tab === 'career' && next !== 'career') {
+      frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-navigate', action: next }, location.origin)
+      return
+    }
+    setTab(next); setViewPractice(null)
+  }
   return h('main', { className: 'sz-product', 'aria-label': t('careerBrand') },
     h('nav', { className: 'sz-product-nav', 'aria-label': t('careerBrand') },
       h('strong', null, t('careerBrand')),
       [['career', 'careerHome'], ['practice', 'careerPractice'], ['chat', 'chatTitle']].map(([id, label]) =>
-        h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => { setTab(id); setViewPractice(null) } }, t(label)))),
+        h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => switchView(id) }, t(label)))),
     h(ErrorNotice, null, error),
     h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career' }),
     tab === 'chat' ? h('div', { className: 'sz-landing' }, h(ChatStart, { key: sessionId || 'new', sessionId, sendMessage: actions.sendMessage })) : null,

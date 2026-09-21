@@ -9,7 +9,14 @@ import { CatalogStore } from "./catalog-store.ts";
 import { ScheduleStore } from "./schedule-store.ts";
 
 export async function openDataProfile(dataDir: string) {
-  const profile = acquireProfile(dataDir);
+  return openProfileData(acquireProfile(dataDir));
+}
+
+/** Opens and backs up a locked profile, including one owned by an embedding host.
+ * @param profile Exclusive lock whose ownership transfers to the returned stores.
+ * @returns Profile stores and their idempotent close operation.
+ */
+export async function openProfileData(profile: ReturnType<typeof acquireProfile>) {
   let progress: Store | undefined;
   let catalog: CatalogStore | undefined;
   let schedules: ScheduleStore | undefined;
