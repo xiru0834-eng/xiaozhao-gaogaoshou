@@ -53,6 +53,16 @@ export function registerApiRoutes(hostCtx, { application, eventBridge, exporter,
     },
   }))
   const coachCommand = createCoachCommands({ application, eventBridge, resolveCompany: career ? (name) => career.company(name) : undefined })
+  register('/interview/api/question-bank', async (request, response) => {
+    try {
+      if (request.method === 'GET') return sendJson(response, 200, { items: await application.coachBank() })
+      if (request.method !== 'POST') return sendJson(response, 405, { error: { message: '仅支持 GET 或 POST' } })
+      if (!String(request.headers['content-type'] || '').startsWith('application/json')) throw new TypeError('需要 JSON 请求')
+      if (request.headers.origin && new URL(request.headers.origin).host !== request.headers.host) throw new TypeError('仅接受同源请求')
+      const body = await readJsonBody(request, 20 * 1024)
+      sendJson(response, 200, await application.setCoachQuestionMastered(body.key, body.mastered))
+    } catch (error) { const output = errorResponse(error); sendJson(response, output.status, output.body) }
+  })
   register('/interview/api/coach', async (request, response) => {
     if (request.method !== 'POST') return sendJson(response, 405, { error: { message: '仅支持 POST' } })
     try {

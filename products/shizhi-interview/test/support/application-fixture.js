@@ -9,6 +9,7 @@ export class InMemoryInterviewRepository {
     this.practices = new Map()
     this.bindings = new Map()
     this.leetcodeProgress = new Map()
+    this.coachQuestionStates = new Map()
   }
 
   async getPractice(id) { return clone(this.practices.get(id) || null) }
@@ -49,6 +50,10 @@ export class InMemoryInterviewRepository {
   async listLeetcodeProgress() { return [...this.leetcodeProgress.values()].map(clone) }
 
   async saveLeetcodeProgress(progress) { this.leetcodeProgress.set(progress.slug, clone(progress)) }
+
+  async listCoachQuestionStates() { return [...this.coachQuestionStates.values()].map(clone) }
+
+  async saveCoachQuestionState(state) { this.coachQuestionStates.set(state.key, clone(state)) }
 }
 
 export function applicationFixture() {

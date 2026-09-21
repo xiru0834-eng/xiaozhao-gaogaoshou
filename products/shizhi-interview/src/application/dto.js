@@ -38,6 +38,7 @@ export function toPracticeSummaryDto(practice) {
     mode: practice.mode,
     modeLabel: INTERVIEW_MODES[practice.mode]?.label || practice.mode,
     topic: practice.topic,
+    ...(practice.config.coach ? { coachKind: practice.config.coach.kind } : {}),
     ...(practice.config.target ? { target: { ...practice.config.target } } : {}),
     status: practice.status,
     createdAt: practice.createdAt,

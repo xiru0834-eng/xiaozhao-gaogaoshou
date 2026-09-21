@@ -1,0 +1,8 @@
+{
+  "bank": { "headings": ["面试陪练", "题库练习"], "inputs": ["search"], "textareas": 0, "selects": 0, "startButtons": [] },
+  "mock": { "headings": ["面试陪练", "模拟面试"], "inputs": ["text"], "textareas": 2, "selects": 4, "startButtons": ["开始模拟面试"] },
+  "targeted": { "headings": ["面试陪练", "岗位专项"], "inputs": ["text"], "textareas": 2, "selects": 0, "startButtons": ["开始岗位专项练习"] },
+  "revision": { "headings": ["面试陪练", "今天复习什么"], "inputs": [], "textareas": 0, "selects": 0, "startButtons": [] },
+  "records": { "headings": ["面试陪练", "练习记录"], "inputs": [], "textareas": 0, "selects": 0, "startButtons": [] },
+  "mastered": { "headings": ["面试陪练", "已斩题"], "inputs": ["search"], "textareas": 0, "selects": 0, "startButtons": [] }
+}

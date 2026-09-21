@@ -3,7 +3,11 @@ import assert from 'node:assert/strict'
 import { createHomeActions, registerProductHome } from '../../src/client/shared/home-session.js'
 import { SlotCore } from '@deepseek-ai/dsh-client-ui-slots'
 
-function fixture(result = { ok: true, value: { accepted: true } }) {
+function sessionResult(coach) {
+  return { resource: { data: { practice: coach ? { config: { coach } } : null } } }
+}
+
+function fixture(result = { ok: true, value: { accepted: true } }, coach) {
   const calls = []
   const actions = createHomeActions({
     async create(...args) { calls.push(['create', ...args]); return 'new-session' },
@@ -15,7 +19,7 @@ function fixture(result = { ok: true, value: { accepted: true } }) {
         } } })
       } finally { calls.push(['release', id]) }
     },
-  }, { openSession(id) { calls.push(['open', id]) } })
+  }, { openSession(id) { calls.push(['open', id]) } }, { session: async () => sessionResult(coach) })
   return { actions, calls }
 }
 
@@ -42,7 +46,13 @@ test('a practice starts in a new independent session without a directory picker'
   assert.deepEqual(calls, [['create'], ['open', 'new-session']])
 })
 
-test('the landing page yields to the original conversation and releases its subscription', () => {
+test('chat started from a practice uses a separate session', async () => {
+  const { actions, calls } = fixture(undefined, { kind: 'mock' })
+  assert.equal(await actions.sendMessage('interview', '你好'), 'new-session')
+  assert.deepEqual(calls.slice(0, 2), [['create'], ['retain', 'new-session', 'controllerOperation']])
+})
+
+function routingFixture(t, readSession = async () => sessionResult()) {
   const slots = new SlotCore()
   const releaseRoot = slots.register({ name: 'root', children: {
     'main.conversation': { kind: 'single', scope: 'session-maybe' },
@@ -52,19 +62,93 @@ test('the landing page yields to the original conversation and releases its subs
   const releaseOriginal = slots.register({ name: 'main.conversation', children: {
     'conversation.session.header': { kind: 'single', scope: 'session' },
   } }, original)
-  let state = { byId: {} }, listener
+  let state = { byId: {} }, listener, invalidate
   const sessions = { list: { getSnapshot: () => state, subscribe: (fn) => { listener = fn; return () => { listener = undefined } } } }
-  const dispose = registerProductHome(slots, sessions, home)
-  try {
-    assert.equal(slots.entriesOfSlot('main.conversation')[0].component, home)
-    state = { byId: { one: { blank: false, retainedBy: { mainView: 1 } } } }
-    listener()
-    assert.equal(slots.entriesOfSlot('main.conversation')[0].component, original)
-    state.byId.one.blank = true
-    listener()
-    assert.equal(slots.entriesOfSlot('main.conversation')[0].component, home)
-    dispose()
-    assert.equal(listener, undefined)
-    assert.equal(slots.entriesOfSlot('main.conversation')[0].component, original)
-  } finally { dispose(); releaseOriginal(); releaseRoot() }
+  const api = { session: readSession, subscribe: (fn) => { invalidate = fn; return () => { invalidate = undefined } } }
+  const dispose = registerProductHome(slots, sessions, home, api)
+  t.after(() => { dispose(); releaseOriginal(); releaseRoot() })
+  return {
+    select(id, blank = false) {
+      state = { byId: id ? { [id]: { id, blank, retainedBy: { mainView: 1 } } } : {} }
+      return listener()
+    },
+    invalidate: () => invalidate(),
+    showingHome: () => slots.entriesOfSlot('main.conversation')[0].component === home,
+    subscribed: () => Boolean(listener || invalidate),
+    dispose,
+  }
+}
+
+test('the landing page yields to ordinary chat and releases its subscriptions', async (t) => {
+  const view = routingFixture(t)
+  assert.equal(view.showingHome(), true)
+  await view.select('chat')
+  assert.equal(view.showingHome(), false)
+  await view.select('empty', true)
+  assert.equal(view.showingHome(), true)
+  view.dispose()
+  assert.equal(view.subscribed(), false)
+  assert.equal(view.showingHome(), false)
+})
+
+for (const kind of ['standard', 'targeted', 'review', 'mock']) {
+  test(`${kind} practice stays visible when model messages arrive and when reopened`, async (t) => {
+    const view = routingFixture(t, async () => sessionResult({ kind }))
+    await view.select('interview', true)
+    const pending = view.select('interview', false)
+    assert.equal(view.showingHome(), true)
+    await pending
+    assert.equal(view.showingHome(), true)
+    await view.select(null)
+    await view.select('interview', false)
+    assert.equal(view.showingHome(), true)
+    await view.invalidate()
+    assert.equal(view.showingHome(), true)
+  })
+}
+
+test('a delayed practice lookup cannot replace a newly selected chat', async (t) => {
+  const delayed = Promise.withResolvers()
+  const view = routingFixture(t, (id) => id === 'interview' ? delayed.promise : Promise.resolve(sessionResult()))
+  const pending = view.select('interview')
+  await view.select('chat')
+  assert.equal(view.showingHome(), false)
+  delayed.resolve(sessionResult({ kind: 'mock' }))
+  await pending
+  assert.equal(view.showingHome(), false)
+})
+
+test('lookup completion after disposal cannot register the product page again', async (t) => {
+  const delayed = Promise.withResolvers()
+  const view = routingFixture(t, () => delayed.promise)
+  const pending = view.select('interview')
+  view.dispose()
+  delayed.resolve(sessionResult({ kind: 'mock' }))
+  await pending
+  assert.equal(view.showingHome(), false)
+})
+
+test('a failed lookup keeps the product page and can recover on invalidation', async (t) => {
+  let offline = true
+  const view = routingFixture(t, async () => {
+    if (offline) throw new Error('offline')
+    return sessionResult()
+  })
+  await view.select('unknown')
+  assert.equal(view.showingHome(), true)
+  offline = false
+  await view.invalidate()
+  assert.equal(view.showingHome(), false)
+})
+
+test('ordinary chat updates do not remount the product page while rechecking its binding', async (t) => {
+  const delayed = Promise.withResolvers()
+  let calls = 0
+  const view = routingFixture(t, () => ++calls === 1 ? Promise.resolve(sessionResult()) : delayed.promise)
+  await view.select('chat')
+  const pending = view.invalidate()
+  assert.equal(view.showingHome(), false)
+  delayed.resolve(sessionResult())
+  await pending
+  assert.equal(view.showingHome(), false)
 })

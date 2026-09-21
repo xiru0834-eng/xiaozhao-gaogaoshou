@@ -44,6 +44,16 @@ function queryString(values) {
 }
 
 export const interviewApi = {
+  questionBank() {
+    return jsonRequest('/interview/api/question-bank')
+  },
+  async setQuestionMastered(key, mastered) {
+    const result = await jsonRequest('/interview/api/question-bank', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key, mastered }),
+    })
+    interviewApi.invalidate()
+    return result
+  },
   session(sessionId) {
     return jsonRequest(`/interview/api/session?${queryString({ session: sessionId })}`)
   },

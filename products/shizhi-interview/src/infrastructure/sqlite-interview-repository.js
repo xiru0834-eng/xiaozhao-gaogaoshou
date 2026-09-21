@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { defaultDatabasePath } from './paths.js'
 
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 
 function parseJson(value, fallback) {
   if (typeof value !== 'string' || !value) return fallback
@@ -20,6 +20,8 @@ export class SqliteInterviewRepository {
   }
 
   #initializeSchema() {
+    const version = this.database.prepare('PRAGMA user_version').get().user_version
+    if (version > SCHEMA_VERSION) throw new Error('练习数据库版本较新，请升级应用')
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS practices (
         id TEXT PRIMARY KEY,
@@ -81,15 +83,19 @@ export class SqliteInterviewRepository {
       CREATE INDEX IF NOT EXISTS idx_questions_practice ON questions(practice_id, sequence);
       CREATE INDEX IF NOT EXISTS idx_attempts_question ON attempts(question_id, sequence);
     `)
-    const version = this.database.prepare('PRAGMA user_version').get().user_version
-    if (version > SCHEMA_VERSION) throw new Error('练习数据库版本较新，请升级应用')
     if (version < SCHEMA_VERSION) {
       this.database.exec('BEGIN IMMEDIATE')
       try {
         if (!this.database.prepare('PRAGMA table_info(attempts)').all().some((column) => column.name === 'evaluation_review_json')) {
           this.database.exec('ALTER TABLE attempts ADD COLUMN evaluation_review_json TEXT')
         }
-        this.database.exec('PRAGMA user_version = 1; COMMIT')
+        this.database.exec(`CREATE TABLE IF NOT EXISTS coach_question_states (
+          question_key TEXT PRIMARY KEY,
+          prompt TEXT NOT NULL,
+          topic TEXT NOT NULL,
+          mastered INTEGER NOT NULL CHECK (mastered IN (0, 1)),
+          updated_at INTEGER NOT NULL
+        ); PRAGMA user_version = 2; COMMIT`)
       } catch (error) { this.database.exec('ROLLBACK'); throw error }
     }
   }
@@ -308,6 +314,25 @@ export class SqliteInterviewRepository {
         completed_at = excluded.completed_at,
         updated_at = excluded.updated_at
     `).run(progress.slug, progress.completed ? 1 : 0, progress.completedAt, progress.updatedAt)
+  }
+
+  /** Reads personal question choices independently of practice archives.
+   * @returns {Promise<object[]>} Mastery choices and retained question text.
+   */
+  async listCoachQuestionStates() {
+    return this.database.prepare('SELECT * FROM coach_question_states ORDER BY updated_at DESC, question_key').all()
+      .map((row) => ({ key: row.question_key, prompt: row.prompt, topic: row.topic, mastered: Boolean(row.mastered), updatedAt: row.updated_at }))
+  }
+
+  /** Saves a reversible mastery choice without modifying answers or reviews.
+   * @param {object} state Known question and explicit mastery choice.
+   * @returns {Promise<void>} Resolves after SQLite saves the choice.
+   */
+  async saveCoachQuestionState(state) {
+    this.database.prepare(`INSERT INTO coach_question_states (question_key, prompt, topic, mastered, updated_at)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT(question_key) DO UPDATE SET
+      prompt = excluded.prompt, topic = excluded.topic, mastered = excluded.mastered, updated_at = excluded.updated_at`)
+      .run(state.key, state.prompt, state.topic, state.mastered ? 1 : 0, state.updatedAt)
   }
 
   close() {

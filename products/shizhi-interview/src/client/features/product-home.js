@@ -1,9 +1,10 @@
-/** Product landing page for new and empty conversations. */
+/** Product workbench and persistent interview practice view. */
 import React from 'react'
 import { CoachHome } from './coach-home.js'
 import { h, Button, ErrorNotice } from '../shared/ui.js'
 import { t } from '../shared/coach-locale.js'
 import { interviewApi } from '../shared/api.js'
+import { useInterviewQuery } from '../shared/hooks.js'
 import { PracticeLibrary } from './practice-library.js'
 
 async function careerRequest(path) {
@@ -43,7 +44,7 @@ function ChatStart({ sessionId, sendMessage }) {
     h(Button, { type: 'submit', disabled: busy || !draft.trim() }, t(busy ? 'sending' : 'chatSend')))
 }
 
-/** Renders a usable landing page for every empty conversation, without a directory picker.
+/** Renders the workbench and coach for empty or practice-bound conversations, without a directory picker.
  * @param {object} props Harness slot hooks and product actions.
  * @returns {object} Product home with chat and practice actions.
  */
@@ -56,16 +57,14 @@ export function ProductConversation(props) {
   const [viewPractice, setViewPractice] = React.useState(null)
   const [error, setError] = React.useState('')
   const frame = React.useRef(null)
+  const session = useInterviewQuery(`product-session:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
+  const practice = sessionId && session.data?.resource?.data?.sessionId === sessionId ? session.data.resource.data.practice : null
   React.useEffect(() => {
-    let alive = true
-    if (sessionId) void interviewApi.session(sessionId).then((result) => {
-      if (!alive || !result.resource.data.practice) return
-      const target = result.resource.data.practice.config.target
-      if (target) { setCompany(target); setRole(target.targetRole) }
-      setTab('practice')
-    }).catch((failure) => { if (alive) setError(failure.message) })
-    return () => { alive = false }
-  }, [sessionId])
+    if (!practice) return
+    const target = practice.config.target
+    setCompany(target || null); setRole(target?.targetRole || ''); setViewPractice(null)
+    setTab('practice')
+  }, [sessionId, practice?.id])
   React.useEffect(() => {
     let alive = true
     const receive = async (event) => {
@@ -104,10 +103,10 @@ export function ProductConversation(props) {
       h('strong', null, t('careerBrand')),
       [['career', 'careerHome'], ['practice', 'careerPractice'], ['chat', 'chatTitle']].map(([id, label]) =>
         h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => switchView(id) }, t(label)))),
-    h(ErrorNotice, null, error),
+    h(ErrorNotice, null, error || session.error),
     h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career' }),
     tab === 'chat' ? h('div', { className: 'sz-landing' }, h(ChatStart, { key: sessionId || 'new', sessionId, sendMessage: actions.sendMessage })) : null,
-    tab === 'practice' ? h('div', { className: 'sz-landing' },
+    h('div', { className: 'sz-landing', hidden: tab !== 'practice' },
       company ? h('section', { className: 'sz-career-target' }, h('small', null, t('careerTarget')),
         h('h2', null, company.companyName), h('p', null, company.roles, ' · ', company.city),
         h('label', { htmlFor: 'sz-target-role' }, t('careerRole')),
@@ -119,5 +118,5 @@ export function ProductConversation(props) {
           item.role, ' · ', item.topic, ' · ', item.answers, ' ', t('careerRecorded'), item.scores.length ? ` · ${(item.scores.reduce((a, b) => a + b, 0) / item.scores.length).toFixed(1)}/10` : '', ' ↗'))) : h('p', null, t('careerEmpty')),
       ) : null,
       viewPractice ? h(PracticeLibrary, { key: viewPractice, sessionId, initialPracticeId: viewPractice, allowCreate: false })
-        : h(CoachHome, { sessionId, createSession: actions.createSession, company, targetRole: role })) : null)
+        : h(CoachHome, { sessionId, createSession: actions.createSession, company, targetRole: role })))
 }

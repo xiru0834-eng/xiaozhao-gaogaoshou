@@ -60,6 +60,41 @@ test('new users can render the practice catalog before a session or query result
   assert.match(text, /计算机网络/)
 })
 
+test('each coach navigation page renders only its own form and controls', () => {
+  const expected = JSON.parse(readFileSync(new URL('../fixtures/coach-page-layout.json', import.meta.url), 'utf8'))
+  for (const [page, snapshot] of Object.entries(expected)) {
+    const { plugin } = loadPlugin({
+      useState: (initial) => [initial === 'career' ? 'practice' : initial === 'bank' ? page : typeof initial === 'function' ? initial() : initial, () => {}],
+      useRef: (initial) => ({ current: initial }), useMemo: (callback) => callback(), useId: () => 'page-test',
+    })
+    let home
+    const slots = { inject(_name, callback) { callback() }, register(config, component) {
+      if (config.name === 'main.conversation') home = component
+      return () => {}
+    } }
+    plugin.apply({ get: (name) => name === 'sessions'
+      ? { list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => {} } } : slots, effect: (factory) => factory() })
+    const observed = { headings: [], inputs: [], textareas: 0, selects: 0, startButtons: [] }
+    const visit = (element) => {
+      if (element == null || typeof element === 'boolean') return ''
+      if (Array.isArray(element)) return element.map(visit).join(' ')
+      if (typeof element !== 'object') return String(element)
+      const [component, props, ...children] = element.args
+      if (props?.hidden || component === 'iframe') return ''
+      if (typeof component === 'function') return visit(component({ ...props, children }))
+      const text = visit(children).trim()
+      if (/^h[1-6]$/.test(String(component))) observed.headings.push(text)
+      if (component === 'input') observed.inputs.push(props.type || 'text')
+      if (component === 'textarea') observed.textareas++
+      if (component === 'select') observed.selects++
+      if (component === 'button' && text.startsWith('开始')) observed.startButtons.push(text)
+      return text
+    }
+    visit(home({ sessionId: undefined }))
+    assert.deepEqual(observed, snapshot, page)
+  }
+})
+
 function settled(interaction, extra = {}) {
   return {
     kind: 'tool-result',

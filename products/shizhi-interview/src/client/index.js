@@ -14,6 +14,7 @@ import { LeetcodeCatalog } from './features/leetcode.js'
 import { WorkspaceSidebarEntry } from './features/workspace-dock.js'
 import { ProductConversation } from './features/product-home.js'
 import { createHomeActions, registerProductHome } from './shared/home-session.js'
+import { interviewApi } from './shared/api.js'
 import { INTERVIEW_TOOL_NAMES } from '../protocol/interview-tool-names.js'
 import { installStyles } from './shared/styles.js'
 import { h, parseInteractionResult, toolCallState, toolErrorAudience, toolErrorMessage } from './shared/ui.js'
@@ -56,9 +57,9 @@ export function apply(ctx) {
   installStyles()
   const slots = ctx.get('slots')
   if (!slots) return
-  const actions = createHomeActions(ctx.get('sessions'), ctx.get('uiWorkspace'))
+  const actions = createHomeActions(ctx.get('sessions'), ctx.get('uiWorkspace'), interviewApi)
   slots.inject('main.conversation', () => registerProductHome(slots, ctx.get('sessions'),
-    (props) => h(ProductConversation, { ...props, actions })))
+    (props) => h(ProductConversation, { ...props, actions }), interviewApi))
 
   for (const toolName of INTERVIEW_TOOL_NAMES) {
     slots.inject('tool.call.toolview', () => slots.register(

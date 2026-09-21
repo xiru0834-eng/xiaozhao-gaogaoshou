@@ -1,7 +1,8 @@
 /** Product commands preserve answers before requesting model work. */
-import { COACH_TRACKS, coachTrack, coachReference } from '../domain/coach-catalog.js'
+import { COACH_TRACKS, coachReference } from '../domain/coach-catalog.js'
 import { DomainError } from '../domain/errors.js'
 import { normalizeCoach, interviewLimitReached } from '../domain/coach-configuration.js'
+import { coachQuestionKey } from '../domain/coach-bank.js'
 
 /** Serializes UI commands per session; agent results are read from persisted records.
  * @param {object} runtime Application and agent bridge owned by the plugin.
@@ -25,10 +26,22 @@ export function createCoachCommands({ application, eventBridge, resolveCompany }
   }
   async function execute(sessionId, command, payload) {
     if (eventBridge?.status?.(sessionId) === 'running') throw new DomainError('MODEL_BUSY', '当前会话仍在运行，请等待结束后再操作')
+    if (command === 'resume') {
+      const source = (await application.getPractice(payload.sourcePracticeId)).resource.data
+      if (!source.config.coach) throw new DomainError('INVALID_COACH', '请从练习档案打开此类型的记录')
+      const binding = await application.repository.getSessionBindingByPractice(source.id)
+      if (binding && eventBridge?.status?.(binding.sessionId) === 'running') throw new DomainError('MODEL_BUSY', '这条练习仍在生成结果，请稍后打开')
+      await application.bindAtomicPractice(sessionId, source.id)
+      await eventBridge?.refresh(sessionId)
+      return application.readAtomicSession(sessionId)
+    }
     if (command === 'review-start') {
       const source = (await application.getPractice(payload.sourcePracticeId)).resource.data
       const question = source.questions.find((item) => item.id === payload.sourceQuestionId)
       if (!question?.attempts.some((attempt) => attempt.evaluation)) throw new DomainError('REVIEW_NOT_FOUND', '没有找到可复习的已点评问题')
+      if ((await application.coachBank()).some((item) => item.key === coachQuestionKey(question.prompt) && item.mastered)) {
+        throw new DomainError('QUESTION_MASTERED', '这道题已斩，请先在已斩题中恢复')
+      }
       const config = { ...source.config, coach: { ...source.config.coach, kind: 'review', sourcePracticeId: source.id, sourceQuestionId: question.id } }
       await application.createAtomicPractice(sessionId, { mode: source.mode, config })
       await application.createAtomicQuestion(sessionId, { prompt: question.prompt })
@@ -49,11 +62,21 @@ export function createCoachCommands({ application, eventBridge, resolveCompany }
       } else if (kind === 'targeted') {
         mode = 'scenario'; config = { topic: `岗位专项 · ${coach.targetRole}`, coach }
       } else if (kind === 'standard') {
-        const track = COACH_TRACKS.find((item) => item.id === payload.track)
-        if (!track) throw new DomainError('INVALID_TRACK', '请选择一个练习方向')
-        const questionIndex = payload.questionIndex === undefined ? 0 : payload.questionIndex
-        if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= track.questions.length) throw new DomainError('INVALID_QUESTION', '请选择题库中存在的问题')
-        mode = 'bagu'; config = { topic: `拾知 · ${track.title}`, coach }; prompt = track.questions[questionIndex][0]
+        const bank = await application.coachBank()
+        let selected
+        if (payload.bankKey !== undefined) selected = bank.find((item) => item.key === payload.bankKey)
+        else {
+          const track = COACH_TRACKS.find((item) => item.id === payload.track)
+          if (!track) throw new DomainError('INVALID_TRACK', '请选择一个练习方向')
+          if (payload.questionIndex === undefined) selected = bank.find((item) => item.track === track.id && !item.mastered)
+          else {
+            if (!Number.isInteger(payload.questionIndex) || payload.questionIndex < 0 || payload.questionIndex >= track.questions.length) throw new DomainError('INVALID_QUESTION', '请选择题库中存在的问题')
+            selected = bank.find((item) => item.track === track.id && item.questionIndex === payload.questionIndex)
+          }
+        }
+        if (!selected) throw new DomainError('NO_PENDING_QUESTION', '没有可练题目，可在已斩题中恢复题目')
+        if (selected.mastered) throw new DomainError('QUESTION_MASTERED', '这道题已斩，请先在已斩题中恢复')
+        mode = 'bagu'; config = { topic: selected.topic, coach }; prompt = selected.prompt
       } else throw new DomainError('INVALID_TRACK', '请选择有效的练习方式')
       if (target) config.target = target
       await application.createAtomicPractice(sessionId, { mode, config })
@@ -86,15 +109,22 @@ export function createCoachCommands({ application, eventBridge, resolveCompany }
       return dispatch(sessionId, practice, question, mock ? 'coach.mock-next' : 'coach.targeted')
     }
     if (!question) throw new DomainError('QUESTION_REQUIRED', '请先生成面试问题')
-    if (command === 'next') {
-      const track = coachTrack(practice.config.topic)
-      if (!track) throw new DomainError('CUSTOM_TOPIC', '自定义主题请使用针对回答追问')
+    if (command === 'select') {
+      if (!['standard', 'review'].includes(practice.config.coach?.kind)) throw new DomainError('SELECTION_NOT_ALLOWED', '模拟面试和岗位专项由 AI 追问，请在题库练习中自由选题')
+      const selected = (await application.coachBank()).find((item) => item.key === payload.bankKey && item.topic === practice.config.topic)
+      if (!selected) throw new DomainError('INVALID_QUESTION', '请选择当前方向的题目')
+      if (selected.mastered) throw new DomainError('QUESTION_MASTERED', '这道题已斩，请先在已斩题中恢复')
+      const existing = practice.questions.find((item) => coachQuestionKey(item.prompt) === selected.key)
+      if (existing) await application.focusAtomicQuestion(sessionId, existing.id)
+      else await application.createAtomicQuestion(sessionId, { prompt: selected.prompt })
+    } else if (command === 'next') {
+      const questions = (await application.coachBank()).filter((item) => item.topic === practice.config.topic && !item.mastered)
       const used = new Set(practice.questions.map((item) => item.prompt))
-      const position = track.questions.findIndex(([prompt]) => prompt === question.prompt)
-      const ordered = [...track.questions.slice(position + 1), ...track.questions.slice(0, position + 1)]
-      const next = ordered.find(([prompt]) => !used.has(prompt))
-      if (!next) throw new DomainError('TRACK_FINISHED', '本方向的题目已练完，可以回看记录或结束本次练习')
-      await application.createAtomicQuestion(sessionId, { prompt: next[0] })
+      const position = questions.findIndex((item) => item.prompt === question.prompt)
+      const ordered = [...questions.slice(position + 1), ...questions.slice(0, position + 1)]
+      const next = ordered.find((item) => !used.has(item.prompt))
+      if (!next) throw new DomainError('TRACK_FINISHED', '本方向的待练题已练完，可以自由选题重练、恢复已斩题，或结束本次练习')
+      await application.createAtomicQuestion(sessionId, { prompt: next.prompt })
     } else if (command === 'retry') {
       if (mock) throw new DomainError('MOCK_RETRY_NOT_ALLOWED', '模拟面试保留真实问答，请继续下一轮或结束复盘')
       await application.focusAtomicQuestion(sessionId, question.id)

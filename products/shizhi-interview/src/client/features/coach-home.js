@@ -10,12 +10,22 @@ import { CoachFeedback, AnswerComparison } from './coach-feedback.js'
 import { CoachPreparation } from './coach-preparation.js'
 import { CoachRevision } from './coach-revision.js'
 import { CoachCatalog } from './coach-catalog.js'
+import { CoachRecords } from './coach-records.js'
+import { coachQuestionKey } from '../../domain/coach-bank.js'
+
+const PAGES = [
+  ['bank', 'bankPage', 'bankDescription', '01'], ['mock', 'mockPage', 'mockDescription', '02'],
+  ['targeted', 'targetedPage', 'targetedDescription', '03'], ['revision', 'revisionPage', 'revisionDescription', '04'],
+  ['records', 'recordsPage', 'recordsDescription', '05'], ['mastered', 'masteredPage', 'masteredDescription', '06'],
+]
 
 /** Renders durable practice state; agent lifecycle never substitutes for saved results.
  * @param {object} props Session, session creator and optional company context.
  * @returns {object} Practice workspace.
  */
 export function CoachHome({ sessionId, createSession, company, targetRole = '' }) {
+  const [page, setPage] = React.useState('bank')
+  const [pickerOpen, setPickerOpen] = React.useState(false)
   const [busy, setBusy] = React.useState('')
   const [error, setError] = React.useState('')
   const [notice, setNotice] = React.useState('')
@@ -27,6 +37,8 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const query = useInterviewQuery(`coach:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
   const context = sessionId && query.data?.resource?.data?.sessionId === sessionId ? query.data.resource.data : null
   const practice = context?.practice
+  const bank = useInterviewQuery('coach-bank', () => interviewApi.questionBank(), [practice?.updatedAt], { cache: false })
+  const bankItems = bank.data?.items || []
   const question = context?.currentQuestion
   const latest = question?.attempts.at(-1)
   const answerKey = `${sessionId}:${question?.id}`
@@ -40,11 +52,16 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const deadline = mock ? practice.createdAt + practice.config.coach.durationMinutes * 60000 : 0
   const secondsLeft = Math.max(0, Math.ceil((deadline - now) / 1000))
   const reference = question ? coachReference(question.prompt) : null
+  const currentBankKey = question ? coachQuestionKey(question.prompt) : ''
+  const mastered = bankItems.some((item) => item.key === currentBankKey && item.mastered)
+  const selectable = bankItems.filter((item) => item.topic === practice?.config.topic && !item.mastered)
+  const canSelect = ['standard', 'review'].includes(practice?.config.coach?.kind)
   const originId = practice?.config.coach?.sourcePracticeId
   const origin = useInterviewQuery(`coach-origin:${originId}`, () => originId ? interviewApi.practice(originId) : Promise.resolve(null), [originId])
   const earlier = origin.data?.resource.data.questions.find((item) => item.id === practice?.config.coach?.sourceQuestionId)?.attempts || []
   const incomplete = active && ((!question && practice?.config.coach) || (mock ? ending || Boolean(latest) : latest && (!latest.evaluation || !question.explanation)))
   React.useEffect(() => { setNotice(''); setError(''); setEditing('') }, [sessionId])
+  React.useEffect(() => { if (practice) { setPage('session'); setPickerOpen(false) } }, [practice?.id])
   React.useEffect(() => {
     if (!sessionId || !active) return undefined
     const timer = setInterval(() => { if (!document.hidden) void query.reload() }, 2500)
@@ -58,10 +75,10 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   async function run(command, payload = {}) {
     if (voiceBusy) { setError(t('micBusy')); return }
     if (inFlight.current || running) return
-    if (draft.trim() && ['start', 'review-start', 'next', 'followup', 'finish', 'archive'].includes(command)) { setError(t('finishDraftHint')); return }
+    if (draft.trim() && ['start', 'review-start', 'resume', 'select', 'next', 'followup', 'finish', 'archive'].includes(command)) { setError(t('finishDraftHint')); return }
     inFlight.current = true; setBusy(command); setError(''); setNotice('')
     try {
-      const starting = ['start', 'review-start'].includes(command)
+      const starting = ['start', 'review-start', 'resume'].includes(command)
       const targetSession = starting || !sessionId ? await createSession() : sessionId
       const response = await fetch('/interview/api/coach', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
         session: targetSession, command, payload: { practiceId: practice?.id, questionId: question?.id, revision: context?.revision,
@@ -73,16 +90,31 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
       if (command === 'retry') setEditing(answerKey)
       if (result.delivery === 'unavailable') setNotice(t('unavailable'))
       if (!result.delivery && ['finish', 'archive'].includes(command)) setNotice(t('saved'))
+      setPage('session'); setPickerOpen(false)
       interviewApi.invalidate()
     } catch (failure) { setError(failure.message || t('error')) }
     finally { inFlight.current = false; setBusy('') }
   }
+  async function setMastered(key, value) {
+    if (inFlight.current || disabled) return
+    inFlight.current = true; setBusy('mastery'); setError(''); setNotice('')
+    try { await interviewApi.setQuestionMastered(key, value); setNotice(t(value ? 'questionMoved' : 'questionRestored')) }
+    catch (failure) { setError(failure.message || t('error')) }
+    finally { inFlight.current = false; setBusy('') }
+  }
   const recover = ending ? 'finish' : !question || mock ? 'generate' : 'review'
   return h('div', { className: 'sz-home' },
-    h('section', { className: 'sz-hero' }, h('div', { className: 'sz-eyebrow' }, t('eyebrow')),
-      h('h1', null, t('headline')), h('p', null, t('intro'))),
+    h('header', { className: 'sz-hub-heading' }, h('div', null, h('h1', null, t('hubTitle')), h('p', null, t('hubIntro'))),
+      h('div', { className: 'sz-bank-stats' }, h('span', null, h('strong', null, bankItems.filter((item) => !item.mastered).length), t('pendingCount')),
+        h('span', null, h('strong', null, bankItems.filter((item) => item.mastered).length), t('masteredCount')))),
+    h('nav', { className: 'sz-coach-nav', 'aria-label': t('coachNavigation') }, PAGES.map(([id, label, description, number]) => h('button', {
+      type: 'button', key: id, 'aria-pressed': page === id, disabled: Boolean(busy) || voiceBusy, onClick: () => { setPage(id); setNotice(''); setError('') },
+    }, h('span', { className: 'sz-nav-number', 'aria-hidden': true }, number), h('strong', null, t(label)), h('small', null, t(description))))),
     h(ErrorNotice, null, error || query.error), notice ? h('p', { className: 'sz-notice', role: 'status' }, notice) : null,
-    practice ? h('section', { className: 'sz-session' },
+    bank.error ? h('div', null, h(ErrorNotice, null, bank.error), h(Button, { onClick: bank.reload }, t('refresh'))) : null,
+    practice && page !== 'session' ? h('div', { className: 'sz-resume-bar' }, h('span', null, practice.topic),
+      h(Button, { onClick: () => setPage('session') }, t(active ? 'continuePractice' : 'viewReport'))) : null,
+    page === 'session' && practice ? h('section', { className: 'sz-session' },
       h('header', { className: 'sz-session-header' }, h('div', null, h('span', { className: 'sz-eyebrow' }, t(mock ? 'mockTitle' : 'question')),
         h('h2', null, mock ? practice.config.targetRole : practice.topic), practice.config.target ? h('p', null, practice.config.target.companyName) : null),
         h('span', { className: 'sz-progress' }, question?.sequence || 0, ' / ', mock ? practice.config.coach.questionLimit : coachTrack(practice.config.topic)?.questions.length || practice.questions.length)),
@@ -94,7 +126,18 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
         h('ul', null, practice.summary.strengths.map((text, index) => h('li', { key: index }, text))), h('h4', null, t('reportImprovements')),
         h('ul', null, practice.summary.improvements.map((text, index) => h('li', { key: index }, text)))) : null,
       !active ? h('p', { className: 'sz-notice' }, t('saved')) : null,
-      question ? h('div', { className: 'sz-question' }, h('h3', null, question.prompt), h(SpeakButton, { key: question.id, text: question.prompt, disabled: voiceBusy })) : null,
+      question ? h('div', { className: 'sz-question' }, h('h3', null, question.prompt),
+        h('div', { className: 'sz-question-tools' }, h(SpeakButton, { key: question.id, text: question.prompt, disabled: voiceBusy }),
+          active && canSelect ? h(Button, { disabled: navigationDisabled || bank.loading || Boolean(bank.error), 'aria-expanded': pickerOpen,
+            onClick: () => setPickerOpen(!pickerOpen) }, t('chooseQuestion')) : null,
+          h(Button, { className: 'sz-mastery-button', disabled: disabled || bank.loading || Boolean(bank.error),
+            onClick: () => setMastered(currentBankKey, !mastered) }, t(mastered ? 'restoreQuestion' : 'slayQuestion'))),
+        mastered ? h('span', { className: 'sz-mastered-badge' }, t('questionMastered')) : null,
+        pickerOpen && canSelect ? h('section', { className: 'sz-session-picker', 'aria-label': t('chooseQuestion') }, h('p', null, t('chooseQuestionHint')),
+          !selectable.length ? h('p', null, t('noSelectable')) : h('ol', null, selectable.map((item) => h('li', { key: item.key },
+            h('button', { type: 'button', disabled: navigationDisabled || item.key === currentBankKey, 'aria-current': item.key === currentBankKey ? 'true' : undefined,
+              onClick: () => run('select', { bankKey: item.key }) }, h('span', null, item.prompt),
+              item.key === currentBankKey ? h('small', null, t('currentQuestion')) : practice.questions.some((saved) => coachQuestionKey(saved.prompt) === item.key) ? h('small', null, t('practicedQuestion')) : null))))) : null) : null,
       active && question && !ending && (!latest || editing === answerKey) ? h(VoiceAnswer, { key: answerKey, value: draft, busy: disabled,
         submitLabel: t(mock ? 'mockSubmit' : 'submit'), onActiveChange: setVoiceBusy,
         onChange: (text) => setDrafts((current) => ({ ...current, [answerKey]: text })), onSubmit: () => run('submit', { answer: draft }) }) : null,
@@ -118,8 +161,12 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
         mock ? h(Button, { disabled: navigationDisabled, onClick: () => run('archive') }, t('archiveOnly')) :
           h(Button, { tone: 'primary', disabled: navigationDisabled, onClick: () => run('next') }, t('next')),
         draft.trim() ? h('p', { className: 'sz-hint' }, t('finishDraftHint')) : null) : null) : null,
-    h(CoachRevision, { busy: navigationDisabled, version: practice?.updatedAt, onReview: (item) => run('review-start', { sourcePracticeId: item.practiceId, sourceQuestionId: item.questionId }) }),
-    h(CoachPreparation, { targetRole, busy: navigationDisabled, onStart: (payload) => run('start', payload) }),
-    h(CoachCatalog, { disabled: navigationDisabled || Boolean(company && !targetRole.trim()), onStart: (payload) => run('start', payload) }),
+    page === 'revision' ? h(CoachRevision, { busy: navigationDisabled, version: practice?.updatedAt, onReview: (item) => run('review-start', { sourcePracticeId: item.practiceId, sourceQuestionId: item.questionId }) }) : null,
+    ['mock', 'targeted'].map((kind) => h('div', { key: kind, hidden: page !== kind },
+      h(CoachPreparation, { kind, targetRole, busy: navigationDisabled, onStart: (payload) => run('start', payload) }))),
+    page === 'bank' || page === 'mastered' ? h(CoachCatalog, { key: page, mastered: page === 'mastered', items: bankItems, loading: bank.loading,
+      disabled: page === 'mastered' ? disabled : navigationDisabled || Boolean(company && !targetRole.trim()) || Boolean(bank.error),
+      onStart: (payload) => run('start', payload), onRestore: (item) => setMastered(item.key, false) }) : null,
+    page === 'records' ? h(CoachRecords, { disabled: navigationDisabled, onOpen: (id) => run('resume', { sourcePracticeId: id }) }) : null,
     h('p', { className: 'sz-local' }, t('local')))
 }

@@ -1,4 +1,5 @@
 import { buildReviewQueue } from '../domain/coach-progress.js'
+import { buildCoachBank, coachQuestionKey } from '../domain/coach-bank.js'
 import { DomainError, assertDomain } from '../domain/errors.js'
 import { LEETCODE_TOP_100, LEETCODE_TOP_100_GROUPS, LEETCODE_TOP_100_SOURCE, leetcodeTop100Problem } from '../domain/leetcode-top-100.js'
 import {
@@ -253,7 +254,29 @@ export class InterviewApplication {
    * @returns {Promise<object[]>} Due dates, repeated gaps and source question identifiers.
    */
   async reviewQueue() {
-    return buildReviewQueue(await this.repository.listPractices(), this.clock.now())
+    const mastered = new Set((await this.repository.listCoachQuestionStates()).filter((item) => item.mastered).map((item) => item.key))
+    return buildReviewQueue(await this.repository.listPractices(), this.clock.now()).filter((item) => !mastered.has(coachQuestionKey(item.prompt)))
+  }
+
+  /** Lists fixed questions and questions collected from personal interview records.
+   * @returns {Promise<object[]>} Personal bank including explicitly mastered questions.
+   */
+  async coachBank() {
+    return buildCoachBank(await this.repository.listPractices(), await this.repository.listCoachQuestionStates())
+  }
+
+  /** Moves a known question between the pending bank and the mastered collection.
+   * @param {string} key Question identifier returned by the bank.
+   * @param {boolean} mastered Explicit user choice; scores do not set this flag.
+   * @returns {Promise<object>} Saved question state.
+   */
+  async setCoachQuestionMastered(key, mastered) {
+    assertDomain(typeof key === 'string' && typeof mastered === 'boolean', 'INVALID_QUESTION_STATE', '请选择题目及有效的斩题状态')
+    const question = (await this.coachBank()).find((item) => item.key === key)
+    assertDomain(question, 'QUESTION_NOT_FOUND', '题目不存在，请刷新题库')
+    const state = { key, prompt: question.prompt, topic: question.topic, mastered, updatedAt: this.clock.now() }
+    await this.repository.saveCoachQuestionState(state)
+    return state
   }
 
   async drawAtomicLeetcode(sessionId) {
