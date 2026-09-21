@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">校招高高手 · 下一家，准备好了。</title>
+  <desc id="desc">薄荷与石墨色的本地求职工作台。找机会、核对线索、去官网、记进度。</desc>
+  <rect width="1200" height="360" rx="22" fill="#132c29"/>
+  <path d="M48 72H1152M720 105V312" stroke="#36534c"/>
+  <g font-family="Segoe UI,Microsoft YaHei,PingFang SC,sans-serif">
+    <rect x="48" y="28" width="26" height="26" rx="7" fill="#96e5c4"/>
+    <path d="M55 41h12m-6-6v12" stroke="#183e34" stroke-width="2"/>
+    <text x="88" y="47" font-size="14" letter-spacing="2.5" fill="#bbd5cc">XIAOZHAO · PERSONAL WORKSPACE</text>
+    <text x="1152" y="47" text-anchor="end" font-size="12" letter-spacing="2" fill="#8fa99f">LOCAL FIRST / WINDOWS</text>
+    <text x="45" y="165" font-size="68" font-weight="700" letter-spacing="1" fill="#f4f7ee">校招高高手</text>
+    <path d="m425 116 5 13 13 5-13 5-5 13-5-13-13-5 13-5Z" fill="#96e5c4"/>
+    <text x="49" y="216" font-size="26" font-weight="500" fill="#96e5c4">下一家，准备好了。</text>
+    <text x="49" y="258" font-size="16" fill="#b3c9c0">把机会、内推线索和每一步进度，留在自己的工作台。</text>
+    <text x="49" y="316" font-size="12" letter-spacing="1.5" fill="#8fa99f">TYPESCRIPT</text>
+    <circle cx="152" cy="312" r="2" fill="#688a7d"/>
+    <text x="170" y="316" font-size="12" letter-spacing="1.5" fill="#8fa99f">SQLITE</text>
+    <circle cx="243" cy="312" r="2" fill="#688a7d"/>
+    <text x="261" y="316" font-size="12" letter-spacing="1.5" fill="#8fa99f">YOUR DATA, YOUR DEVICE</text>
+    <text x="756" y="126" font-size="11" letter-spacing="2.8" fill="#8fa99f">ONE OPPORTUNITY AT A TIME</text>
+    <g font-size="18" fill="#edf4e9">
+      <text x="801" y="169">找机会</text><text x="801" y="213">核对线索</text><text x="801" y="257">去官网</text><text x="801" y="301">记进度</text>
+    </g>
+    <g font-size="12" font-family="Consolas,monospace" fill="#96e5c4">
+      <text x="757" y="167">01</text><text x="757" y="211">02</text><text x="757" y="255">03</text><text x="757" y="299">04</text>
+    </g>
+    <g font-size="12" fill="#8fa99f" text-anchor="end">
+      <text x="1148" y="167">公司 / 岗位 / 城市</text><text x="1148" y="211">公开内推 · 保留来源</text><text x="1148" y="255">自己确认，自己投递</text><text x="1148" y="299">本机保存 · 随时备份</text>
+    </g>
+    <path d="M756 184H1148M756 228H1148M756 272H1148" stroke="#2c4941"/>
+  </g>
+</svg>
