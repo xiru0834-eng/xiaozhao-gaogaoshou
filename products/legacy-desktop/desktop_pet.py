@@ -11,7 +11,7 @@ from desktop_pet_native import Renderer, WindowClass, WNDPROC, user, kernel
 from floating_native import enable_dpi, work_area
 from launcher import launch_lock
 
-ROOT = pathlib.Path(__file__).resolve().parent
+from desktop_paths import REPOSITORY_ROOT as ROOT
 
 
 class PetWindow:

@@ -11,7 +11,7 @@ const companies = DATA.map(row => ({
   deadline: row[F.dl], deadlineText: row[F.dlTxt],
   added: APPEND_DATES.get(row[F.n]) ?? '',
 }));
-const original = await readFile(new URL('../companion.html', import.meta.url), 'utf8');
+const original = await readFile(new URL('../products/legacy-desktop/companion.html', import.meta.url), 'utf8');
 const mascot = (await readFile(new URL('../assets/mascot-48.png', import.meta.url))).toString('base64');
 const cast = (await readFile(new URL('../assets/companion-cast.png', import.meta.url))).toString('base64');
 const bridge = `<script>
@@ -36,7 +36,7 @@ const server = createServer(async (req, res) => {
   if (req.method !== 'GET' || req.headers.host !== `127.0.0.1:${port}`) {res.writeHead(403).end(); return;}
   if (!['/', '/before'].includes(new URL(req.url ?? '/', `http://127.0.0.1:${port}`).pathname)) {res.writeHead(404).end(); return;}
   try {
-    const html = req.url?.startsWith('/before') ? original : await readFile(new URL('../companion.html', import.meta.url), 'utf8');
+    const html = req.url?.startsWith('/before') ? original : await readFile(new URL('../products/legacy-desktop/companion.html', import.meta.url), 'utf8');
     res.writeHead(200, {'Content-Type':'text/html; charset=utf-8', 'Cache-Control':'no-store'});
     res.end(html.replaceAll('__MASCOT__', `data:image/png;base64,${mascot}`).replaceAll('__CAST__', `data:image/png;base64,${cast}`).replace('<script>', bridge+'<script>'));
   } catch {res.writeHead(500).end('Preview unavailable');}

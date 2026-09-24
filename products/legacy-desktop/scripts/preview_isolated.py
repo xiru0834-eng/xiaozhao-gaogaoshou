@@ -6,6 +6,9 @@ import sqlite3
 import tempfile
 import threading
 
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import app
 
 
@@ -14,7 +17,7 @@ def main():
     parser.add_argument('--seconds', type=int, default=300)
     parser.add_argument('--port', type=int, default=18764)
     args = parser.parse_args()
-    html = app.ROOT / 'index.html'
+    html = app.SOURCE_DIR / 'index.html'
     with tempfile.TemporaryDirectory(prefix='qiuzhao-ui-test-') as folder:
         app.ROOT = pathlib.Path(folder)
         app.DB = app.ROOT / 'test.db'

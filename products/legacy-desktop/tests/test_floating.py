@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from floating_model import Catalog, DockState, fit_rect, LedgerClient, SaveState, safe_url
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class CatalogTests(unittest.TestCase):

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-const legacy = read('../index.html');
+const legacy = read('../products/legacy-desktop/index.html');
 const css = read('../src/client/styles.css');
 
 test('legacy baseline styles stay intact while TypeScript can layer a scoped workbench', () => {

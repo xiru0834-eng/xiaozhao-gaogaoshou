@@ -9,6 +9,7 @@ from companion import CompanionAPI, DesktopShell, ROOT
 from companion_schedule import ScheduleClient
 from desktop_client import DesktopCatalog
 from launcher import launch_lock
+from desktop_paths import SOURCE_DIR
 
 
 class ProfileSchedule(ScheduleClient):
@@ -48,7 +49,7 @@ class DesktopAPI(CompanionAPI):
 
 
 def page_html(base):
-    html = (ROOT / 'companion.html').read_text(encoding='utf-8')
+    html = (SOURCE_DIR / 'companion.html').read_text(encoding='utf-8')
     mascot = base64.b64encode((ROOT / 'assets/mascot-48.png').read_bytes()).decode()
     result = html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', base + '/assets/companion-cast.png')
     result = result.replace('与完整版共用进度', '新版桌面 · 与完整版共用进度')

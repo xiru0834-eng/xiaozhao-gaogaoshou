@@ -9,7 +9,7 @@ import sys
 import unittest
 
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 @unittest.skipUnless(sys.platform == 'win32', 'Windows native bindings')

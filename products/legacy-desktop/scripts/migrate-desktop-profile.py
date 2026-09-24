@@ -9,8 +9,8 @@ import sqlite3
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+from desktop_paths import REPOSITORY_ROOT as ROOT
 
 
 def records(path):

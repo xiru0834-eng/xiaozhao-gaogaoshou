@@ -13,7 +13,7 @@ import webbrowser
 from desktop_client import DesktopClient
 from launcher import launch_lock
 
-ROOT = pathlib.Path(__file__).resolve().parent
+from desktop_paths import REPOSITORY_ROOT as ROOT, SOURCE_DIR
 CONFIG = pathlib.Path(os.environ.get('LOCALAPPDATA', pathlib.Path.home())) / 'XiaozhaoGaogaoshou/desktop-settings.json'
 
 
@@ -72,7 +72,7 @@ def open_page(settings, section=''):
 
 def launch_companion(settings, config_path=CONFIG):
     runtime = pathlib.Path(sys.executable).with_name('pythonw.exe')
-    return subprocess.Popen([str(runtime if runtime.exists() else sys.executable), str(ROOT / 'desktop_runtime.py'), '--config', str(config_path), '--companion'], cwd=ROOT, creationflags=subprocess.CREATE_NO_WINDOW)
+    return subprocess.Popen([str(runtime if runtime.exists() else sys.executable), str(SOURCE_DIR / 'desktop_runtime.py'), '--config', str(config_path), '--companion'], cwd=ROOT, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
 def main():

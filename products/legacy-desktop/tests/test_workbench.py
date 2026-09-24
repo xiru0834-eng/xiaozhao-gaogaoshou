@@ -13,7 +13,7 @@ import subprocess
 import unittest
 
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 BUNDLED_NODE = pathlib.Path(os.environ.get('USERPROFILE', str(pathlib.Path.home()))) / '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe'
 
 

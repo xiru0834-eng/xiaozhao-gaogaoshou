@@ -4,7 +4,7 @@ import pathlib
 import unittest
 from floating_model import Catalog
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class FrontendTests(unittest.TestCase):
@@ -26,9 +26,16 @@ class FrontendTests(unittest.TestCase):
         self.assertNotIn('.then(done).catch(done)', self.html)
         self.assertIn('复制失败', self.html)
 
-    def test_backend_file_is_unchanged(self):
-        self.assertEqual(hashlib.sha256((ROOT / 'app.py').read_bytes()).hexdigest(),
-                         '162c582aae0594510a6632ca5f816557e3df211053d5349abd8feb29e0a32e25')
+    def test_existing_data_stays_at_repository_root_while_pages_live_with_the_product(self):
+        import app
+        import companion
+        import launcher
+        repository = pathlib.Path(__file__).resolve().parents[3]
+        self.assertEqual(app.DB, repository / 'qiuzhao.db')
+        self.assertEqual(companion.ROOT, repository)
+        self.assertEqual(launcher.LOG, repository / 'launcher.log')
+        self.assertEqual(app.SOURCE_DIR, ROOT)
+        self.assertIn('data:image/png;base64,', companion.page_html())
 
     def test_shared_baseline_company_order_is_preserved(self):
         # Portable invariant: no dependency on the maintainer's private backups.

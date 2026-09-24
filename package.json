@@ -21,7 +21,7 @@
     "start:workbench": "node dist/server/server/main.js",
     "profile:import": "node dist/server/server/import-cli.js",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:legacy": "python -X utf8 -m unittest -q",
+    "test:legacy": "python -X utf8 -m unittest discover -s products/legacy-desktop -q",
     "eval:jobs": "node --experimental-strip-types scripts/evaluate-jobs.ts"
   },
   "dependencies": {

@@ -31,7 +31,7 @@ class LauncherTests(unittest.TestCase):
         process = None
         def spawn():
             nonlocal process
-            process = subprocess.Popen([sys.executable, str(launcher.ROOT / 'preview_isolated.py'), '--seconds', '2', '--port', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen([sys.executable, str(launcher.SOURCE_DIR / 'scripts/preview_isolated.py'), '--seconds', '2', '--port', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return process
         try:
             with patch.object(launcher, 'PORT', port), patch.object(launcher, 'BASE', f'http://127.0.0.1:{port}'), patch.object(launcher, 'spawn_server', side_effect=spawn) as spawned:

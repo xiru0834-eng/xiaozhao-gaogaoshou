@@ -12,7 +12,7 @@ import time
 import urllib.request
 import webbrowser
 
-ROOT = pathlib.Path(__file__).resolve().parent
+from desktop_paths import REPOSITORY_ROOT as ROOT, SOURCE_DIR
 PORT = 18763
 BASE = f'http://127.0.0.1:{PORT}'
 LOG = ROOT / 'launcher.log'
@@ -65,7 +65,7 @@ def spawn_server():
         runtime = windowless
     with open(ROOT / 'server-errors.log', 'ab') as errors:
         process = subprocess.Popen(
-            [str(runtime), str(ROOT / 'launcher.py'), '--serve'],
+            [str(runtime), str(SOURCE_DIR / 'launcher.py'), '--serve'],
             cwd=ROOT, stdin=subprocess.DEVNULL, stdout=errors, stderr=errors,
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
         )

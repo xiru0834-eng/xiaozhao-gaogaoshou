@@ -10,8 +10,8 @@ import threading
 import time
 from unittest.mock import patch
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+from desktop_paths import REPOSITORY_ROOT as ROOT
 from desktop_client import DesktopClient
 from desktop_companion import DesktopAPI, page_html
 from desktop_pet import PetWindow

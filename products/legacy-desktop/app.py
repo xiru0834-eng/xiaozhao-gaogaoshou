@@ -10,7 +10,7 @@ import webbrowser
 import logging
 from datetime import datetime
 
-ROOT = pathlib.Path(__file__).resolve().parent
+from desktop_paths import REPOSITORY_ROOT as ROOT, SOURCE_DIR
 logging.basicConfig(filename=str(ROOT / 'startup.log'), level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s', encoding='utf-8')
 DB = ROOT / 'qiuzhao.db'
@@ -60,7 +60,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path == '/health':
             return self.send(200, {'app': 'qiuzhao-ledger-v1'})
         if self.path == '/':
-            html = (ROOT / 'index.html').read_text(encoding='utf-8')
+            html = (SOURCE_DIR / 'index.html').read_text(encoding='utf-8')
             html = html.replace('<script>', '<script>window.APP_TOKEN=' + json.dumps(TOKEN) + ';', 1)
             return self.send(200, html.encode(), 'text/html; charset=utf-8')
         if self.path == '/api/status':

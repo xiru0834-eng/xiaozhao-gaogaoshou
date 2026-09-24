@@ -91,9 +91,14 @@ export async function verifyAppearance({ product, until, clickText, output }) {
     await menu('desktop-light-export-narrow.png')
     nativeTheme.themeSource = 'dark'
     await mode('light')
-    product.reload()
+    await new Promise((resolve) => {
+      product.webContents.once('did-finish-load', resolve)
+      product.reload()
+    })
     await mode('light')
     await until(() => frame('return d.documentElement.dataset.skin === "blue"'), 'saved skin after reload')
+    await until(() => clickText('稍后配置', '[role="dialog"]'), 'keyless onboarding after reload')
+    await until(() => js('!document.querySelector("[role=dialog]")'), 'onboarding dismissed after reload')
     product.setSize(1440, 940)
     console.log('PASS: global light/dark/system, iframe theme controls, preview cancellation, reload persistence and export hit targets.')
   } finally {

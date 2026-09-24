@@ -8,7 +8,7 @@ from unittest.mock import patch
 import app
 from floating_model import Catalog
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 
 
 class SharingTests(unittest.TestCase):
@@ -39,11 +39,11 @@ class SharingTests(unittest.TestCase):
         self.assertEqual(set(filter(None, result.stdout.decode().split('\0'))), set(paths))
 
     def test_pages_have_no_personal_profile_instructions(self):
-        html = (ROOT / 'index.html').read_text(encoding='utf-8')
+        html = (ROOT / 'products/legacy-desktop/index.html').read_text(encoding='utf-8')
         for pattern in (r'C:[\\/]Users[\\/][^<\s]+', '毕业时间统一按', '你上传的',
                         r'应聘-岗位名-悉尼大学', r'[?&](?:userId|csrftoken|access_token)='):
             self.assertIsNone(re.search(pattern, html, re.I), pattern)
-        catalog = Catalog.read(ROOT / 'index.html')
+        catalog = Catalog.read(ROOT / 'products/legacy-desktop/index.html')
         for row in catalog.rows:
             self.assertNotRegex(row[9], '你|BossAI|悉尼|反馈|截图|Android GUI Agent')
 

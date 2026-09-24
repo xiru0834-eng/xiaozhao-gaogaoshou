@@ -19,13 +19,13 @@ class PetModelTests(unittest.TestCase):
         self.assertEqual(clamp_position(-1600, 50, 200, 240, (-1920, 0, 0, 1080)), (-1600, 50))
 
     def test_five_characters_and_every_referenced_frame_exist(self):
-        cast = load_cast(pathlib.Path(__file__).parent / 'assets/pet')
+        cast = load_cast(pathlib.Path(__file__).resolve().parents[3] / 'assets/pet')
         self.assertEqual(len(cast), 5)
         self.assertEqual(sum(len(a['frames']) for c in cast for a in c['actions']), 70)
 
     def test_windows_decodes_every_frame_with_real_transparency(self):
         from desktop_pet_native import Renderer
-        root = pathlib.Path(__file__).parent / 'assets/pet'
+        root = pathlib.Path(__file__).resolve().parents[3] / 'assets/pet'
         renderer = Renderer()
         try:
             for character in load_cast(root):

@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 from desktop_client import DesktopClient, DesktopCatalog
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 
 
 class DesktopClientTests(unittest.TestCase):

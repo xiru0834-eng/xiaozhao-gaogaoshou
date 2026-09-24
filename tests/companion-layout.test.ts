@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-const html = readFileSync(new URL('../companion.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../products/legacy-desktop/companion.html', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)![1];
 
 // Execute the shipped view script; no real bridge, SQLite or personal records.

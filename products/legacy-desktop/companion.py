@@ -18,11 +18,11 @@ from companion_schedule import ScheduleClient, SCHEDULE_BASE
 from floating_model import Catalog, DockState, LedgerClient, STATUSES, fit_rect, safe_url
 from floating_native import user32, work_area
 
-ROOT = pathlib.Path(__file__).resolve().parent
+from desktop_paths import REPOSITORY_ROOT as ROOT, SOURCE_DIR
 
 
 def page_html():
-    html = (ROOT / 'companion.html').read_text(encoding='utf-8')
+    html = (SOURCE_DIR / 'companion.html').read_text(encoding='utf-8')
     mascot = base64.b64encode((ROOT / 'assets/mascot-48.png').read_bytes()).decode()
     cast = base64.b64encode((ROOT / 'assets/companion-cast.png').read_bytes()).decode()
     return html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', 'data:image/png;base64,' + cast)
@@ -33,7 +33,7 @@ class CompanionAPI:
         self._directory = pathlib.Path(directory)
         self._base = base
         self._client = LedgerClient(base)
-        self._catalog = Catalog.read(ROOT / 'index.html')
+        self._catalog = Catalog.read(SOURCE_DIR / 'index.html')
         self._journal = None
         self._journal_error = ''
         try:
@@ -47,7 +47,7 @@ class CompanionAPI:
 
     def snapshot(self):
         with self._lock:
-            self._catalog = Catalog.read(ROOT / 'index.html')
+            self._catalog = Catalog.read(SOURCE_DIR / 'index.html')
             statuses = self._client.statuses()
             result = self._response(statuses, catalog=True)
             result['schedule'] = self._schedules.summary()
