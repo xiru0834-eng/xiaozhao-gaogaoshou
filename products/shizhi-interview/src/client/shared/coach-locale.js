@@ -1,5 +1,11 @@
 /** Product copy for the Chinese interview workspace. */
 const zh = Object.freeze({
+  studioPage: '练习首页', studioDescription: '选择今天的练习方式',
+  studioTitle: '把准备，', studioTitleAccent: '变成临场的底气。', studioIntro: '从一道题开始，把知识讲清楚。再用一场模拟面试，练习面对追问的从容。',
+  studioEnter: '进入题库', studioPaths: '练得扎实，也答得从容。', studioPathsIntro: '按这次准备的重点，选择练习方式。',
+  studioMock: '带上项目经历，与 AI 面试官进行一场有来有回的对话。', studioTargeted: '粘贴 JD，让准备围绕目标岗位展开。', studioRevision: '回看遗漏与薄弱点，把没讲清的再练一次。',
+  overviewLibrary: '我的题库', overviewPending: '题待练', overviewAllQuestions: '查看全部', overviewAnswerModes: '支持语音口述与文字作答',
+  overviewStepContext: '填写背景', overviewStepAnswer: '连续问答', overviewStepReview: '统一复盘', overviewMockDefault: '默认 15 分钟 · 最多 6 题', overviewPrepare: '准备一场面试',
   coachNavigation: '陪练功能导航', bankPage: '题库练习', mockPage: '模拟面试', targetedPage: '岗位专项', revisionPage: '复习计划', recordsPage: '练习记录', masteredPage: '已斩题',
   hubTitle: '面试陪练', hubIntro: '选题练表达，模拟练临场。一次专注一件事。',
   bankDescription: '自由选题，逐题作答与点评', mockDescription: 'AI 连续追问，结束统一复盘', targetedDescription: '围绕岗位要求与项目经历准备',
@@ -24,6 +30,8 @@ const zh = Object.freeze({
   targetedStart: '开始岗位专项练习', mockTitle: '限时模拟面试', mockStart: '开始模拟面试', mockDuration: '面试时长', mockLimit: '最多提问',
   mockDifficulty: '面试难度', mockStyle: '面试官风格', minutes: '分钟', junior: '初级', intermediate: '中级', senior: '高级',
   professionalStyle: '专业、围绕证据追问', friendlyStyle: '友好、引导表达',
+  required: '必填', roleRequired: '请填写想练习的目标岗位。', projectRequired: '请补充一段项目经历或自我介绍，面试官会据此追问。',
+  contextRequired: '请至少填写岗位要求或项目经历中的一项。', mockRules: '面试规则与计时说明',
   mockSetupHint: '逐题口述，回答后自动追问。本场不含手撕代码；进行中不展示答案，结束后统一复盘。计时从开始计算，包含思考与模型等待；到时仍可提交当前回答。',
   mockInProgressHint: '回答后继续追问，结束后统一复盘', mockSubmit: '保存回答并继续面试', timeRemaining: '剩余时间',
   timeExpired: '本场时间已到。可以提交当前回答后进入复盘，或直接结束；不会丢弃你的草稿。',

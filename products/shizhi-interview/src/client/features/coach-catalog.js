@@ -1,15 +1,15 @@
 /** Searchable personal bank with a separate, reversible mastered collection. */
 import React from 'react'
 import { COACH_TRACKS } from '../../domain/coach-catalog.js'
-import { h, Button } from '../shared/ui.js'
+import { h, Button, Icon } from '../shared/ui.js'
 import { t } from '../shared/coach-locale.js'
 
 /** Renders one bank page with direction filters, search and bounded result pages.
  * @param {object} props Persisted bank, mastery filter and question actions.
  * @returns {object} Question bank page.
  */
-export function CoachCatalog({ items, loading, disabled, onStart, onRestore, mastered = false }) {
-  const [track, setTrack] = React.useState('all')
+export function CoachCatalog({ items, loading, disabled, onStart, onRestore, mastered = false, initialTrack = 'all' }) {
+  const [track, setTrack] = React.useState(initialTrack)
   const [search, setSearch] = React.useState('')
   const [page, setPage] = React.useState(0)
   const eligible = items.filter((item) => item.mastered === mastered)
@@ -23,8 +23,10 @@ export function CoachCatalog({ items, loading, disabled, onStart, onRestore, mas
   return h('section', { className: 'sz-bank-page', 'aria-label': t(mastered ? 'masteredPage' : 'bankPage') },
     h('div', { className: 'sz-page-heading' }, h('div', null, h('h2', null, t(mastered ? 'masteredPage' : 'bankPage')),
       h('p', null, t(mastered ? 'masteredHint' : 'bankHint'))), h('span', { className: 'sz-count-pill' }, eligible.length, ' ', t('bankTotal'))),
-    h('label', { className: 'sz-bank-search' }, t('bankSearch'), h('input', { type: 'search', value: search, placeholder: t('bankSearchHint'),
-      onChange: (event) => { setSearch(event.target.value); setPage(0) } })),
+    h('label', { className: 'sz-bank-search' }, h('span', null, t('bankSearch')),
+      h('span', { className: 'sz-search-control' }, h(Icon, { name: 'search' }),
+        h('input', { type: 'search', name: 'question-search', autoComplete: 'off', value: search, placeholder: t('bankSearchHint'),
+          onChange: (event) => { setSearch(event.target.value); setPage(0) } }))),
     h('div', { className: 'sz-bank-layout' },
       h('nav', { className: 'sz-topic-nav', 'aria-label': t('allTopics') }, tracks.map((item) => h('button', { type: 'button', key: item.id,
         'aria-pressed': track === item.id, onClick: () => { setTrack(item.id); setPage(0) } },

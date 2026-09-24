@@ -10,6 +10,7 @@ import { compareAttempts } from '../../domain/coach-progress.js'
 export function CoachFeedback({ evaluation }) {
   if (!evaluation.review) return h(Markdown, null, evaluation.feedback)
   return h('div', { className: 'sz-evidence' },
+    h('section', { className: 'sz-next-step' }, h('h4', null, t('nextStep')), h('p', null, evaluation.review.nextStep)),
     ['met', 'partial', 'incorrect', 'missing', 'uncertain'].map((status) => {
       const items = evaluation.review.items.filter((item) => item.status === status)
       if (!items.length) return null
@@ -17,7 +18,7 @@ export function CoachFeedback({ evaluation }) {
         h('h4', null, t(`evidence_${status}`)), items.map((item) => h('article', { key: item.point },
           h('strong', null, item.point), item.quote ? h('blockquote', null, item.quote) : null,
           h('p', null, item.comment))))
-    }), h('section', { className: 'sz-next-step' }, h('h4', null, t('nextStep')), h('p', null, evaluation.review.nextStep)),
+    }),
     h('details', null, h('summary', null, t('fullFeedback')), h(Markdown, null, evaluation.feedback)))
 }
 

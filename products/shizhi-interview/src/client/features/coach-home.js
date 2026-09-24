@@ -3,7 +3,7 @@ import React from 'react'
 import { coachReference, coachTrack } from '../../domain/coach-catalog.js'
 import { interviewApi } from '../shared/api.js'
 import { useInterviewQuery } from '../shared/hooks.js'
-import { h, Button, ErrorNotice, Markdown } from '../shared/ui.js'
+import { h, Button, ErrorNotice, Markdown, Icon } from '../shared/ui.js'
 import { t } from '../shared/coach-locale.js'
 import { SpeakButton, VoiceAnswer } from './voice-answer.js'
 import { CoachFeedback, AnswerComparison } from './coach-feedback.js'
@@ -11,12 +11,14 @@ import { CoachPreparation } from './coach-preparation.js'
 import { CoachRevision } from './coach-revision.js'
 import { CoachCatalog } from './coach-catalog.js'
 import { CoachRecords } from './coach-records.js'
+import { CoachOverview } from './coach-overview.js'
 import { coachQuestionKey } from '../../domain/coach-bank.js'
 
 const PAGES = [
-  ['bank', 'bankPage', 'bankDescription', '01'], ['mock', 'mockPage', 'mockDescription', '02'],
-  ['targeted', 'targetedPage', 'targetedDescription', '03'], ['revision', 'revisionPage', 'revisionDescription', '04'],
-  ['records', 'recordsPage', 'recordsDescription', '05'], ['mastered', 'masteredPage', 'masteredDescription', '06'],
+  ['studio', 'studioPage', 'studioDescription', 'grid'],
+  ['bank', 'bankPage', 'bankDescription', 'book'], ['mock', 'mockPage', 'mockDescription', 'microphone'],
+  ['targeted', 'targetedPage', 'targetedDescription', 'code'], ['revision', 'revisionPage', 'revisionDescription', 'swap'],
+  ['records', 'recordsPage', 'recordsDescription', 'archive'], ['mastered', 'masteredPage', 'masteredDescription', 'check'],
 ]
 
 /** Renders durable practice state; agent lifecycle never substitutes for saved results.
@@ -24,7 +26,8 @@ const PAGES = [
  * @returns {object} Practice workspace.
  */
 export function CoachHome({ sessionId, createSession, company, targetRole = '' }) {
-  const [page, setPage] = React.useState('bank')
+  const [page, setPage] = React.useState('studio')
+  const [bankTrack, setBankTrack] = React.useState('all')
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [busy, setBusy] = React.useState('')
   const [error, setError] = React.useState('')
@@ -34,6 +37,7 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const [voiceBusy, setVoiceBusy] = React.useState(false)
   const [now, setNow] = React.useState(Date.now())
   const inFlight = React.useRef(false)
+  const root = React.useRef(null)
   const query = useInterviewQuery(`coach:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
   const context = sessionId && query.data?.resource?.data?.sessionId === sessionId ? query.data.resource.data : null
   const practice = context?.practice
@@ -61,6 +65,10 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const earlier = origin.data?.resource.data.questions.find((item) => item.id === practice?.config.coach?.sourceQuestionId)?.attempts || []
   const incomplete = active && ((!question && practice?.config.coach) || (mock ? ending || Boolean(latest) : latest && (!latest.evaluation || !question.explanation)))
   React.useEffect(() => { setNotice(''); setError(''); setEditing('') }, [sessionId])
+  React.useEffect(() => {
+    root.current?.closest('.sz-landing,.di-workspace-content')?.scrollTo({ top: 0, behavior: 'instant' })
+    root.current?.querySelector('.sz-coach-nav button[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+  }, [page])
   React.useEffect(() => { if (practice) { setPage('session'); setPickerOpen(false) } }, [practice?.id])
   React.useEffect(() => {
     if (!sessionId || !active) return undefined
@@ -103,17 +111,22 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
     finally { inFlight.current = false; setBusy('') }
   }
   const recover = ending ? 'finish' : !question || mock ? 'generate' : 'review'
-  return h('div', { className: 'sz-home' },
-    h('header', { className: 'sz-hub-heading' }, h('div', null, h('h1', null, t('hubTitle')), h('p', null, t('hubIntro'))),
+  const activePage = page === 'session' ? mock ? 'mock' : practice?.config.coach?.kind === 'targeted' ? 'targeted' : 'bank' : page
+  const navigate = (id) => { setPage(id); setBankTrack('all'); setNotice(''); setError('') }
+  const openBank = (track) => { navigate('bank'); setBankTrack(track) }
+  return h('div', { ref: root, className: `sz-home${page === 'session' ? ' is-answering' : ''}${page === 'studio' ? ' is-studio' : ''}` },
+    h('nav', { className: 'sz-coach-nav', 'aria-label': t('coachNavigation') }, PAGES.map(([id, label, description, icon]) => h('button', {
+      type: 'button', key: id, 'aria-pressed': activePage === id, title: t(description), disabled: Boolean(busy) || voiceBusy,
+      onClick: () => navigate(id),
+    }, h(Icon, { name: icon }), h('span', null, t(label))))),
+    page !== 'studio' ? h('header', { className: 'sz-hub-heading' }, h('div', null, h('h1', null, t('hubTitle')), h('p', null, t('hubIntro'))),
       h('div', { className: 'sz-bank-stats' }, h('span', null, h('strong', null, bankItems.filter((item) => !item.mastered).length), t('pendingCount')),
-        h('span', null, h('strong', null, bankItems.filter((item) => item.mastered).length), t('masteredCount')))),
-    h('nav', { className: 'sz-coach-nav', 'aria-label': t('coachNavigation') }, PAGES.map(([id, label, description, number]) => h('button', {
-      type: 'button', key: id, 'aria-pressed': page === id, disabled: Boolean(busy) || voiceBusy, onClick: () => { setPage(id); setNotice(''); setError('') },
-    }, h('span', { className: 'sz-nav-number', 'aria-hidden': true }, number), h('strong', null, t(label)), h('small', null, t(description))))),
+        h('span', null, h('strong', null, bankItems.filter((item) => item.mastered).length), t('masteredCount')))) : null,
     h(ErrorNotice, null, error || query.error), notice ? h('p', { className: 'sz-notice', role: 'status' }, notice) : null,
     bank.error ? h('div', null, h(ErrorNotice, null, bank.error), h(Button, { onClick: bank.reload }, t('refresh'))) : null,
     practice && page !== 'session' ? h('div', { className: 'sz-resume-bar' }, h('span', null, practice.topic),
       h(Button, { onClick: () => setPage('session') }, t(active ? 'continuePractice' : 'viewReport'))) : null,
+    page === 'studio' ? h(CoachOverview, { onNavigate: navigate, onOpenBank: openBank, disabled: Boolean(busy) || voiceBusy, loading: bank.loading, items: bankItems }) : null,
     page === 'session' && practice ? h('section', { className: 'sz-session' },
       h('header', { className: 'sz-session-header' }, h('div', null, h('span', { className: 'sz-eyebrow' }, t(mock ? 'mockTitle' : 'question')),
         h('h2', null, mock ? practice.config.targetRole : practice.topic), practice.config.target ? h('p', null, practice.config.target.companyName) : null),
@@ -163,8 +176,8 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
         draft.trim() ? h('p', { className: 'sz-hint' }, t('finishDraftHint')) : null) : null) : null,
     page === 'revision' ? h(CoachRevision, { busy: navigationDisabled, version: practice?.updatedAt, onReview: (item) => run('review-start', { sourcePracticeId: item.practiceId, sourceQuestionId: item.questionId }) }) : null,
     ['mock', 'targeted'].map((kind) => h('div', { key: kind, hidden: page !== kind },
-      h(CoachPreparation, { kind, targetRole, busy: navigationDisabled, onStart: (payload) => run('start', payload) }))),
-    page === 'bank' || page === 'mastered' ? h(CoachCatalog, { key: page, mastered: page === 'mastered', items: bankItems, loading: bank.loading,
+      h(CoachPreparation, { kind, targetRole, busy: navigationDisabled, pending: Boolean(busy) || running, onStart: (payload) => run('start', payload) }))),
+    page === 'bank' || page === 'mastered' ? h(CoachCatalog, { key: `${page}:${bankTrack}`, initialTrack: bankTrack, mastered: page === 'mastered', items: bankItems, loading: bank.loading,
       disabled: page === 'mastered' ? disabled : navigationDisabled || Boolean(company && !targetRole.trim()) || Boolean(bank.error),
       onStart: (payload) => run('start', payload), onRestore: (item) => setMastered(item.key, false) }) : null,
     page === 'records' ? h(CoachRecords, { disabled: navigationDisabled, onOpen: (id) => run('resume', { sourcePracticeId: id }) }) : null,

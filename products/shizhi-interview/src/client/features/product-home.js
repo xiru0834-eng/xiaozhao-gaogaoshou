@@ -1,11 +1,12 @@
 /** Product workbench and persistent interview practice view. */
 import React from 'react'
 import { CoachHome } from './coach-home.js'
-import { h, Button, ErrorNotice } from '../shared/ui.js'
+import { h, Button, ErrorNotice, Icon } from '../shared/ui.js'
 import { t } from '../shared/coach-locale.js'
 import { interviewApi } from '../shared/api.js'
 import { useInterviewQuery } from '../shared/hooks.js'
 import { PracticeLibrary } from './practice-library.js'
+import { appearanceFromMessage, coachTheme, readProductAppearance } from '../shared/product-appearance.js'
 
 async function careerRequest(path) {
   const response = await fetch(`/interview/career${path}`, { cache: 'no-store' })
@@ -51,6 +52,7 @@ function ChatStart({ sessionId, sendMessage }) {
 export function ProductConversation(props) {
   const { sessionId, actions } = props
   const [tab, setTab] = React.useState('career')
+  const [appearance, setAppearance] = React.useState(readProductAppearance)
   const [company, setCompany] = React.useState(null)
   const [role, setRole] = React.useState('')
   const [history, setHistory] = React.useState([])
@@ -68,7 +70,10 @@ export function ProductConversation(props) {
   React.useEffect(() => {
     let alive = true
     const receive = async (event) => {
-      if (event.origin !== location.origin || event.source !== frame.current?.contentWindow || event.data?.type !== 'shizhi-career') return
+      if (event.origin !== location.origin || event.source !== frame.current?.contentWindow) return
+      const selected = appearanceFromMessage(event.data)
+      if (selected) { setAppearance(selected); return }
+      if (event.data?.type !== 'shizhi-career') return
       setError(''); setViewPractice(null)
       if (event.data.action === 'chat' || event.data.action === 'practice') { setTab(event.data.action); return }
       if (event.data.action !== 'prepare' || typeof event.data.companyName !== 'string' || event.data.companyName.length > 200) return
@@ -98,13 +103,14 @@ export function ProductConversation(props) {
     }
     setTab(next); setViewPractice(null)
   }
-  return h('main', { className: 'sz-product', 'aria-label': t('careerBrand') },
+  return h('main', { className: 'sz-product', style: coachTheme(appearance), 'data-theme': appearance.mode, 'aria-label': t('careerBrand') },
     h('nav', { className: 'sz-product-nav', 'aria-label': t('careerBrand') },
-      h('strong', null, t('careerBrand')),
+      h('strong', { className: 'sz-wordmark' }, h(Icon, { name: 'book', size: 23 }), t('careerBrand')),
       [['career', 'careerHome'], ['practice', 'careerPractice'], ['chat', 'chatTitle']].map(([id, label]) =>
         h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => switchView(id) }, t(label)))),
     h(ErrorNotice, null, error || session.error),
-    h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career' }),
+    h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career',
+      onLoad: () => frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-appearance-request' }, location.origin) }),
     tab === 'chat' ? h('div', { className: 'sz-landing' }, h(ChatStart, { key: sessionId || 'new', sessionId, sendMessage: actions.sendMessage })) : null,
     h('div', { className: 'sz-landing', hidden: tab !== 'practice' },
       company ? h('section', { className: 'sz-career-target' }, h('small', null, t('careerTarget')),

@@ -24,6 +24,7 @@ function loadPlugin(reactOverrides = {}) {
     setTimeout,
     clearTimeout,
     document: {
+      querySelector: () => null,
       getElementById: () => null,
       createElement: () => ({}),
       head: { appendChild: (node) => appended.push(node) },
@@ -33,7 +34,7 @@ function loadPlugin(reactOverrides = {}) {
   return { plugin, appended }
 }
 
-test('new users can render the practice catalog before a session or query result exists', () => {
+test('new users can reach the practice workflows before a session or query result exists', () => {
   const { plugin } = loadPlugin({
     useState: (initial) => [initial === 'career' ? 'practice' : typeof initial === 'function' ? initial() : initial, () => {}],
     useRef: (initial) => ({ current: initial }),
@@ -56,15 +57,16 @@ test('new users can render the practice catalog before a session or query result
     return typeof component === 'function' ? renderText(component({ ...props, children })) : renderText(children)
   }
   const text = renderText(home({ sessionId: undefined }))
-  assert.match(text, /智能体应用开发/)
-  assert.match(text, /计算机网络/)
+  assert.match(text, /进入题库/)
+  assert.match(text, /模拟面试/)
+  assert.match(text, /岗位专项/)
 })
 
 test('each coach navigation page renders only its own form and controls', () => {
   const expected = JSON.parse(readFileSync(new URL('../fixtures/coach-page-layout.json', import.meta.url), 'utf8'))
   for (const [page, snapshot] of Object.entries(expected)) {
     const { plugin } = loadPlugin({
-      useState: (initial) => [initial === 'career' ? 'practice' : initial === 'bank' ? page : typeof initial === 'function' ? initial() : initial, () => {}],
+      useState: (initial) => [initial === 'career' ? 'practice' : initial === 'studio' ? page : typeof initial === 'function' ? initial() : initial, () => {}],
       useRef: (initial) => ({ current: initial }), useMemo: (callback) => callback(), useId: () => 'page-test',
     })
     let home
@@ -102,6 +104,142 @@ function settled(interaction, extra = {}) {
     ...extra,
   }
 }
+
+test('overview direction counts exclude mastered questions and open that bank filter', () => {
+  let overview, catalog
+  const { plugin } = loadPlugin({
+    useState: (initial) => [initial === 'career' ? 'practice' : typeof initial === 'function' ? initial() : initial, () => {}],
+    useRef: (initial) => ({ current: initial }), useMemo: (callback) => callback(), useId: () => 'overview-test',
+  })
+  let home
+  const slots = { inject(_name, callback) { callback() }, register(config, component) {
+    if (config.name === 'main.conversation') home = component
+    return () => {}
+  } }
+  plugin.apply({ get: (name) => name === 'sessions'
+    ? { list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => {} } } : slots, effect: (factory) => factory() })
+  const nodes = []
+  const visit = (element) => {
+    if (element == null || typeof element === 'boolean') return ''
+    if (Array.isArray(element)) return element.map(visit).join(' ')
+    if (typeof element !== 'object') return String(element)
+    const [component, props, ...children] = element.args
+    if (typeof component === 'function') {
+      if (props?.onOpenBank) overview = component
+      if (props?.onRestore && 'initialTrack' in props) catalog = component
+      return visit(component({ ...props, children }))
+    }
+    const text = visit(children).trim()
+    nodes.push({ type: component, ...props, text })
+    return text
+  }
+  visit(home({ sessionId: undefined }))
+  assert.equal(typeof overview, 'function')
+  const opened = []
+  const items = [
+    { key: 'network-open', track: 'network', topic: '计算机网络', section: '', prompt: 'TCP 问题', mastered: false },
+    { key: 'network-done', track: 'network', topic: '计算机网络', section: '', prompt: 'HTTP 问题', mastered: true },
+    { key: 'database-open', track: 'database', topic: '数据库', section: '', prompt: '索引问题', mastered: false },
+  ]
+  nodes.length = 0
+  visit(overview({ items, loading: false, disabled: false, onOpenBank: (track) => opened.push(track), onNavigate: (page) => opened.push(page) }))
+  const direction = nodes.find((node) => node.type === 'button' && node.text.startsWith('计算机网络'))
+  assert.match(direction.text, /计算机网络\s+1/)
+  direction.onClick()
+  nodes.find((node) => node.type === 'button' && node.text.startsWith('已斩题')).onClick()
+  assert.deepEqual(opened, ['network', 'mastered'])
+
+  const { plugin: bankPlugin } = loadPlugin({
+    useState: (initial) => [initial === 'career' ? 'practice' : initial === 'studio' ? 'bank' : typeof initial === 'function' ? initial() : initial, () => {}],
+    useRef: (initial) => ({ current: initial }), useMemo: (callback) => callback(), useId: () => 'filter-test',
+  })
+  bankPlugin.apply({ get: (name) => name === 'sessions'
+    ? { list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => {} } } : slots, effect: (factory) => factory() })
+  visit(home({ sessionId: undefined }))
+  assert.equal(typeof catalog, 'function')
+  nodes.length = 0
+  visit(catalog({ items, initialTrack: 'network', loading: false, mastered: false, onStart: () => {}, onRestore: () => {} }))
+  assert.deepEqual(nodes.filter((node) => node.type === 'h3').map((node) => node.text), ['TCP 问题'])
+  assert.equal(nodes.find((node) => node.type === 'button' && node.text.startsWith('计算机网络'))['aria-pressed'], true)
+})
+
+test('preparation validates before starting and sends the selected interview settings', () => {
+  let stateful = false, cursor = 0
+  const states = []
+  const { plugin } = loadPlugin({
+    useState(initial) {
+      if (!stateful) return [typeof initial === 'function' ? initial() : initial, () => {}]
+      const index = cursor++
+      if (!(index in states)) states[index] = initial
+      return [states[index], (value) => { states[index] = value }]
+    },
+    useRef: (initial) => ({ current: initial }), useMemo: (callback) => callback(), useId: () => 'preparation-test',
+  })
+  let home, prepare
+  const slots = { inject(_name, callback) { callback() }, register(config, component) {
+    if (config.name === 'main.conversation') home = component
+    return () => {}
+  } }
+  plugin.apply({ get: (name) => name === 'sessions'
+    ? { list: { getSnapshot: () => ({ byId: {} }), subscribe: () => () => {} } } : slots, effect: (factory) => factory() })
+  const discover = (element) => {
+    if (Array.isArray(element)) { element.forEach(discover); return }
+    if (!element?.args) return
+    const [component, props, ...children] = element.args
+    if (typeof component === 'function') {
+      if (props?.kind === 'mock' && 'onStart' in props && 'targetRole' in props) prepare = component
+      else discover(component({ ...props, children }))
+    } else children.forEach(discover)
+  }
+  discover(home({ sessionId: undefined }))
+  assert.equal(typeof prepare, 'function')
+  stateful = true
+  const requests = [], focused = []
+  const render = (kind = 'mock') => {
+    cursor = 0
+    const nodes = []
+    const visit = (element) => {
+      if (Array.isArray(element)) { element.forEach(visit); return }
+      if (!element?.args) return
+      const [component, props, ...children] = element.args
+      if (typeof component === 'function') visit(component({ ...props, children }))
+      else { nodes.push({ type: component, ...props }); children.forEach(visit) }
+    }
+    visit(prepare({ kind, busy: false, onStart: (payload) => requests.push(payload) }))
+    return nodes
+  }
+  const submit = (nodes) => nodes.find((node) => node.type === 'form').onSubmit({ preventDefault() {},
+    currentTarget: { elements: { namedItem: (key) => ({ focus: () => focused.push(key) }) } } })
+  let nodes = render()
+  assert.equal(nodes.find((node) => node.type === 'submit').disabled, false)
+  submit(nodes)
+  assert.deepEqual(focused, ['prepRole'])
+  assert.equal(requests.length, 0)
+  nodes = render()
+  assert.equal(nodes.find((node) => node.name === 'prepRole')['aria-invalid'], true)
+  nodes.find((node) => node.name === 'prepRole').onChange({ target: { value: '智能体工程师' } })
+  submit(render())
+  assert.equal(focused.at(-1), 'prepProject')
+  nodes = render()
+  nodes.find((node) => node.name === 'prepProject').onChange({ target: { value: '做过 RAG 文档问答和评估。' } })
+  for (const [name, value] of [['mockDuration', 20], ['mockLimit', 8], ['mockDifficulty', 'senior']]) {
+    nodes.find((node) => node.name === `preparation-test-${name}` && node.value === value).onChange()
+  }
+  nodes.find((node) => node.name === 'interviewer-style').onChange({ target: { value: '友好、引导表达' } })
+  submit(render())
+  assert.deepEqual(JSON.parse(JSON.stringify(requests)), [{ kind: 'mock', targetRole: '智能体工程师',
+    preparation: { targetRole: '智能体工程师', jobDescription: '', projectExperience: '做过 RAG 文档问答和评估。' },
+    durationMinutes: 20, questionLimit: 8, difficulty: 'senior', interviewerStyle: '友好、引导表达' }])
+  nodes = render('targeted')
+  nodes.find((node) => node.name === 'prepProject').onChange({ target: { value: '' } })
+  submit(render('targeted'))
+  assert.equal(requests.length, 1)
+  nodes = render('targeted')
+  nodes.find((node) => node.name === 'prepJob').onChange({ target: { value: '要求掌握向量检索。' } })
+  submit(render('targeted'))
+  assert.equal(requests[1].kind, 'targeted')
+  assert.equal(requests[1].preparation.jobDescription, '要求掌握向量检索。')
+})
 
 test('构建后的 Client 注册全部原子工具视图、侧边栏入口和时间轴槽位', () => {
   const { plugin, appended } = loadPlugin()

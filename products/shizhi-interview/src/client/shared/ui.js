@@ -6,7 +6,7 @@ export const h = React.createElement
 
 const MarkdownText = primitives.MarkdownText
 
-/** Renders Markdown inside a product-owned wrapper for the light interview cards.
+/** Renders Markdown inside a product-owned wrapper for interview surfaces.
  * @param {object} props Text children to render.
  * @returns {object} React element with a plain-text fallback.
  */
@@ -17,6 +17,10 @@ export function Markdown({ children }) {
 }
 
 const ICON_PATHS = {
+  arrowRight: [h('path', { key: 'p', d: 'M4 12h16m-6-6 6 6-6 6' })],
+  book: [h('path', { key: 'p', d: 'M12 6C9 4 6 4 3 5v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v14' })],
+  microphone: [h('rect', { key: 'a', x: 9, y: 3, width: 6, height: 12, rx: 3 }), h('path', { key: 'b', d: 'M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8' })],
+  search: [h('circle', { key: 'a', cx: 10.5, cy: 10.5, r: 6.5 }), h('path', { key: 'b', d: 'm16 16 5 5' })],
   check: [h('path', { key: 'p', d: 'm5 12 4 4L19 6' })],
   eye: [h('path', { key: 'p', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z' }), h('circle', { key: 'c', cx: 12, cy: 12, r: 2.5 })],
   copy: [h('rect', { key: 'a', x: 9, y: 9, width: 10, height: 10, rx: 1.5 }), h('path', { key: 'b', d: 'M15 9V6.5A1.5 1.5 0 0 0 13.5 5h-7A1.5 1.5 0 0 0 5 6.5v7A1.5 1.5 0 0 0 6.5 15H9' })],

@@ -1,6 +1,7 @@
 {
+  "studio": { "headings": ["把准备， 变成临场的底气。", "我的题库", "练得扎实，也答得从容。", "模拟面试"], "inputs": [], "textareas": 0, "selects": 0, "startButtons": [] },
   "bank": { "headings": ["面试陪练", "题库练习"], "inputs": ["search"], "textareas": 0, "selects": 0, "startButtons": [] },
-  "mock": { "headings": ["面试陪练", "模拟面试"], "inputs": ["text"], "textareas": 2, "selects": 4, "startButtons": ["开始模拟面试"] },
+  "mock": { "headings": ["面试陪练", "模拟面试"], "inputs": ["text", "radio", "radio", "radio", "radio", "radio", "radio", "radio", "radio", "radio"], "textareas": 2, "selects": 1, "startButtons": ["开始模拟面试"] },
   "targeted": { "headings": ["面试陪练", "岗位专项"], "inputs": ["text"], "textareas": 2, "selects": 0, "startButtons": ["开始岗位专项练习"] },
   "revision": { "headings": ["面试陪练", "今天复习什么"], "inputs": [], "textareas": 0, "selects": 0, "startButtons": [] },
   "records": { "headings": ["面试陪练", "练习记录"], "inputs": [], "textareas": 0, "selects": 0, "startButtons": [] },
