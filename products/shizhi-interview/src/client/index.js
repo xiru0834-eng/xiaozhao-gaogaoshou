@@ -11,16 +11,17 @@ import { InsightsCard, PracticeLibrary } from './features/practice-library.js'
 import { PracticeSetupCard } from './features/practice-config.js'
 import { TimelinePanel } from './features/timeline.js'
 import { LeetcodeCatalog } from './features/leetcode.js'
-import { WorkspaceSidebarEntry } from './features/workspace-dock.js'
 import { ProductConversation } from './features/product-home.js'
+import { ProductShell, SHELL_STYLES } from './features/product-shell.js'
 import { createHomeActions, registerProductHome } from './shared/home-session.js'
+import { installProductAppearance } from './shared/appearance-bridge.js'
 import { interviewApi } from './shared/api.js'
 import { INTERVIEW_TOOL_NAMES } from '../protocol/interview-tool-names.js'
 import { installStyles } from './shared/styles.js'
 import { h, parseInteractionResult, toolCallState, toolErrorAudience, toolErrorMessage } from './shared/ui.js'
 
 export const name = 'shizhi-interview'
-export const inject = ['slots', 'sessions', 'uiWorkspace']
+export const inject = ['slots', 'sessions', 'uiWorkspace', 'layout', 'theme']
 
 export function resolveToolView(toolName, block) {
   const state = toolCallState(block)
@@ -51,13 +52,23 @@ function ToolResourceView({ toolName, sessionId, block }) {
 
 export function apply(ctx) {
   const coachStyle = document.createElement('style')
-  coachStyle.textContent = COACH_STYLES
+  coachStyle.textContent = COACH_STYLES + SHELL_STYLES
   document.head.appendChild(coachStyle)
   ctx.effect(() => () => coachStyle.remove())
   installStyles()
+  ctx.effect(() => installProductAppearance(ctx))
   const slots = ctx.get('slots')
   if (!slots) return
   const actions = createHomeActions(ctx.get('sessions'), ctx.get('uiWorkspace'), interviewApi)
+  slots.inject('sidebar', () => slots.register({
+    name: 'sidebar', priority: -10,
+    children: {
+      'sidebar.workspaces': { kind: 'single', scope: 'root' },
+      'sidebar.settings': { kind: 'single', scope: 'root' },
+    },
+  }, (props) => h(ProductShell, { ...props, createSession: actions.createSession,
+    openPlugins: () => ctx.get('layout').selectPanel('plugins'),
+  })))
   slots.inject('main.conversation', () => registerProductHome(slots, ctx.get('sessions'),
     (props) => h(ProductConversation, { ...props, actions }), interviewApi))
 
@@ -67,13 +78,6 @@ export function apply(ctx) {
       (props) => h(ToolResourceView, { toolName, sessionId: props.sessionId, block: props.block }),
     ))
   }
-
-  slots.inject('sidebar.footer.action', () => slots.register(
-    { name: 'sidebar.footer.action', id: 'interview-workspace', order: 20 },
-    (props) => h(WorkspaceSidebarEntry, { wide: props.wide, useSessions: props.useSessions,
-      createSession: actions.createSession,
-    }),
-  ))
 
   slots.inject('conversation.input.dock', () => slots.register(
     { name: 'conversation.input.dock', id: 'interview-timeline', order: 25 },

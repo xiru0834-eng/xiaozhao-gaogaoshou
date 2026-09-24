@@ -135,15 +135,29 @@ export function mountAppearance(notify: (message: string) => void) {
   node('close').addEventListener('click', () => dialog.close());
   node('reset').addEventListener('click', () => { draft = { skin: 'mint', mode: draft.mode, characters: true }; preview(); });
   node('apply').addEventListener('click', () => {
-    current = { ...draft }; apply();
+    const mode = draft.mode === current.mode || requestMode(draft.mode) ? draft.mode : current.mode;
+    current = { ...draft, mode }; apply();
     const saved = saveAppearance(storage, current);
     dialog.close();
     notify(saved ? `已换上「${skinOf(current.skin).name}」${current.characters ? '' : ' · 已隐藏角色'}` : '外观已用于本次会话；浏览器存储不可用，刷新后可能无法保留。');
   });
   toggle.addEventListener('click', () => {
-    current = { ...current, mode: current.mode === 'dark' ? 'light' : 'dark' }; apply();
+    const mode = current.mode === 'dark' ? 'light' : 'dark';
+    if (!requestMode(mode)) return;
+    current = { ...current, mode }; apply();
     const saved = saveAppearance(storage, current);
     notify(saved ? `已切换${current.mode === 'dark' ? '深色' : '浅色'}主题` : '明暗已切换；浏览器存储不可用，本次会话有效。');
+  });
+  function requestMode(mode: Appearance['mode']) {
+    return window.dispatchEvent(new CustomEvent('workbench:color-mode-request', { cancelable: true, detail: mode }));
+  }
+  window.addEventListener('workbench:color-mode', (event) => {
+    const mode: unknown = (event as CustomEvent<unknown>).detail;
+    if ((mode !== 'light' && mode !== 'dark') || mode === current.mode) return;
+    current = { ...current, mode }; draft = { ...draft, mode };
+    apply();
+    if (dialog.open) preview();
+    saveAppearance(storage, current);
   });
   apply();
 }

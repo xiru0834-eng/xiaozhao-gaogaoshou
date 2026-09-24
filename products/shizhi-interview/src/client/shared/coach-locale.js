@@ -1,5 +1,8 @@
 /** Product copy for the Chinese interview workspace. */
 const zh = Object.freeze({
+  shellTagline: '从准备，到下一站', shellHome: '返回工作台', shellHistory: '历史会话',
+  shellHistoryHint: '继续之前的聊天与练习。练习复盘也可在面试陪练中查看。', shellClose: '关闭历史会话',
+  shellPlugins: '插件管理',
   studioPage: '练习首页', studioDescription: '选择今天的练习方式',
   studioTitle: '把准备，', studioTitleAccent: '变成临场的底气。', studioIntro: '从一道题开始，把知识讲清楚。再用一场模拟面试，练习面对追问的从容。',
   studioEnter: '进入题库', studioPaths: '练得扎实，也答得从容。', studioPathsIntro: '按这次准备的重点，选择练习方式。',

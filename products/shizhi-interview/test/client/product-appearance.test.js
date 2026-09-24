@@ -34,12 +34,12 @@ test('appearance messages accept supported identifiers, not arbitrary CSS or unr
 
 test('the embedded workbench syncs committed themes and answers only its own parent origin', (t) => {
   const root = { dataset: { skin: 'mint', theme: 'light' } }
-  const tokens = new Map(), messages = [], listeners = new Map()
+  const tokens = new Map(), messages = [], listeners = new Map(), dispatched = []
   const parent = { postMessage: (message, origin) => messages.push({ message, origin }) }
   let observerCallback
   for (const [key, value] of Object.entries({
     document: { documentElement: root, body: { classList: { add: (name) => assert.equal(name, 'sz-career') }, style: { setProperty: (name, color) => tokens.set(name, color) } } },
-    window: { parent, addEventListener: (event, callback) => listeners.set(event, callback) },
+    window: { parent, addEventListener: (event, callback) => listeners.set(event, callback), dispatchEvent: (event) => dispatched.push(event) },
     location: { origin: 'http://localhost:4318' },
     MutationObserver: class { constructor(callback) { observerCallback = callback } observe(target, options) {
       assert.equal(target, root); assert.deepEqual(options.attributeFilter, ['data-skin', 'data-theme'])
@@ -58,4 +58,15 @@ test('the embedded workbench syncs committed themes and answers only its own par
   receive({ ...request, source: {} }); receive({ ...request, origin: 'https://example.com' })
   assert.equal(messages.length, 2)
   receive(request); assert.equal(messages.length, 3)
+  const modeRequest = { ...request, data: { type: 'shizhi-product-theme', mode: 'dark' } }
+  receive({ ...modeRequest, source: {} }); receive({ ...modeRequest, origin: 'https://example.com' })
+  receive({ ...request, data: { type: 'shizhi-product-theme', mode: 'invalid' } })
+  assert.equal(dispatched.length, 0)
+  receive(modeRequest)
+  assert.equal(dispatched[0].type, 'workbench:color-mode')
+  assert.equal(dispatched[0].detail, 'dark')
+  const toggle = new CustomEvent('workbench:color-mode-request', { cancelable: true, detail: 'light' })
+  listeners.get(toggle.type)(toggle)
+  assert.equal(toggle.defaultPrevented, true)
+  assert.deepEqual(messages.at(-1), { message: { type: 'shizhi-theme-request', mode: 'light' }, origin: location.origin })
 })

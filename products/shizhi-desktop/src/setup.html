@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>校招高手 · 开始准备下一站</title>
+  <link rel="stylesheet" href="setup.css">
+</head>
+<body>
+  <main>
+    <div class="eyebrow"><span class="mark" aria-hidden="true">知</span> 校招高手 × 拾知</div>
+    <h1>准备好，走向下一站。</h1>
+    <p class="intro">把投递、练习与每一次进步，留在属于你的求职工作台。</p>
+    <form id="settings">
+      <section>
+        <div class="section-heading"><h2>连接你的 AI 教练</h2><span id="model-status" class="badge">可稍后设置</span></div>
+        <label for="deepseek">DeepSeek API Key</label>
+        <input id="deepseek" name="deepseekKey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴你的 API Key">
+        <p class="hint">用于回答点评、模拟面试和对话。更多模型可进入应用后在「设置 → 模型」配置。</p>
+        <label class="clear"><input name="cleardeepseekKey" type="checkbox">清除已保存的 DeepSeek 密钥</label>
+      </section>
+      <section>
+        <div class="section-heading"><h2>用声音练习表达</h2><span id="voice-status" class="badge">选填</span></div>
+        <label for="qwen">阿里云百炼 API Key（北京地域）</label>
+        <input id="qwen" name="qwenKey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴百炼 API Key，启用千问语音转文字">
+        <p class="hint">使用 qwen3-asr-flash。录音会发送给阿里云转写；额度与计费以你的账号为准。</p>
+        <label class="clear"><input name="clearqwenKey" type="checkbox">清除已保存的语音密钥</label>
+      </section>
+      <p class="privacy">练习记录保存在这台电脑。此处填写的密钥经 Windows 加密保存，留空会保留已有密钥。</p>
+      <p id="restart-note" class="hint" hidden>保存后会重新打开工作台，请先保存正在编辑的回答。</p>
+      <div id="message" role="status" aria-live="polite"></div>
+      <div class="actions"><button type="button" id="skip" class="secondary">先体验一下</button><button type="submit" id="save">保存并进入工作台 <span aria-hidden="true">→</span></button></div>
+    </form>
+    <footer>随时从窗口菜单「校招高手 → 模型与语音配置」返回这里。</footer>
+  </main>
+  <script src="setup.js"></script>
+</body>
+</html>

@@ -48,3 +48,7 @@ desktop-migration.json
 mail-settings.json
 /.playwright-mcp/
 /.codex/context/
+.npm-cache/
+products/shizhi-desktop/build/
+products/shizhi-desktop/release/
+products/shizhi-desktop/.cache/

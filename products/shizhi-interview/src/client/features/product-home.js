@@ -6,7 +6,6 @@ import { t } from '../shared/coach-locale.js'
 import { interviewApi } from '../shared/api.js'
 import { useInterviewQuery } from '../shared/hooks.js'
 import { PracticeLibrary } from './practice-library.js'
-import { appearanceFromMessage, coachTheme, readProductAppearance } from '../shared/product-appearance.js'
 
 async function careerRequest(path) {
   const response = await fetch(`/interview/career${path}`, { cache: 'no-store' })
@@ -52,13 +51,14 @@ function ChatStart({ sessionId, sendMessage }) {
 export function ProductConversation(props) {
   const { sessionId, actions } = props
   const [tab, setTab] = React.useState('career')
-  const [appearance, setAppearance] = React.useState(readProductAppearance)
   const [company, setCompany] = React.useState(null)
   const [role, setRole] = React.useState('')
   const [history, setHistory] = React.useState([])
   const [viewPractice, setViewPractice] = React.useState(null)
   const [error, setError] = React.useState('')
   const frame = React.useRef(null)
+  const frameReady = React.useRef(false)
+  const pendingNavigation = React.useRef(null)
   const session = useInterviewQuery(`product-session:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
   const practice = sessionId && session.data?.resource?.data?.sessionId === sessionId ? session.data.resource.data.practice : null
   React.useEffect(() => {
@@ -71,8 +71,14 @@ export function ProductConversation(props) {
     let alive = true
     const receive = async (event) => {
       if (event.origin !== location.origin || event.source !== frame.current?.contentWindow) return
-      const selected = appearanceFromMessage(event.data)
-      if (selected) { setAppearance(selected); return }
+      if (event.data?.type === 'shizhi-career-ready') {
+        frameReady.current = true
+        if (pendingNavigation.current) {
+          frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-navigate', action: pendingNavigation.current }, location.origin)
+          pendingNavigation.current = null
+        }
+        return
+      }
       if (event.data?.type !== 'shizhi-career') return
       setError(''); setViewPractice(null)
       if (event.data.action === 'chat' || event.data.action === 'practice') { setTab(event.data.action); return }
@@ -98,19 +104,22 @@ export function ProductConversation(props) {
   }, [company, tab])
   const switchView = (next) => {
     if (tab === 'career' && next !== 'career') {
+      if (!frameReady.current) { pendingNavigation.current = next; return }
       frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-navigate', action: next }, location.origin)
       return
     }
     setTab(next); setViewPractice(null)
   }
-  return h('main', { className: 'sz-product', style: coachTheme(appearance), 'data-theme': appearance.mode, 'aria-label': t('careerBrand') },
+  return h('main', { className: 'sz-product', 'aria-label': t('careerBrand') },
     h('nav', { className: 'sz-product-nav', 'aria-label': t('careerBrand') },
       h('strong', { className: 'sz-wordmark' }, h(Icon, { name: 'book', size: 23 }), t('careerBrand')),
       [['career', 'careerHome'], ['practice', 'careerPractice'], ['chat', 'chatTitle']].map(([id, label]) =>
         h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => switchView(id) }, t(label)))),
     h(ErrorNotice, null, error || session.error),
     h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career',
-      onLoad: () => frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-appearance-request' }, location.origin) }),
+      onLoad: () => {
+        frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-appearance-request' }, location.origin)
+      } }),
     tab === 'chat' ? h('div', { className: 'sz-landing' }, h(ChatStart, { key: sessionId || 'new', sessionId, sendMessage: actions.sendMessage })) : null,
     h('div', { className: 'sz-landing', hidden: tab !== 'practice' },
       company ? h('section', { className: 'sz-career-target' }, h('small', null, t('careerTarget')),

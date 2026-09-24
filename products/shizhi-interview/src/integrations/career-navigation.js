@@ -77,5 +77,13 @@ export function mountModelSettings(session) {
     if (event.data?.type === 'shizhi-career-refresh') void addHistory()
     if (event.data?.type === 'shizhi-career-navigate' && ['practice', 'chat'].includes(event.data.action)) send(event.data.action)
   })
+  const saveStatus = document.querySelector('#savenote')
+  const ready = new MutationObserver(() => {
+    if (saveStatus.dataset.kind !== 'ready') return
+    window.parent.postMessage({ type: 'shizhi-career-ready' }, location.origin)
+    ready.disconnect()
+  })
+  if (saveStatus.dataset.kind === 'ready') window.parent.postMessage({ type: 'shizhi-career-ready' }, location.origin)
+  else ready.observe(saveStatus, { attributes: true, attributeFilter: ['data-kind'] })
   void addHistory()
 }

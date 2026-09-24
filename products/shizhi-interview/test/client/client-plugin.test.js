@@ -24,13 +24,22 @@ function loadPlugin(reactOverrides = {}) {
     setTimeout,
     clearTimeout,
     document: {
+      documentElement: {
+        getAttribute: () => null, setAttribute: () => {}, removeAttribute: () => {},
+        style: { getPropertyValue: () => '', getPropertyPriority: () => '', setProperty: () => {}, removeProperty: () => {} },
+      },
       querySelector: () => null,
       getElementById: () => null,
       createElement: () => ({}),
       head: { appendChild: (node) => appended.push(node) },
     },
-    window: { __ModuleLoader__: { load(definition) { plugin = definition.factory((name) => name === 'react' ? fakeReact : {}) } } },
+    window: { addEventListener: () => {}, removeEventListener: () => {},
+      __ModuleLoader__: { load(definition) { plugin = definition.factory((name) => name === 'react' ? fakeReact : {}) } } },
   })
+  const apply = plugin.apply
+  plugin = { ...plugin, apply: (ctx) => apply({ ...ctx, on: () => () => {},
+    get: (name) => name === 'theme' ? { getTheme: () => ({ active: { colorScheme: 'light' } }) } : ctx.get(name),
+  }) }
   return { plugin, appended }
 }
 
@@ -241,7 +250,7 @@ test('preparation validates before starting and sends the selected interview set
   assert.equal(requests[1].preparation.jobDescription, '要求掌握向量检索。')
 })
 
-test('构建后的 Client 注册全部原子工具视图、侧边栏入口和时间轴槽位', () => {
+test('构建后的 Client 注册工具视图、产品顶部栏和时间轴槽位', () => {
   const { plugin, appended } = loadPlugin()
   const registrations = []
   const slots = {
@@ -259,7 +268,8 @@ test('构建后的 Client 注册全部原子工具视图、侧边栏入口和时
   )
   const sidebarIds = registrations.filter((item) => item.name === 'sidebar.footer.action').map((item) => item.id)
   const dockIds = registrations.filter((item) => item.name === 'conversation.input.dock').map((item) => item.id)
-  assert.deepEqual(sidebarIds, ['interview-workspace'])
+  assert.deepEqual(sidebarIds, [])
+  assert.equal(registrations.filter((item) => item.name === 'sidebar').length, 1)
   assert.deepEqual(dockIds, ['interview-timeline'])
 })
 
@@ -269,7 +279,7 @@ test('Client 只使用 DSH 当前会话身份且不共享练习游标', () => {
   assert.doesNotMatch(source, /sessionId\s*\|\|\s*['"]global['"]/)
   assert.doesNotMatch(leetcode, /sessionId\s*=\s*['"]global['"]/)
   assert.match(source, /sessionId: props\.sessionId/)
-  assert.match(source, /useSessions: props\.useSessions/)
+  assert.match(source, /ProductShell, \{ \.\.\.props/)
 })
 
 test('工具视图只按结构化 artifact 渲染用户可见卡片', () => {
@@ -544,18 +554,4 @@ test('长时间轴使用独立滚动区且详情浮层位于滚动区之外', ()
   assert.match(styles, /\.di-time-list\{[^}]*scrollbar-width:none[^}]*-ms-overflow-style:none/)
   assert.match(styles, /\.di-time-list::\-webkit-scrollbar\{display:none\}/)
   assert.doesNotMatch(styles, /\.di-timeline\{[^}]*max-height:/)
-})
-
-test('面试训练入口固定注册在设置上方并适配折叠侧边栏', () => {
-  const entry = readFileSync(new URL('../../src/client/index.js', import.meta.url), 'utf8')
-  const workspace = readFileSync(new URL('../../src/client/features/workspace-dock.js', import.meta.url), 'utf8')
-  const styles = readFileSync(new URL('../../src/client/shared/styles.js', import.meta.url), 'utf8')
-
-  assert.match(entry, /name: 'sidebar\.footer\.action'/)
-  assert.match(workspace, /session\.retainedBy\.mainView/)
-  assert.match(workspace, /di-workspace-entry/)
-  assert.match(workspace, /is-rail/)
-  assert.match(workspace, /t\('brand'\)/)
-  assert.match(styles, /\.di-workspace-entry\.is-rail\{[^}]*width:36px[^}]*height:36px/)
-  assert.doesNotMatch(workspace, /onPointerDown|setPointerCapture|localStorage|workspace-launcher-position/)
 })

@@ -1,0 +1,54 @@
+{
+  "name": "shizhi-desktop",
+  "version": "0.1.2",
+  "private": true,
+  "packageManager": "npm@12.1.0",
+  "description": "校招高手 × 拾知面试陪练",
+  "author": "Xiaozhao & Shizhi contributors",
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "prepare:runtime": "node scripts/prepare.mjs",
+    "prepare:electron": "node scripts/prepare-electron.mjs",
+    "start": "electron .",
+    "test": "node --test test/*.test.mjs",
+    "test:runtime": "node scripts/smoke-runtime.mjs",
+    "test:lifecycle": "node scripts/smoke-lifecycle.mjs",
+    "test:desktop": "electron scripts/smoke-desktop.mjs",
+    "pack": "electron-builder --win dir --x64",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.shizhi.career",
+    "productName": "校招高手",
+    "executableName": "Xiaozhao",
+    "artifactName": "Xiaozhao-Setup-${version}-${arch}.${ext}",
+    "directories": { "output": "release" },
+    "files": ["src/**", "package.json"],
+    "extraResources": [
+      { "from": "build/backend", "to": "backend", "filter": ["*"] },
+      { "from": "build/backend/node_modules", "to": "backend/node_modules", "filter": ["**/*", "!.bin/**"] }
+    ],
+    "afterPack": "scripts/after-pack.mjs",
+    "asar": true,
+    "electronDist": "node_modules/electron/dist",
+    "npmRebuild": false,
+    "win": { "target": "nsis", "icon": "build/icon.ico", "signExecutable": false },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "校招高手",
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": false,
+      "useZip": true,
+      "runAfterFinish": false
+    }
+  }
+}

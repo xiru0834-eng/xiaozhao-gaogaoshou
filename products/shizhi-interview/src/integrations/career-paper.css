@@ -42,7 +42,7 @@ body.sz-career .sidebar .chip .n { margin-left:6px; color:inherit; }
 body.sz-career .sidebar .chip:hover { background:var(--paper-2); color:var(--ink); }
 body.sz-career .sidebar .chip[aria-pressed=true] { background:var(--accent); color:var(--on-accent); }
 body.sz-career .main-shell>.app-header {
-  position:static; flex-wrap:wrap; min-height:44px; height:auto; gap:8px 16px;
+  position:relative; flex-wrap:wrap; min-height:44px; height:auto; gap:8px 16px;
   padding:0; margin:0 0 24px; background:none; border:0;
 }
 body.sz-career .main-shell>.app-header .breadcrumb { display:none; }
@@ -51,6 +51,8 @@ body.sz-career .main-shell>.app-header .savenote { font-size:12px; }
 body.sz-career .main-shell>.app-header .header-tools { gap:8px; }
 body.sz-career .main-shell>.app-header .action { min-height:44px; font-size:13px; }
 body.sz-career .main-shell>.app-header .icon-button { width:44px; }
+body.sz-career #export-menu .menu-panel { top:calc(100% + 8px); max-width:calc(100vw - 40px); }
+body.sz-career #export-menu .menu-panel .action { white-space:normal; text-align:left; }
 body.sz-career .main-shell>:is(.content,.model-page,.updates-page,.schedule-page,.daily-page) { width:100%; max-width:none; margin:0; padding:0; }
 body.sz-career .workbench .masthead { min-height:0; margin:0 0 28px; padding:0; border:0; border-radius:0; background:none; }
 body.sz-career .workbench .horizon { display:none; }

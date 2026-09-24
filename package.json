@@ -7,6 +7,10 @@
     "node": ">=24.14.0 <25"
   },
   "scripts": {
+    "desktop:install": "npm --prefix products/shizhi-desktop ci --ignore-scripts",
+    "desktop:prepare": "npm --prefix products/shizhi-desktop run prepare:runtime && npm --prefix products/shizhi-desktop run prepare:electron",
+    "desktop": "npm --prefix products/shizhi-desktop start",
+    "desktop:dist": "npm --prefix products/shizhi-desktop run dist",
     "coach:install": "npm --prefix products/shizhi-interview ci",
     "coach": "npm --prefix products/shizhi-interview start",
     "coach:check": "npm --prefix products/shizhi-interview run verify",

@@ -1,0 +1,34 @@
+:root { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: #233c46; background: #f3f6f7; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at 95% 0, #dcece9, transparent 55%); min-height: 100vh; }
+main { max-width: 760px; padding: 32px 38px 24px; margin: auto; }
+.eyebrow { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; letter-spacing: .08em; }
+.mark { display: grid; place-items: center; background: #24655d; color: white; border-radius: 11px; width: 34px; height: 34px; font-size: 17px; }
+h1 { font-size: 30px; font-weight: 650; letter-spacing: -.04em; margin: 20px 0 9px; }
+.intro { font-size: 13px; color: #5b737b; margin: 0 0 24px; }
+form { background: #ffffffdc; border: 1px solid #dce5e8; border-radius: 18px; padding: 24px 28px; box-shadow: 0 14px 40px #24455008; }
+section + section { border-top: 1px solid #e5ecee; margin-top: 20px; padding-top: 20px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+h2 { font-size: 16px; margin: 0; }
+.badge { color: #466c65; background: #edf4f1; padding: 4px 9px; font-size: 11px; border-radius: 6px; }
+label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 7px; }
+input[type=password] { width: 100%; border: 1px solid #cfdde1; background: #f7fafb; color: #243e48; padding: 12px; border-radius: 8px; font: inherit; font-size: 13px; }
+input::placeholder { color: #83949b; }
+input:focus-visible, button:focus-visible { outline: 3px solid #80b6ac; outline-offset: 3px; }
+input:focus { background: white; border-color: #358477; }
+.hint, .privacy, footer { font-size: 11px; line-height: 1.7; color: #647c85; }
+.hint { margin: 8px 0 0; }
+.clear { font-size: 11px; color: #647c85; font-weight: 400; display: flex; align-items: center; gap: 4px; margin: 7px 0 0; }
+.clear input { accent-color: #24655d; }
+.privacy { margin: 20px 0 12px; }
+.actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+button { font: inherit; font-size: 13px; border: 1px solid #24655d; border-radius: 8px; padding: 12px 17px; background: #24655d; color: white; cursor: pointer; transition: background .15s, transform .15s; }
+button:hover { background: #194f49; }
+button:active { transform: translateY(1px); }
+button.secondary { color: #38545e; background: white; border-color: #d3dfe3; }
+button.secondary:hover { background: #eef4f5; }
+button:disabled { opacity: .6; cursor: wait; }
+footer { text-align: center; margin-top: 16px; }
+#message { font-size: 12px; line-height: 1.6; color: #24655d; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 125px; overflow: auto; }
+#message.error { color: #a33c3c; }
+@media (prefers-reduced-motion: reduce) { * { transition: none; } }

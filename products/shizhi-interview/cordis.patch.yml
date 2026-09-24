@@ -1,3 +1,5 @@
+- id: ui-sidebar
+  disabled: true
 - insert:
     - id: shizhi-interview
       name: '@deepseek-ai/dsh-shizhi-interview'

@@ -14,8 +14,17 @@ export function mountCareerAppearance() {
     window.parent.postMessage({ type: 'shizhi-career-appearance', skin: selected.skin, mode: selected.mode }, location.origin)
   }
   new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['data-skin', 'data-theme'] })
+  window.addEventListener('workbench:color-mode-request', (event) => {
+    if (!['light', 'dark'].includes(event.detail)) return
+    event.preventDefault()
+    window.parent.postMessage({ type: 'shizhi-theme-request', mode: event.detail }, location.origin)
+  })
   window.addEventListener('message', (event) => {
-    if (event.origin === location.origin && event.source === window.parent && event.data?.type === 'shizhi-career-appearance-request') sync()
+    if (event.origin !== location.origin || event.source !== window.parent) return
+    if (event.data?.type === 'shizhi-career-appearance-request') sync()
+    if (event.data?.type === 'shizhi-product-theme' && ['light', 'dark'].includes(event.data.mode)) {
+      window.dispatchEvent(new CustomEvent('workbench:color-mode', { detail: event.data.mode }))
+    }
   })
   sync()
 }
