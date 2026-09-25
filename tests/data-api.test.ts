@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { startServer } from "../src/server/http.ts";
 import type { CatalogSnapshot } from "../src/shared/catalog-contract.ts";
 import { DatabaseSync } from "node:sqlite";
+import { DATA } from "../src/shared/catalog.ts";
 
 test("two HTTP profiles are isolated; catalog append persists, paginates and never changes progress", async () => {
   const root = await mkdtemp(join(tmpdir(), "xiaozhao-data-api-"));
@@ -113,9 +114,9 @@ test("two HTTP profiles are isolated; catalog append persists, paginates and nev
       409,
     );
     const list = (await (
-      await fetch(a.url + "/api/companies?offset=315&limit=1")
+      await fetch(a.url + `/api/companies?offset=${DATA.length}&limit=1`)
     ).json()) as { items: unknown[]; total: number };
-    assert.equal(list.total, 316);
+    assert.equal(list.total, DATA.length + 1);
     assert.equal(list.items.length, 1);
     assert.equal(
       (await fetch(a.url + "/api/companies?limit=99999")).status,
@@ -154,7 +155,7 @@ test("two HTTP profiles are isolated; catalog append persists, paginates and nev
       );
       assert.equal(
         backup.prepare("SELECT count(*) AS n FROM companies").get()?.n,
-        316,
+        DATA.length + 1,
       );
     } finally {
       backup.close();
@@ -164,7 +165,7 @@ test("two HTTP profiles are isolated; catalog append persists, paginates and nev
     const after = (await (
       await fetch(a.url + "/api/catalog")
     ).json()) as CatalogSnapshot;
-    assert.equal(after.companies.length, 316);
+    assert.equal(after.companies.length, DATA.length + 1);
     assert.equal(after.companies.at(-1)?.[0], "合成验收公司");
     assert.equal(
       ((await (await fetch(a.url + "/health")).json()) as { profileId: string })

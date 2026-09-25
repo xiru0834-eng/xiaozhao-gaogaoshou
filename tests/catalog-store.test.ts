@@ -35,8 +35,8 @@ test("catalog seed preserves every field/order/date and initialization is idempo
     const first = store.snapshot();
     assert.deepEqual(first.companies, DATA);
     assert.deepEqual(first.appendDates, [...APPEND_DATES]);
-    assert.equal(first.metadata.length, 315);
-    assert.equal(new Set(first.metadata.map((x) => x.id)).size, 315);
+    assert.equal(first.metadata.length, DATA.length);
+    assert.equal(new Set(first.metadata.map((x) => x.id)).size, DATA.length);
     store.close();
     store = new CatalogStore(path);
     assert.deepEqual(store.snapshot(), first);
@@ -56,8 +56,8 @@ test("append keeps history; normalized aliases deduplicate; conflicts and stale 
     );
     assert.equal(added.inserted, true);
     const after = store.snapshot();
-    assert.deepEqual(after.companies.slice(0, 315), before.companies);
-    assert.equal(after.metadata.at(-1)?.sequence, 316);
+    assert.deepEqual(after.companies.slice(0, DATA.length), before.companies);
+    assert.equal(after.metadata.at(-1)?.sequence, DATA.length + 1);
     const duplicate = store.append(company("  ＴＥＳＴ  CO  "), after.revision);
     assert.equal(duplicate.id, added.id);
     assert.equal(duplicate.inserted, false);

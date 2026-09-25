@@ -19,11 +19,12 @@ const base: Filters = {
   filterCat: "all",
   filterOwnership: "all",
   filterChannel: "all",
+  filterInterviewMode: "all",
   query: "",
 };
 installCatalog({
   schemaVersion: 1,
-  revision: 315,
+  revision: DATA.length,
   companies: DATA,
   appendDates: [...APPEND_DATES],
   metadata: DATA.map((row, index) => ({
@@ -72,9 +73,9 @@ test("unsuitable is not counted as applied; sorting can restore original order",
   );
   assert.deepEqual(sortedRows([...DATA].reverse(), "original"), DATA);
 });
-test("recent filter uses original append dates only", () => {
+test("recent filter includes every dated append and no historical undated row", () => {
   assert.equal(
     DATA.filter((r) => matches(r, { ...base, onlyRecent: true })).length,
-    7,
+    APPEND_DATES.size,
   );
 });

@@ -18,6 +18,7 @@ import {
   type CompanyRow,
   type StatusMap,
 } from "../shared/types.ts";
+import { matchesInterviewMode } from "./interview-mode.ts";
 export interface Filters {
   state: StatusMap;
   filterStatus: string;
@@ -27,6 +28,7 @@ export interface Filters {
   filterCat: string;
   filterOwnership: string;
   filterChannel: string;
+  filterInterviewMode: string;
   query: string;
 }
 export function daysLeft(dl: string) {
@@ -114,6 +116,7 @@ export function matches(r: CompanyRow, filters: Filters) {
     filterCat,
     filterOwnership,
     filterChannel,
+    filterInterviewMode,
     query,
   } = filters;
   const s = state[r[F.n]] || "未投";
@@ -132,6 +135,7 @@ export function matches(r: CompanyRow, filters: Filters) {
     return false;
   if (filterChannel !== "all" && recruitChannelOf(r) !== filterChannel)
     return false;
+  if (!matchesInterviewMode(r[F.n], filterInterviewMode)) return false;
   if (query) {
     const hay = (
       r[F.n] +
