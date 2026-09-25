@@ -104,7 +104,7 @@
 .workbench .filter-menu > summary::after { display: none; }
 .workbench .filter-menu[open] > summary, .workbench #view-options[open] > summary { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 .workbench #filter-count { border-radius: 4px; padding-inline: 5px; background: var(--paper); color: var(--accent-ink); }
-.workbench #advanced-filters .advanced-panel { left: auto; right: 0; top: calc(100% + 8px); transform: none; width: min(640px, calc(100vw - 32px)); min-width: 0; max-width: none; max-height: min(65dvh, 560px); overflow-y: auto; overscroll-behavior: contain; display: grid; grid-template-columns: 1fr 1.2fr 1.2fr; gap: 16px; padding: 16px; border: 1px solid var(--line-strong); border-radius: var(--op-radius); box-shadow: var(--shadow); }
+.workbench #advanced-filters .advanced-panel { left: auto; right: 0; top: calc(100% + 8px); transform: none; width: min(880px, calc(100vw - 32px)); min-width: 0; max-width: none; max-height: min(65dvh, 560px); overflow-y: auto; overscroll-behavior: contain; display: grid; grid-template-columns: 1fr 1.15fr 1.1fr 1.25fr; gap: 14px; padding: 16px; border: 1px solid var(--line-strong); border-radius: var(--op-radius); box-shadow: var(--shadow); }
 .workbench .advanced-panel section { min-width: 0; }
 .workbench .advanced-panel h3 { margin: 0 0 8px; padding: 0 8px 8px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink); }
 .workbench .advanced-panel .chip { min-height: 36px; font-size: 12px; padding: 7px 8px; border-radius: 6px; }

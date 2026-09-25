@@ -58,6 +58,7 @@ test("dynamic catalog drives classification, alias search, dates, order and CSV;
     filterCat: "all",
     filterOwnership: "foreign",
     filterChannel: "all",
+    filterInterviewMode: "all",
     query: "dynamic alias",
   };
   assert.equal(matches(DATA[0], filters), true);

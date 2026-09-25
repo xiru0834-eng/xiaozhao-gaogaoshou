@@ -40,6 +40,7 @@ import { mountMail } from "./mail.ts";
 import { mountDaily } from "./daily.ts";
 import "./module-surfaces.css";
 import { mountWorkbenchShell } from "./workbench-shell.ts";
+import { INTERVIEW_MODE_LABEL, interviewEvidence } from "./interview-mode.ts";
 import "./workbench-shell.css";
 const session = sessionFromPage();
 mountModelSettings(session);
@@ -61,6 +62,7 @@ let state: StatusMap = {};
 let filterCat = "all",
   filterOwnership = "all",
   filterChannel = "all",
+  filterInterviewMode = "all",
   filterStatus = "all",
   onlyCode = false,
   onlyRecent = false,
@@ -157,6 +159,7 @@ function matches(row: CompanyRow) {
     filterCat,
     filterOwnership,
     filterChannel,
+    filterInterviewMode,
     query,
   });
 }
@@ -229,7 +232,8 @@ function rowHtml(r: CompanyRow) {
   const name = r[F.n],
     s = state[name] || "未投",
     d = daysLeft(r[F.dl]),
-    added = APPEND_DATES.get(name);
+    added = APPEND_DATES.get(name),
+    interview = interviewEvidence(name);
   const done = ["Offer", "结束", "无合适岗位"].includes(s) ? " done" : "",
     badge = added
       ? '<span class="added-badge">' + esc(added.slice(5)) + " 新增</span>"
@@ -257,6 +261,7 @@ function rowHtml(r: CompanyRow) {
     esc(name) +
     "</button>" +
     badge +
+    (interview.mode !== "unknown" ? '<span class="added-badge">' + esc(INTERVIEW_MODE_LABEL[interview.mode]) + '</span>' : '') +
     '<div class="company-meta">' +
     esc(classificationLabel(r)) +
     '</div></div></div><div class="rl" title="' +
@@ -299,7 +304,8 @@ function detailHtml(r: CompanyRow) {
       encodeURIComponent(name + " 2027届校园招聘 内推");
   const rows = visibleRows(),
     idx = rows.findIndex((x) => x[F.n] === name),
-    added = APPEND_DATES.get(name);
+    added = APPEND_DATES.get(name),
+    interview = interviewEvidence(name);
   return (
     '<div class="detail-company-heading"><span class="detail-avatar" aria-hidden="true">' + esc(name.slice(0, 1)) + '</span><div><h2 id="detail-title">' +
     esc(name) +
@@ -330,6 +336,12 @@ function detailHtml(r: CompanyRow) {
     '</p><a class="action" href="' +
     esc(search) +
     '" target="_blank" rel="noopener noreferrer">查找内推来源 ↗</a>' +
+    '<section class="detail-note"><h3>面试形式 · ' +
+    esc(INTERVIEW_MODE_LABEL[interview.mode]) +
+    '</h3><p>' + esc(interview.scope) + '。' + esc(interview.note) +
+    (interview.checked ? ' 核验：' + esc(interview.checked) : '') + '</p>' +
+    (interview.url ? '<a class="action" href="' + esc(interview.url) + '" target="_blank" rel="noopener noreferrer">查看依据 ↗</a>' : '') +
+    '</section>' +
     '<section class="detail-note"><h3>投递提示 · 完整备注</h3><p>' +
     esc(r[F.note] || "暂无补充备注。请核实岗位要求、届别和毕业时间窗口。") +
     "</p></section>" +
@@ -390,6 +402,8 @@ function syncFilters() {
   if (filterCat !== "all") add("cat", CATNAME[filterCat]);
   if (filterChannel !== "all")
     add("channel", RECRUIT_CHANNEL_NAME[filterChannel]);
+  if (filterInterviewMode !== "all")
+    add("interview-mode", filterInterviewMode === "online-candidate" ? "线上可尝试（含待确认）" : INTERVIEW_MODE_LABEL[filterInterviewMode as keyof typeof INTERVIEW_MODE_LABEL]);
   if (onlyCode) add("code", "有推荐码");
   if (onlyRecent) add("recent", "最近新增");
   if (onlySoon) add("soon", "7 天内截止");
@@ -400,7 +414,7 @@ function syncFilters() {
       '<button class="text-button" id="reset-filters" type="button">清空筛选</button>'
     : '';
   element("active-filters").hidden = selected.length === 0;
-  const advancedCount = [filterOwnership, filterCat, filterChannel].filter(value => value !== "all").length;
+  const advancedCount = [filterOwnership, filterCat, filterChannel, filterInterviewMode].filter(value => value !== "all").length;
   element("filter-count").textContent = String(advancedCount);
   element("filter-count").hidden = advancedCount === 0;
   element("clear-search").hidden = !element<HTMLInputElement>("q").value;
@@ -412,11 +426,13 @@ function syncFilters() {
     filterCat === "all" ? "行业方向" : CATNAME[filterCat].split(" · ")[0];
   element("channel-label").textContent =
     filterChannel === "all" ? "国企渠道" : RECRUIT_CHANNEL_NAME[filterChannel];
+  element("interview-mode-label").textContent = filterInterviewMode === "all" ? "面试形式" : filterInterviewMode === "online-candidate" ? "线上可尝试" : INTERVIEW_MODE_LABEL[filterInterviewMode as keyof typeof INTERVIEW_MODE_LABEL];
   for (const [attr, value] of [
     ["status", filterStatus],
     ["owner", filterOwnership],
     ["cat", filterCat],
     ["channel", filterChannel],
+    ["interviewMode", filterInterviewMode],
   ])
     document
       .querySelectorAll<HTMLElement>("[data-" + attr + "]")
@@ -507,7 +523,11 @@ function render() {
     ? html
     : !catalogReady
       ? '<div class="empty" role="status"><h2>公司目录尚未连接</h2><p>连接完成后会显示清单。连接失败时请使用上方「重连」，不会用旧清单替代。</p></div>'
-      : '<div class="empty"><div class="empty-symbol" aria-hidden="true">⌕</div><h2>这一组，还没有匹配的公司</h2><p>试试移除一个筛选条件，或换个公司名。你的投递记录都还在。</p><button class="action primary" type="button" data-reset-filters>清空全部筛选</button></div>';
+      : '<div class="empty"><div class="empty-symbol" aria-hidden="true">⌕</div><h2>' +
+        (filterInterviewMode === "online" ? "尚无全程线上面试的可靠确认" : "这一组，还没有匹配的公司") +
+        '</h2><p>' +
+        (filterInterviewMode === "online" ? "可改用「线上可尝试（含待确认）」查看机会；收到面邀后再逐轮确认。" : "试试移除一个筛选条件，或换个公司名。你的投递记录都还在。") +
+        '</p><button class="action primary" type="button" data-reset-filters>清空全部筛选</button></div>';
   element("result-count").textContent =
     "显示 " + shown + " / " + DATA.length + " 家公司";
   stats();
@@ -600,6 +620,10 @@ function buildFilters() {
         "</span></button>",
     )
     .join("");
+  element("interview-mode-filters").innerHTML = [
+    ["all", "全部形式"], ["online-candidate", "线上可尝试（含待确认）"],
+    ...Object.entries(INTERVIEW_MODE_LABEL),
+  ].map(([k, t]) => '<button class="chip" type="button" data-interview-mode="' + k + '" aria-pressed="' + (k === filterInterviewMode) + '">' + t + '<span class="n">' + DATA.filter(r => k === "all" || (k === "online-candidate" ? interviewEvidence(r[F.n]).mode !== "offline" : interviewEvidence(r[F.n]).mode === k)).length + '</span></button>').join("");
   element("status-filters").innerHTML = STATUS_VIEWS.map(
     ([k, t, icon]) =>
       '<button class="chip" type="button" data-status="' +
@@ -719,6 +743,7 @@ document.addEventListener("click", (e) => {
     }
     if (k === "cat") filterCat = "all";
     if (k === "channel") filterChannel = "all";
+    if (k === "interview-mode") filterInterviewMode = "all";
     if (k === "code") onlyCode = false;
     if (k === "recent") onlyRecent = false;
     if (k === "soon") onlySoon = false;
@@ -766,6 +791,8 @@ document.addEventListener("click", (e) => {
     } else if (chip.dataset.channel!) {
       filterChannel = chip.dataset.channel!;
       if (filterChannel !== "all") filterOwnership = "state";
+    } else if (chip.dataset.interviewMode!) {
+      filterInterviewMode = chip.dataset.interviewMode!;
     } else if (chip.dataset.status!) filterStatus = chip.dataset.status!;
     else if (chip.dataset.cat!) filterCat = chip.dataset.cat!;
     else return;
@@ -812,7 +839,7 @@ element("clear-search").addEventListener("click", () => {
 element("btn-csv").addEventListener("click", () => exportCsv(state));
 element("btn-sql").addEventListener("click", () => exportSql(state));
 function resetFilters() {
-  filterCat = filterOwnership = filterChannel = filterStatus = "all";
+  filterCat = filterOwnership = filterChannel = filterInterviewMode = filterStatus = "all";
   query = "";
   onlyCode = onlyRecent = onlySoon = false;
   element<HTMLInputElement>("q").value = "";
