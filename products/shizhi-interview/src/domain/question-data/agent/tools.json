@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "id": "tools",
+  "title": "工具调用与 MCP",
+  "questions": [
+    {
+      "id": "agent-005",
+      "prompt": "模型返回了一个工具调用，为什么还不能直接认为业务已经执行成功？",
+      "cues": "工具调用只是请求，业务由程序执行；执行前检查参数、身份权限和目标对象；以工具结果或业务状态确认成功，不能只相信模型回复。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-006",
+      "prompt": "为 Agent 设计一个文档检索工具，输入、输出和错误信息应该包含什么？",
+      "cues": "输入明确查询条件、过滤范围与条数限制；输出包含可定位的片段、来源和必要标识；区分无结果、参数错误和服务异常，并给出可处理的信息。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-007",
+      "prompt": "MCP 与模型的 Function Calling 是什么关系，Host、Client、Server 分别负责什么？",
+      "cues": "MCP 规范应用与外部能力之间的通信；Host 管理连接，Client 与 Server 通信，Server 提供能力；模型工具调用需要宿主执行适配，接入 MCP 不等于模型自动理解业务。",
+      "source": "https://modelcontextprotocol.io/docs/2026-07-28/learn/architecture",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-008",
+      "prompt": "Agent 调用创建工单接口后超时了，能直接重试吗？",
+      "cues": "超时不等于业务未成功；使用业务幂等标识或查询已有结果避免重复创建；限制重试次数并保留请求与执行状态，结果不明时交由人工核实。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-045",
+      "prompt": "工具参数里的用户 ID 能否直接采用模型生成的值？",
+      "cues": "把身份从已认证会话中注入；模型只能提供允许选择的业务参数；服务端再次校验资源归属，不能依赖提示词阻止访问其他用户。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-046",
+      "prompt": "工具调用返回结构化 JSON，为什么仍需要业务校验？",
+      "cues": "格式符合 schema 不代表对象存在或操作被允许；检查取值范围、状态和前置条件；错误应清楚反馈给调用方，禁止把格式校验等同业务成功。",
+      "source": "https://docs.langchain.com/oss/python/langchain/structured-output",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-047",
+      "prompt": "有十个描述相近的工具，如何减少模型选错工具？",
+      "cues": "分析真实失败轨迹中的混淆对；让名称与说明强调适用条件和差异；用包含近似需求的评测验证工具选择变化。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-048",
+      "prompt": "查询工具返回上万行记录时，怎样控制结果规模？",
+      "cues": "设置可验证的条数限制和分页；优先返回完成任务所需字段与聚合；明确截断和下一页信息，避免把部分结果说成全部。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-049",
+      "prompt": "模型遗漏了工具的必填字段，应该让谁负责补齐？",
+      "cues": "参数解析层拒绝缺失值并说明约束；仅对业务定义允许的默认项补值；涉及目标身份或高影响参数时向用户澄清。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-050",
+      "prompt": "工具参数正确但业务对象已经变化，如何避免基于旧状态写入？",
+      "cues": "为修改操作携带对象版本或前置状态；执行时用条件更新检测冲突；冲突后重读并重新确认影响，不能盲目覆盖最新记录。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-051",
+      "prompt": "只读工具和有副作用的工具，重试策略有什么区别？",
+      "cues": "只读操作通常可在预算内重试但仍应考虑费用与一致性；写入需要幂等键或查询执行结果；把不确定结果保留下来，不能把所有失败统一重发。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-052",
+      "prompt": "两个写工具操作同一条记录，什么时候不应该并行执行？",
+      "cues": "存在读写依赖或顺序语义时需要串行或事务约束；明确冲突处理和提交规则；即使模型同时发出调用，执行层也应遵守业务顺序。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-053",
+      "prompt": "如何把一个长时间任务设计成 Agent 可使用的工具？",
+      "cues": "启动时返回任务标识与当前状态；提供查询或通知机制并设置超时；进度和最终成功分开表达，允许明确取消。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/progress",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-054",
+      "prompt": "MCP 的工具、资源和提示模板分别承担什么作用？",
+      "cues": "工具执行能力，资源提供可读取的上下文内容，提示模板组织可复用交互；选择依据是用途与控制方式；不能因为内容是文本就把三者混为一谈。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/resources",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-055",
+      "prompt": "MCP 初始化时为什么要协商版本和能力？",
+      "cues": "连接双方交换协议版本和支持能力；客户端只使用协商后可用的操作；版本或能力不匹配应明确失败，而非猜测对端支持。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-056",
+      "prompt": "MCP 的 stdio 与 Streamable HTTP 传输适合怎样的部署？",
+      "cues": "stdio 适用于宿主启动的本地子进程通信；HTTP 适合网络服务连接；认证、连接生命周期与部署隔离仍需要单独设计。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/transports",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-057",
+      "prompt": "本地 MCP 子进程把调试日志写到标准输出会发生什么？",
+      "cues": "stdio 用标准输入输出承载协议消息；混入非协议文本会破坏解析；调试日志应走标准错误或其他明确日志通道。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/transports",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-058",
+      "prompt": "MCP 服务器新增了工具，客户端如何更新可用能力？",
+      "cues": "检查服务器声明的列表变更通知能力；收到变化后重新拉取并校验工具列表；处理缓存失效，避免继续依赖过期的工具说明。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-059",
+      "prompt": "MCP 工具列表很多时，为什么需要处理分页游标？",
+      "cues": "一次列表响应可能只包含部分工具；按服务返回的游标继续读取并限制总量；避免假定第一页等于完整能力集合。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-060",
+      "prompt": "收到 MCP 的工具执行错误与协议级错误，客户端处理有何不同？",
+      "cues": "区分请求无法被协议处理与工具已执行但业务失败；保留可诊断信息；只让模型处理可修正的业务错误，连接故障交给宿主恢复。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-061",
+      "prompt": "MCP 工具声明自己是只读操作，就能跳过权限检查吗？",
+      "cues": "工具注解是描述信息，来自不可信服务器时不能视为安全保证；执行权限依赖受信配置和服务端校验；以最小权限限制实际可执行能力。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-062",
+      "prompt": "如何为远程 MCP 服务区分认证和业务授权？",
+      "cues": "认证确认调用者身份；授权判断其能读取或修改的资源范围；令牌有效不等于拥有全部工具和数据权限。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-063",
+      "prompt": "为什么不能把接收到的任意访问令牌直接转发给另一个服务？",
+      "cues": "令牌应限定目标资源和授权范围；不同服务需要各自适用的凭据与授权流程；不能把客户端提交的令牌当作所有下游服务的通用身份。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-064",
+      "prompt": "MCP 请求取消后，客户端能否认为外部业务已经撤销？",
+      "cues": "取消通知要求停止处理但不保证对端能立即停止；已经发生的副作用可能仍存在；记录不确定状态并查询或补偿，不能把取消当成事务回滚。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/cancellation",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-065",
+      "prompt": "MCP 的进度通知为什么不能作为最终结果保存？",
+      "cues": "进度描述执行过程而非业务验收；最终结果由对应请求的完成响应确定；断连或停滞时保留最后进度并展示未完成状态。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/progress",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-066",
+      "prompt": "多个 MCP 服务器都有 search 工具，宿主如何避免名称冲突？",
+      "cues": "在宿主内使用包含服务器来源的唯一映射；记录工具调用对应的具体连接和版本；展示清晰用途，不能只按同名工具任意分发。",
+      "source": "https://modelcontextprotocol.io/docs/2026-07-28/learn/architecture",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-067",
+      "prompt": "远程工具服务器断线重连后，应该重新检查哪些信息？",
+      "cues": "重新完成必要的初始化和能力发现；检查授权、工具定义及未完成请求状态；有副作用的旧请求不能无条件重放。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-068",
+      "prompt": "工具返回的大段网页内容为什么仍属于不可信输入？",
+      "cues": "工具返回的数据可能包含外部作者内容；区分任务证据与试图控制 Agent 的指令；对后续读写和外发操作继续校验权限。",
+      "source": "https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-069",
+      "prompt": "如何让模型调用计算器，而不是在文本里估算关键金额？",
+      "cues": "明确哪些计算必须由确定代码执行；工具参数包含单位、精度和舍入规则；返回可核对的输入与结果，模型只负责解释。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "foundation",
+      "type": "project"
+    },
+    {
+      "id": "agent-070",
+      "prompt": "如何测试一个检索工具的描述是否足够清楚？",
+      "cues": "构造应调用、不应调用和容易混淆的任务；统计选错、参数错误与结果利用情况；对描述改动做对照，不能只检查文案是否通顺。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-071",
+      "prompt": "工具输出格式升级时，怎样避免旧会话结果无法展示？",
+      "cues": "为持久化结果保存格式版本；保留旧数据读取能力或显式迁移；分别验证旧记录、新结果和模型工具接口的兼容性。",
+      "source": "https://docs.langchain.com/oss/python/langchain/structured-output",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-072",
+      "prompt": "工具调用后界面一直显示处理中，如何定位故障位置？",
+      "cues": "沿请求标识检查模型输出、执行开始、执行完成和持久化展示；区分工具卡住、结果未写入与前端未刷新；为每一步记录可关联的状态。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/progress",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-073",
+      "prompt": "如何给工具设定统一的超时预算，而不让整场任务无限拖延？",
+      "cues": "从任务总时限分配单次调用预算；重试和排队也计入总预算；预算耗尽时停止新调用并报告已完成和未完成部分。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-074",
+      "prompt": "如果工具只支持按 ID 查询，模型却只有用户口述的名称怎么办？",
+      "cues": "先使用受权限约束的查找步骤解析候选；有多个同名对象时让用户确认；不要让模型编造 ID 或把第一个搜索结果当作唯一目标。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-075",
+      "prompt": "一个 MCP 资源链接能保证内容始终不变吗？",
+      "cues": "链接只标识资源位置或读取方式；内容可能更新、失效或需要权限；对依赖的证据记录读取时点与版本，复现时检查变化。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/server/resources",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-076",
+      "prompt": "如何设计一组能被模型可靠调用的面试练习工具？",
+      "cues": "将读取题目、保存回答、保存点评划为职责清晰的操作；参数关联具体练习与回答并校验状态；错误明确指出可恢复动作，防止重复创建作答。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "project"
+    }
+  ]
+}

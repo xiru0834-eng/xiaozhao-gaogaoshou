@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "id": "reliability",
+  "title": "工作流与可靠性",
+  "questions": [
+    {
+      "id": "agent-017",
+      "prompt": "Agent 服务重启后要继续未完成任务，除了聊天文本还需要保存什么？",
+      "cues": "保存任务标识、执行状态和已完成步骤；记录工具参数、结果及待处理操作；通过持久化检查点恢复，并核对外部业务是否已执行。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-018",
+      "prompt": "工作流有了 checkpoint，是否就能保证外部接口只执行一次？",
+      "cues": "检查点保存状态，不天然保证外部副作用恰好一次；恢复或重跑可能重复执行部分代码；采用幂等操作、执行记录或结果核对，并测试中断位置。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-019",
+      "prompt": "Agent 要同时查三个独立数据源，什么可以并行，什么必须串行？",
+      "cues": "无依赖的读取可并行，有数据或写入依赖的步骤要排序；限制并发并处理单路超时或失败；合并结果时保留来源与缺失信息，不把部分结果当作完整成功。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-020",
+      "prompt": "如何给 Agent 的高影响操作加入人工确认，并在确认后继续执行？",
+      "cues": "先展示具体目标、参数和影响再等待确认；持久化待确认状态并绑定确认对应的操作；恢复时核对状态与权限，避免重复执行或沿用过期确认。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-145",
+      "prompt": "如何把一个调研 Agent 的自然语言计划转换成可恢复的执行状态？",
+      "cues": "将任务拆成带标识、输入和依赖的步骤；记录步骤状态与可核验的产物，不只保存计划文本；恢复时从未完成步骤继续并核对已产生的外部效果。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-146",
+      "prompt": "条件路由和固定连线分别适合什么工作流节点？",
+      "cues": "固定连线适合执行顺序确定的步骤；条件路由按验证后的状态选择分支并覆盖未知或失败情况；通过可读的状态与分支规则检查是否存在无法退出的路径。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/graph-api",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-147",
+      "prompt": "两个并行节点都更新同一个状态字段，应该怎样设计合并规则？",
+      "cues": "先明确字段是覆盖、累加还是集合合并；使用符合业务语义的归并方法并考虑顺序与重复；让有冲突的写入显式失败或串行处理，而非默认最后写入正确。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/use-graph-api",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-148",
+      "prompt": "分支数量由运行时检索结果决定时，如何设计 fan-out 与 fan-in？",
+      "cues": "按实际候选为每个分支分配输入与任务标识；限制并发并定义结果归并及失败处理；汇总时等待必要分支，明确空输入和部分失败的行为。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/use-graph-api",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-149",
+      "prompt": "调研任务有一个分支失败，应该重跑全部分支还是只重跑失败分支？",
+      "cues": "区分可复用的成功结果与已失效的输入；保存各分支状态并优先恢复必要的失败步骤；合并时标明缺失内容并检查重跑是否重复产生外部效果。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-150",
+      "prompt": "模型服务返回限流、参数错误和网络超时，重试策略应当一样吗？",
+      "cues": "按瞬时故障、无效输入和结果不明分别处理；对可重试错误设置退避、抖动和次数上限并遵循服务端提示；在总耗时预算内停止重试并给出可恢复的失败状态。",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/retry",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-151",
+      "prompt": "SDK、业务服务和任务队列都自动重试，为什么可能把故障放大？",
+      "cues": "多层重试的次数可能相乘并增加下游负载；明确重试责任并共享截止时间与请求标识；统计实际尝试次数，限制重试预算并监控故障期间的流量。",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/retry",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-152",
+      "prompt": "多步骤任务前几步成功、后一步失败，能把已发生的操作都自动回滚吗？",
+      "cues": "外部操作通常不在同一个本地事务中；按业务定义补偿动作并保存可恢复的补偿进度；区分可补偿与不可逆操作，必要时人工处理而非宣称全部已撤销。",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-153",
+      "prompt": "主模型不可用时切换备用模型，需要验证哪些兼容性？",
+      "cues": "核对工具调用、结构化输出、上下文限制和消息格式；保留已确认的业务状态并重新校验备用模型的输出；分别评估质量、成本和时延，避免无限来回切换。",
+      "source": "https://docs.langchain.com/oss/python/langchain/structured-output",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-154",
+      "prompt": "工作流每一步都成功，但任务总是循环不结束，你会怎么定位？",
+      "cues": "观察状态变化与分支条件是否真正接近目标；记录重复行动并区分有进展的重试和无效循环；设置步数及预算上限，退出时保存未完成原因供用户继续处理。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-155",
+      "prompt": "用户连续点击两次提交，如何避免同一回答触发两次点评和重复收费？",
+      "cues": "为一次逻辑提交分配稳定请求标识并绑定回答版本；服务端原子记录受理状态，重复请求返回已有任务；界面禁用按钮只改善体验，不能替代服务端去重。",
+      "source": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-156",
+      "prompt": "同一个幂等键对应了不同参数，服务端应该怎么处理？",
+      "cues": "保存幂等键所属用户与原始请求摘要；发现参数不一致时明确拒绝或按协议处理冲突；约定幂等记录保留期限，不把不同业务意图误判为同一次请求。",
+      "source": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "difficulty": "advanced",
+      "type": "concept"
+    },
+    {
+      "id": "agent-157",
+      "prompt": "回答已保存但点评任务没有创建，怎样避免出现永久等待的记录？",
+      "cues": "将本地回答与待点评状态在同一事务中保存；后台扫描或投递待处理任务并采用幂等受理；显示可重试状态并区分保存成功与点评完成。",
+      "source": "https://www.sqlite.org/lang_transaction.html",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-158",
+      "prompt": "模型点评生成完了，写入数据库失败，此时界面该显示什么？",
+      "cues": "区分已生成结果与已持久化结果，不能提前宣称保存成功；保留可重试的结果或任务标识并限制重复写入；恢复后读取数据库状态，避免用户看见互相矛盾的完成提示。",
+      "source": "https://www.sqlite.org/lang_transaction.html",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-159",
+      "prompt": "本地 SQLite 多个任务同时写入时，为什么还可能遇到锁等待？",
+      "cues": "SQLite 写事务仍需要协调，开启 WAL 不等于可以无限并发写；缩短事务并把远程模型调用放在事务之外；根据负载设置有界等待或排队，记录锁冲突以定位长事务。",
+      "source": "https://www.sqlite.org/wal.html",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-160",
+      "prompt": "任务量突然增加时，怎样避免 Agent 请求把模型服务和本机资源压垮？",
+      "cues": "限制同时运行的模型与工具任务并使用有界队列；向用户展示排队状态和预计可取消的阶段；设置过载拒绝或降级策略，监控等待时间而非只看吞吐量。",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-161",
+      "prompt": "后台任务被两个 worker 同时拿到，如何避免重复写入最终结果？",
+      "cues": "明确任务领取、所有权与过期回收规则；提交结果时核对执行版本或所有权令牌；外部操作仍使用业务幂等标识，不能把进程内锁当作跨进程保护。",
+      "source": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-162",
+      "prompt": "用户点击取消后，后台模型仍返回结果，应该如何处理？",
+      "cues": "把取消作为任务状态并尽力中止可取消的调用；结果提交时核对任务是否仍有效；保留必要的耗时或费用记录，不能保证取消会撤销已经发生的外部操作。",
+      "source": "https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/cancellation",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-163",
+      "prompt": "长任务执行时用户关闭页面，再次打开如何继续展示正确进度？",
+      "cues": "服务端或本地持久层保留任务标识、阶段和结果；重开页面先读取快照，再订阅后续状态；避免因重新挂载组件再次发起同一业务任务。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-164",
+      "prompt": "流式回复只收到一半就断线，应该把这些文字保存成最终点评吗？",
+      "cues": "区分增量展示、完成信号和可验证的最终结构；断线后把内容标为未完成并允许恢复或重试；最终入库前校验必填字段，避免半段内容获得正式评分状态。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/streaming",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-165",
+      "prompt": "用户已经改了答案，上一版答案的异步点评才返回，怎么防止覆盖？",
+      "cues": "给答案和点评任务绑定稳定的版本号；写入时比较当前版本，只接受仍对应的结果；旧结果可以保留为历史，但不能冒充当前答案的点评。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-166",
+      "prompt": "从 checkpoint 恢复时，为什么随机数、当前时间和外部读取也值得关注？",
+      "cues": "重放可能得到与原执行不同的值并改变分支；按持久执行框架约定记录需要稳定复用的非确定性结果；区分重用旧结果与重新查询最新数据，并测试两种语义。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/functional-api",
+      "difficulty": "advanced",
+      "type": "concept"
+    },
+    {
+      "id": "agent-167",
+      "prompt": "工作流上线新版本后，如何处理仍停在旧 checkpoint 的任务？",
+      "cues": "保存状态格式与工作流版本，识别未完成任务所需代码；提供明确迁移或兼容执行路径并保留恢复依据；用真实旧状态测试恢复，不能直接假定新节点能读取所有旧数据。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-168",
+      "prompt": "工具版本升级导致返回字段改变，工作流应该怎样发现和处理？",
+      "cues": "在工具结果进入状态时校验版本和必要字段；对兼容转换明确记录规则，不用缺省值掩盖关键字段丢失；用旧新样例验证依赖节点并让不兼容任务进入可诊断状态。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-169",
+      "prompt": "只在日志里写“Agent 失败了”，为什么很难定位一场长任务的问题？",
+      "cues": "关联用户请求、任务、步骤及外部调用的标识；记录每步输入摘要、耗时、状态和失败类别；保护敏感数据并能还原首次失败位置与后续重试过程。",
+      "source": "https://opentelemetry.io/docs/concepts/signals/traces/",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-170",
+      "prompt": "如何测试 Agent 在“外部操作成功、结果未保存”这个瞬间崩溃的行为？",
+      "cues": "在可控测试环境对关键持久化位置注入中断；恢复后核对外部状态和本地记录是否一致；验证幂等或核对机制，既不重复执行也不伪造成功。",
+      "source": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-171",
+      "prompt": "自动重试多次后仍无法完成的任务，应当如何交还给用户？",
+      "cues": "保留已完成产物、失败步骤和已知或未知的业务效果；给出能执行的重试、修改输入或人工接管选项；继续执行时绑定原任务状态，避免把失败流程从头无条件重跑。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/interrupts",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-172",
+      "prompt": "你会怎样设计一场可暂停、可恢复的模拟面试流程？",
+      "cues": "将选题、回答、点评、追问和结束拆成明确状态；保存题目与回答版本，防止重复提交和迟到结果污染；用关闭页面、服务重启和点评失败等情形验证恢复体验。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "intermediate",
+      "type": "project"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ test('mastery removes a question from future draws without changing saved answer
   const { application } = applicationFixture()
   const run = createCoachCommands({ application })
   const bank = await application.coachBank()
-  assert.equal(bank.length, 56)
+  assert.equal(bank.length, 232)
   const first = bank.find((item) => item.track === 'network')
   const second = bank.find((item) => item.track === 'network' && item.questionIndex === 1)
   let state = await run('one', 'start', { bankKey: first.key })

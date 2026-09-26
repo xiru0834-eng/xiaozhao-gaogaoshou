@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "id": "retrieval",
+  "title": "RAG 与检索质量",
+  "questions": [
+    {
+      "id": "agent-009",
+      "prompt": "从一批内部文档到可回答问题的 RAG 系统，你会怎样拆解流程？",
+      "cues": "解析清洗文档并保留来源与权限信息；切块、向量化和建索引后按问题检索；把相关证据交给模型生成回答并验证引用支持结论。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-010",
+      "prompt": "文档内容离散、表格多且有效信息少，你会怎样清洗和切块？",
+      "cues": "去除重复噪声并识别正文、标题和表格结构；按语义与结构切块，保留必要上下文和来源定位；用真实问题评估召回效果，不把固定块长当作通用最优值。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-011",
+      "prompt": "向量检索、关键词检索、混合检索和重排分别解决什么问题？",
+      "cues": "语义检索和词面匹配各有适用查询；混合检索融合多路候选，不能直接假定不同分数可比较；重排重新排序候选，并评估质量收益与额外时延。",
+      "source": "https://qdrant.tech/documentation/search/hybrid-queries/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-012",
+      "prompt": "RAG 没检索到足够证据，但模型仍给出很肯定的答案，怎么排查和改进？",
+      "cues": "分别检查文档覆盖、检索结果和生成阶段；根据证据相关性及是否支持结论决定回答、澄清或说明不足；用无答案和误导性资料样例验证，不能保证有 RAG 就没有幻觉。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-077",
+      "prompt": "文档切块太小或太大，分别可能损失什么？",
+      "cues": "小块可能丢失上下文与条件，大块可能稀释相关信息并占用预算；根据文档结构和真实查询选择粒度；比较召回、答案支持度与成本，不依赖固定最优长度。",
+      "source": "https://docs.langchain.com/oss/python/integrations/splitters",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-078",
+      "prompt": "切块重叠为什么不是越多越好？",
+      "cues": "重叠可保留跨边界语义；过大重叠增加索引与上下文重复；用跨段问题和去重后的有效证据比例评估取舍。",
+      "source": "https://docs.langchain.com/oss/python/integrations/splitters",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-079",
+      "prompt": "父子分块检索为什么可能同时改善匹配和回答上下文？",
+      "cues": "用较小子块召回以定位相关内容；再返回受长度限制的父块补全上下文；避免父块过大带回无关或无权限内容。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-080",
+      "prompt": "按语义切块相对固定长度切块，有哪些代价？",
+      "cues": "语义分块尝试保持主题连贯但依赖模型与阈值；处理成本、稳定性和超长段落需要控制；通过领域问题对照实验确认收益。",
+      "source": "https://docs.langchain.com/oss/python/integrations/splitters",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-081",
+      "prompt": "扫描 PDF 提取出来几乎没有正文，应该如何处理？",
+      "cues": "区分可提取文本与扫描图像；采用 OCR 并保留页码和识别置信信息；抽查数字、单位及阅读顺序，不把 OCR 输出直接当作无误原文。",
+      "source": "https://docs.langchain.com/oss/python/integrations/document_loaders",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-082",
+      "prompt": "表格被展开为一串文本后，为什么容易产生错误回答？",
+      "cues": "行列对应、表头与单位可能丢失；保留结构并为切块补上必要表头；用跨列比较和数值查询验证解析结果。",
+      "source": "https://docs.langchain.com/oss/python/integrations/document_loaders",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-083",
+      "prompt": "文档标题层级应该如何参与检索？",
+      "cues": "保留文档名与章节路径作为元数据或受控上下文；避免离开标题后无法解释的短段；区分匹配用标题和可引用正文。",
+      "source": "https://docs.langchain.com/oss/python/integrations/document_loaders",
+      "difficulty": "foundation",
+      "type": "project"
+    },
+    {
+      "id": "agent-084",
+      "prompt": "RAG 的每个文档片段至少需要哪些元数据？",
+      "cues": "记录稳定文档标识、版本和片段定位；保留来源、更新时间与访问范围；根据过滤和引用需求选择字段，不只存向量与纯文本。",
+      "source": "https://qdrant.tech/documentation/search/filtering/",
+      "difficulty": "foundation",
+      "type": "project"
+    },
+    {
+      "id": "agent-085",
+      "prompt": "同一份文档反复上传，如何防止索引越来越重复？",
+      "cues": "用稳定标识与内容哈希识别重复或修订；把文档和分块版本关联起来；更新时明确替换范围并验证不会删除其他资料。",
+      "source": "https://qdrant.tech/documentation/tutorials-operations/embedding-model-migration/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-086",
+      "prompt": "知识库文档更新后，怎样避免新旧片段混合参与回答？",
+      "cues": "为文档与索引记录版本；新版本建完并校验后切换可见版本；清理或过滤旧片段，处理更新期间的读取一致性。",
+      "source": "https://qdrant.tech/documentation/tutorials-operations/embedding-model-migration/",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-087",
+      "prompt": "删除原文后，为什么还需要检查向量索引和缓存？",
+      "cues": "索引和缓存可能独立保存原文派生内容；按文档标识追踪并清理相关副本；验证检索和回答不再返回已删除资料。",
+      "source": "https://qdrant.tech/documentation/manage-data/multitenancy/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-088",
+      "prompt": "查询向量和文档向量为什么通常要使用兼容的编码方式？",
+      "cues": "向量维度一致不足以保证空间语义一致；遵守模型对查询与文档的编码约定；更换模型时重新评估索引兼容性及迁移策略。",
+      "source": "https://qdrant.tech/documentation/manage-data/collections/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-089",
+      "prompt": "向量相似度分数能直接理解为答案正确的概率吗？",
+      "cues": "分数取决于模型、距离度量和数据分布；高相似度不代表证据支持结论；需用标注问题集校准筛选策略并检查答案依据。",
+      "source": "https://qdrant.tech/documentation/tutorials-search-engineering/ann-recall/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-090",
+      "prompt": "用户用中文提问而资料主要是英文，如何评估跨语言检索？",
+      "cues": "选择支持目标语言组合的编码或查询转换方案；使用真实跨语言问题并保留原始术语；检查译名、缩写和专有名词导致的遗漏。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-091",
+      "prompt": "产品型号、错误码等精确词为什么可能需要关键词检索补充？",
+      "cues": "语义模型可能弱化字符差异；关键词匹配能保留精确词面信号；根据查询类型组合检索，测试相近型号而非只看自然语言问题。",
+      "source": "https://qdrant.tech/documentation/search/hybrid-queries/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-092",
+      "prompt": "BM25 与稠密向量检索为什么可能返回不同结果？",
+      "cues": "BM25 主要利用词项匹配、频率和文档长度；稠密检索使用学习到的语义表示；分别用专有词和改写查询观察优势及失败情形。",
+      "source": "https://qdrant.tech/documentation/search/hybrid-queries/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-093",
+      "prompt": "关键词分数和向量分数直接相加，有什么问题？",
+      "cues": "不同检索器的数值尺度与分布可能不同；需校准加权或使用基于排名的融合；用标注集选择参数，不能只比较裸分数。",
+      "source": "https://qdrant.tech/documentation/search/hybrid-queries/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-094",
+      "prompt": "RRF 为什么可以融合分数尺度不同的检索列表？",
+      "cues": "根据文档在各列表中的名次贡献累加得分；不需要把原始分数放在同一量纲；仍需控制候选深度并处理相同文档去重。",
+      "source": "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reciprocal-rank-fusion",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-095",
+      "prompt": "双编码召回与交叉编码重排，在计算方式上有什么区别？",
+      "cues": "双编码可预先计算文档向量以便大规模查找；交叉编码联合处理查询和候选文本并评分；通常先召回有限候选再重排以控制开销。",
+      "source": "https://www.sbert.net/examples/cross_encoder/applications/README.html",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-096",
+      "prompt": "重排模型为什么无法挽救所有检索失败？",
+      "cues": "相关文档未进入候选集合时重排没有可排序的正确证据；先检查召回覆盖再检查排序；分别评估候选数量和重排收益。",
+      "source": "https://qdrant.tech/documentation/search-tuning/when-a-reranker-is-worth-it/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-097",
+      "prompt": "检索 top-k 从五提高到五十，为什么回答可能更差？",
+      "cues": "更多候选可能加入无关或冲突证据；上下文长度与生成注意力有限；同时检查召回收益、噪声比例和最终答案质量。",
+      "source": "https://qdrant.tech/documentation/search-tuning/candidate-depth/",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-098",
+      "prompt": "召回候选数量与最终放进提示词的片段数量应相同吗？",
+      "cues": "候选池可以较大以覆盖相关内容；经过重排、去重和预算筛选后再形成上下文；分别调整两阶段数量而非共用一个固定参数。",
+      "source": "https://qdrant.tech/documentation/search-tuning/candidate-depth/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-099",
+      "prompt": "多租户知识库如何防止检索到其他用户的文档？",
+      "cues": "把租户和资源权限作为服务端强制过滤条件；查询和缓存都带隔离范围；测试恶意参数及同内容不同权限样例，不能依赖模型自行忽略越权片段。",
+      "source": "https://qdrant.tech/documentation/manage-data/multitenancy/",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-100",
+      "prompt": "先取全局 top-k 再过滤权限，可能有什么问题？",
+      "cues": "有权限的相关文档可能在全局候选之外；先后过滤的召回与执行开销不同；结合索引支持评估授权内召回，始终阻止越权内容进入模型。",
+      "source": "https://qdrant.tech/documentation/search/filtering/",
+      "difficulty": "advanced",
+      "type": "concept"
+    },
+    {
+      "id": "agent-101",
+      "prompt": "HNSW 这类近似索引为什么能加速检索，又可能损失什么？",
+      "cues": "以近似候选搜索减少逐条距离计算；用额外索引和搜索参数换取速度与召回折中；对照精确检索检查遗漏并测量内存和时延。",
+      "source": "https://qdrant.tech/documentation/manage-data/indexing/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-102",
+      "prompt": "ANN Recall 和用户问题的相关文档召回率有什么区别？",
+      "cues": "ANN Recall 比较近似结果与精确向量近邻的重合；语义相关召回需要人工或可靠标注；近似索引完全命中也不能保证编码模型理解了问题。",
+      "source": "https://qdrant.tech/documentation/tutorials-search-engineering/ann-recall/",
+      "difficulty": "advanced",
+      "type": "concept"
+    },
+    {
+      "id": "agent-103",
+      "prompt": "同一个相似度阈值能直接用于所有知识库吗？",
+      "cues": "模型、语料和查询分布变化会改变分数含义；在代表性正负样本上校准阈值；比较漏答和误答代价，监测数据变化后的漂移。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-104",
+      "prompt": "多轮对话中的“它有什么限制”应如何用于检索？",
+      "cues": "从已确认上下文解析指代并形成独立查询；保留用户本轮约束；指代不明确时澄清，避免把错误推断带入后续检索。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-105",
+      "prompt": "一个问题需要比较两家产品时，如何分解检索任务？",
+      "cues": "识别各对象和共同比较维度；分别检索对应资料再对齐版本与条件；没有资料的维度明确留空，不能补造对比结论。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-106",
+      "prompt": "生成多个查询改写后，怎样合并检索结果而不堆满重复内容？",
+      "cues": "限制改写数量并保留原始查询；按稳定片段标识去重与融合排名；以新增有效证据和额外成本评估多查询策略。",
+      "source": "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reciprocal-rank-fusion",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-107",
+      "prompt": "HyDE 用模型生成假设文档，为什么不能直接把它当事实依据？",
+      "cues": "假设文档用于构造检索表示，可能含有虚构细节；最终回答应依据真实检索资料；验证假设引入的主题偏移和额外生成成本。",
+      "source": "https://arxiv.org/abs/2212.10496",
+      "difficulty": "advanced",
+      "type": "concept"
+    },
+    {
+      "id": "agent-108",
+      "prompt": "回答附了引用链接，就能说明结论有根据吗？",
+      "cues": "链接存在不代表内容支持当前论断；把关键结论对齐到具体片段和位置；检查引用是否过时、断章取义或仅主题相似。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-109",
+      "prompt": "检索到两份结论相反的制度文档，应该如何回答？",
+      "cues": "核对来源权威性、生效日期与适用范围；不能单凭相似度选择一个结论；冲突无法消除时说明差异并请求确认当前版本。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-110",
+      "prompt": "知识库完全没有答案时，合适的产品行为是什么？",
+      "cues": "区分无相关文档和证据不足；说明缺失信息并提供澄清或补充资料入口；如允许外部搜索，应明确其来源与权限。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-111",
+      "prompt": "把大量无效模板、页眉页脚留在知识库里，会造成什么问题？",
+      "cues": "重复噪声可能占用检索候选与上下文预算；在保留必要来源信息的前提下清洗模板；比较清洗前后困难查询的相关片段比例。",
+      "source": "https://docs.langchain.com/oss/python/integrations/document_loaders",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-112",
+      "prompt": "回答忠实于检索资料，但仍然答非所问，说明什么？",
+      "cues": "依据一致性与问题相关性是不同维度；分别检查是否支持事实及是否满足用户意图；使用多维评价避免单项高分掩盖失败。",
+      "source": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-113",
+      "prompt": "Precision@k 与 Recall@k 分别适合观察什么问题？",
+      "cues": "精确率看返回候选中相关内容的比例；召回率看已知相关内容被找回的比例；说明标注集合与 k 的影响，并结合业务目标使用。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-114",
+      "prompt": "MRR 为什么特别关注第一条相关结果的位置？",
+      "cues": "对每个查询取首个相关结果排名的倒数再求平均；适合关注首次找到有效结果的场景；它不能完整反映多条相关资料的覆盖情况。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-115",
+      "prompt": "NDCG 相比只判断是否命中，多考虑了什么？",
+      "cues": "允许相关性有不同等级并对靠后结果折扣；用理想排序归一化以便比较；解释标签质量和截断位置如何影响分数。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-116",
+      "prompt": "用模型从文档生成问题做评测，可能高估哪些能力？",
+      "cues": "生成问题可能直接复用文档用词而过于容易；补充真实表达、跨文档与无答案问题；把开发集和留出集分开，避免只优化自造样本。",
+      "source": "https://qdrant.tech/documentation/search-evaluation/retrieval-relevance/",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-117",
+      "prompt": "为什么检索测试需要加入主题相近但答案不在其中的负样本？",
+      "cues": "相近资料能暴露只匹配主题不匹配条件的问题；考察日期、产品版本或对象差异；对误召回和错误引用做专项分析。",
+      "source": "https://qdrant.tech/documentation/search-tuning/when-a-reranker-is-worth-it/",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-118",
+      "prompt": "缓存 RAG 答案时，缓存键为什么不能只有问题文本？",
+      "cues": "结果还依赖用户权限、知识库版本和对话语境；把这些变化纳入键或失效规则；检查缓存是否跨用户泄露或继续返回旧文档内容。",
+      "source": "https://qdrant.tech/documentation/manage-data/multitenancy/",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-119",
+      "prompt": "图表中的信息如何进入一个可追溯的检索流程？",
+      "cues": "根据材料选择 OCR、结构化解析或多模态表示；保留图表、页码与文字说明的关联；验证数字和图例解释，不能把图像摘要当作无误原文。",
+      "source": "https://docs.langchain.com/oss/python/integrations/document_loaders",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-120",
+      "prompt": "什么情况下值得尝试 GraphRAG，而不是继续调普通向量检索？",
+      "cues": "考虑需要跨实体关系或全局概括的任务；评估图构建、更新与查询成本；用实际问题对照基线，不能只因文档多就认定图方案更好。",
+      "source": "https://microsoft.github.io/graphrag/",
+      "difficulty": "advanced",
+      "type": "project"
+    }
+  ]
+}

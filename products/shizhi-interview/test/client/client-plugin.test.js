@@ -2,6 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
+import { buildCoachBank } from '../../src/domain/coach-bank.js'
+import { AGENT_TRACK } from '../../src/domain/agent-catalog.js'
 import { INTERVIEW_TOOL_NAMES } from '../../src/protocol/interview-tool-names.js'
 import { INTERACTION_PROTOCOL } from '../../src/protocol/interaction-protocol.js'
 
@@ -23,7 +25,9 @@ function loadPlugin(reactOverrides = {}) {
     fetch: async () => ({ ok: true, json: async () => ({}) }),
     setTimeout,
     clearTimeout,
+    MutationObserver: class { observe() {} disconnect() {} },
     document: {
+      title: 'DeepSeek Harness',
       documentElement: {
         getAttribute: () => null, setAttribute: () => {}, removeAttribute: () => {},
         style: { getPropertyValue: () => '', getPropertyPriority: () => '', setProperty: () => {}, removeProperty: () => {} },
@@ -170,6 +174,15 @@ test('overview direction counts exclude mastered questions and open that bank fi
   visit(catalog({ items, initialTrack: 'network', loading: false, mastered: false, onStart: () => {}, onRestore: () => {} }))
   assert.deepEqual(nodes.filter((node) => node.type === 'h3').map((node) => node.text), ['TCP 问题'])
   assert.equal(nodes.find((node) => node.type === 'button' && node.text.startsWith('计算机网络'))['aria-pressed'], true)
+
+  nodes.length = 0
+  visit(catalog({ items: buildCoachBank([], []), initialTrack: 'agent', loading: false, mastered: false,
+    onStart: (request) => opened.push(request), onRestore: () => {} }))
+  assert.deepEqual(nodes.filter((node) => node.type === 'h3').map((node) => node.text), AGENT_TRACK.questions.slice(0, 12).map(([prompt]) => prompt))
+  assert.match(nodes.find((node) => node.type === 'button' && node.text.startsWith('智能体应用开发')).text, /200/)
+  assert.ok(nodes.some((node) => /^1\s*\/\s*17\s+页$/.test(node.text)))
+  nodes.find((node) => node.type === 'button' && node['aria-label']?.includes(AGENT_TRACK.questions[0][0])).onClick()
+  assert.equal(opened.at(-1).bankKey, AGENT_TRACK.questions[0][0])
 })
 
 test('preparation validates before starting and sends the selected interview settings', () => {

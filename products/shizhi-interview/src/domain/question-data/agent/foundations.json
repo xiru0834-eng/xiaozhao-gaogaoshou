@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "id": "foundations",
+  "title": "Agent 基础与方案选择",
+  "questions": [
+    {
+      "id": "agent-001",
+      "prompt": "普通 LLM 问答、固定工作流和 Agent 的区别是什么？",
+      "cues": "区分生成文本、预设流程与模型动态选择行动；说明工具执行结果如何影响后续决策；按任务复杂度与可控性选择方案，而非默认使用 Agent。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-002",
+      "prompt": "一个带工具的 Agent 如何完成一轮任务，什么时候应该停止？",
+      "cues": "模型提出工具调用后由运行程序执行并返回结果；根据观察结果继续行动或生成答复；设置完成条件、步数预算和异常退出，不能无限重试。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-003",
+      "prompt": "给企业做知识问答，什么情况下固定 RAG 流程比自主 Agent 更合适？",
+      "cues": "固定检索后生成适合步骤明确的问答；动态选择检索与工具适合路径不确定的任务；比较准确性、时延和可观测性后再增加自主决策。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-004",
+      "prompt": "什么时候值得使用多智能体，什么时候单个 Agent 就够了？",
+      "cues": "可独立分解的任务适合并行分工；共享依赖、协调和结果合并会产生额外成本；与单智能体基线比较效果、时延和 token 消耗。",
+      "source": "https://www.anthropic.com/engineering/multi-agent-research-system",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-025",
+      "prompt": "ReAct 如何把推理、工具行动和环境反馈连接起来？",
+      "cues": "描述提出行动、执行工具、读取观察的循环；工具输出用于修正下一步选择；不能把模型写出的行动文本当作真实执行结果。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-026",
+      "prompt": "先制定计划再执行的 Agent，遇到中途条件变化怎么办？",
+      "cues": "把计划拆为有输入和完成条件的步骤；根据实际结果修改剩余计划；保留已完成结果并限制反复重规划的成本。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/workflows-agents",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-027",
+      "prompt": "需求只需要从文本提取几个字段，应该引入自主 Agent 吗？",
+      "cues": "先尝试单次模型调用与结构化输出；依据错误率和任务分支判断是否需要工具循环；比较可维护性、延迟和质量，避免为简单提取增加无用步骤。",
+      "source": "https://docs.langchain.com/oss/python/langchain/structured-output",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-028",
+      "prompt": "什么时候应让系统向用户澄清，而不是继续猜测目标？",
+      "cues": "识别会改变执行目标或结果的重要缺失信息；用简短问题消除歧义；对可逆低影响步骤可带明示假设继续，对关键写入等待明确输入。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "foundation",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-029",
+      "prompt": "Agent 的大模型、工具执行器和持久化层应如何分工？",
+      "cues": "模型提出下一步行动与待生成内容；执行器验证并执行允许的操作，返回真实结果；持久化层记录可恢复状态，不能用模型自述代替执行记录。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-030",
+      "prompt": "Agent 的状态对象和发给模型的上下文有什么区别？",
+      "cues": "状态可包含完整业务字段和执行信息；上下文是当前模型调用需要的选取内容；不应把密钥、所有历史或大文件无差别塞进提示。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-031",
+      "prompt": "路由工作流与同时调用多个专家再汇总有什么取舍？",
+      "cues": "路由先选择适合的分支以减少成本；并行候选有利于独立分析但增加延迟尾部与费用；用任务分类误差和最终结果质量选择方案。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/workflows-agents",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-032",
+      "prompt": "评审者与生成者循环为什么需要明确退出条件？",
+      "cues": "评审应依据具体可检验标准；设最大迭代和不再改善时的停止条件；避免同一模型无证据地相互赞同或反复修改正确内容。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/workflows-agents",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-033",
+      "prompt": "如何把一个模糊的业务需求转换成可实现的 Agent 任务？",
+      "cues": "明确输入、期望交付和不可做的操作；列出需要的数据、工具与人工决策；先实现可测量的小范围流程并记录不能处理的情况。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "foundation",
+      "type": "project"
+    },
+    {
+      "id": "agent-034",
+      "prompt": "业务流程经常变化时，哪些逻辑适合写在代码里，哪些交给模型？",
+      "cues": "校验、权限、金额计算与状态约束由确定代码控制；语义理解和内容生成可交给模型；把模型建议转换为受校验操作并分别维护版本。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-035",
+      "prompt": "为什么把业务 API 全部注册成工具可能降低任务成功率？",
+      "cues": "相似工具会增加选择歧义和上下文开销；按任务筛选能力并明确用途；比较精简工具集与全量工具集的任务完成率。",
+      "source": "https://www.anthropic.com/engineering/writing-tools-for-agents",
+      "difficulty": "intermediate",
+      "type": "concept"
+    },
+    {
+      "id": "agent-036",
+      "prompt": "如何设计一个先检索资料、再判断是否需要外部搜索的流程？",
+      "cues": "先定义内部证据足够的条件；不足时在授权范围搜索或请求澄清；保留不同来源并限制外部搜索次数与内容可信范围。",
+      "source": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+      "difficulty": "intermediate",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-037",
+      "prompt": "不同任务需要不同模型时，怎样建立可解释的模型路由规则？",
+      "cues": "用任务类型、质量要求和资源预算确定候选；记录路由原因及失败回退条件；使用同一评测集比较结果，不能只按价格选最便宜模型。",
+      "source": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-038",
+      "prompt": "将 Agent 框架换成另一种实现时，哪些部分应尽量保持独立？",
+      "cues": "将业务数据、工具操作和评价标准与框架接口分开；用适配器连接模型与状态持久化；重放相同任务验证语义、错误和副作用行为。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "advanced",
+      "type": "project"
+    },
+    {
+      "id": "agent-039",
+      "prompt": "什么时候应把任务拆成多次模型调用，而不是写一段很长的提示词？",
+      "cues": "步骤有清晰输入输出且需要中间校验时可拆分；评估分步带来的可诊断性与额外时延成本；避免机械拆分本来可以一次完成的简单任务。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-040",
+      "prompt": "面向校招用户的面试 Agent，应该怎样划定自主操作范围？",
+      "cues": "区分出题点评与修改用户记录的权限；回答和点评分别校验保存；结束、重试及斩题等动作应由明确用户操作驱动。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "intermediate",
+      "type": "project"
+    },
+    {
+      "id": "agent-041",
+      "prompt": "用户在执行任务时改变目标，系统如何处理已经完成的步骤？",
+      "cues": "记录新目标与变更时点；评估已执行操作能否复用或需要补偿；未执行步骤按新目标重排，不能假设旧目标下的授权仍适用。",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-042",
+      "prompt": "知识问答、数据查询与执行操作为什么需要不同的验收标准？",
+      "cues": "知识问答检查依据与准确性；数据查询核对过滤条件和结果完整性；操作类任务需要验证真实业务状态与影响范围。",
+      "source": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "difficulty": "foundation",
+      "type": "concept"
+    },
+    {
+      "id": "agent-043",
+      "prompt": "同一个 Agent 同时服务多个业务域，如何减少任务之间互相干扰？",
+      "cues": "按任务隔离上下文、工具与状态；只共享经过定义的公共能力；通过跨域相似请求测试错误路由和越权读取。",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "difficulty": "advanced",
+      "type": "scenario"
+    },
+    {
+      "id": "agent-044",
+      "prompt": "如何为一个智能体项目选定第一版最小可交付范围？",
+      "cues": "选择用户明确、结果可观察的单一任务；约束输入范围、工具数量和失败出口；用真实试用反馈决定后续增加检索、记忆或多智能体能力。",
+      "source": "https://www.anthropic.com/engineering/building-effective-agents",
+      "difficulty": "foundation",
+      "type": "project"
+    }
+  ]
+}
