@@ -6,17 +6,19 @@ import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { verifyAppearance } from './smoke-appearance.mjs'
+import { verifyWorkspace } from './smoke-workspace.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const temporary = await mkdtemp(join(root, 'build', 'desktop-smoke-'))
 app.disableHardwareAcceleration()
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows')
 app.commandLine.appendSwitch('use-fake-device-for-media-stream')
 app.setPath('appData', temporary)
 const rendererErrors = []
 app.on('web-contents-created', (_event, contents) => contents.on('console-message', (event) => {
   if (event.level === 'error') rendererErrors.push(event.message)
 }))
-const timer = setTimeout(() => { console.error('Desktop smoke timed out'); app.exit(1) }, 90000)
+const timer = setTimeout(() => { console.error('Desktop smoke timed out'); app.exit(1) }, 150000)
 async function until(get, description) {
   const deadline = Date.now() + 30000
   while (Date.now() < deadline) {
@@ -38,19 +40,20 @@ try {
   await writeFile(join(root, 'build', 'desktop-setup.png'), firstRun.toPNG())
   void setup.webContents.executeJavaScript('window.desktop.launch({})').catch(() => { /* Successful launch disposes its setup renderer. */ })
   const product = await until(() => BrowserWindow.getAllWindows().find((window) => window.webContents.getURL().startsWith('http://127.0.0.1:') && !window.webContents.isLoading()), 'workbench window')
+  product.webContents.setBackgroundThrottling(false)
   await until(async () => (await product.webContents.executeJavaScript('document.body.innerText')).includes('校招工作台'), 'integrated workbench content')
   await until(() => product.webContents.executeJavaScript('Boolean(document.querySelector(".sz-shell-frame .sz-shell-header"))'), 'product header replaces framework sidebar')
   const clickText = async (text, scope = 'body') => product.webContents.executeJavaScript(`(() => {
     const button = [...document.querySelectorAll(${JSON.stringify(scope)} + ' button')].find(item => item.textContent.trim() === ${JSON.stringify(text)} && item.getClientRects().length);
     if (!button) return false; button.click(); return true;
   })()`)
-  await until(() => clickText('继续', '[role="dialog"]'), 'first-run notice')
-  await until(() => clickText('稍后配置', '[role="dialog"]'), 'keyless onboarding')
+  await until(() => product.webContents.executeJavaScript('!document.querySelector("[role=dialog]") && !document.querySelector("#root[inert]")'), 'desktop setup owns onboarding')
+  assert.equal(await product.webContents.executeJavaScript('document.body.innerText.includes("内测声明")'), false)
   const geometry = await product.webContents.executeJavaScript(`(() => {
     const main = document.querySelector('.sz-shell-main-column').getBoundingClientRect();
     const header = document.querySelector('.sz-shell-header').getBoundingClientRect();
     return { left:main.left, top:main.top, width:main.width, viewport:innerWidth, headerBottom:header.bottom,
-      frameworkBrand:document.querySelector('.sz-shell-header').textContent.includes('DeepSeek') };
+      frameworkBrand:document.querySelector('.sz-shell-brand').textContent.includes('DeepSeek') };
   })()`)
   assert.equal(geometry.left, 0, 'no empty sidebar track')
   assert.equal(geometry.width, geometry.viewport, 'workbench uses the window width')
@@ -62,10 +65,10 @@ try {
   assert.equal(await product.webContents.executeJavaScript('document.querySelector(".sz-shell-history").open'), false)
   await until(() => product.webContents.executeJavaScript('document.activeElement.textContent.trim() === "历史会话"'), 'history restores keyboard focus')
   await product.webContents.executeJavaScript('document.querySelector(".sz-shell-settings button[aria-haspopup=dialog]").click()')
-  await until(() => clickText('模型', '[role="dialog"]'), 'model settings reachable from header')
+  await until(() => clickText('模型与语音', '.sz-settings-dialog'), 'model settings reachable from header')
   product.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' })
   product.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' })
-  await until(() => product.webContents.executeJavaScript('!document.querySelector("[role=dialog]")'), 'settings close')
+  await until(() => product.webContents.executeJavaScript('!document.querySelector(".sz-settings-dialog").open'), 'settings close')
   await verifyAppearance({ product, until, clickText, output: join(root, 'build') })
   assert.equal(await clickText('历史会话', '.sz-shell-header'), true)
   assert.equal(await clickText('插件管理', '.sz-shell-history'), true)
@@ -99,6 +102,7 @@ try {
   await product.webContents.executeJavaScript('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
   await writeFile(join(root, 'build', 'desktop-workbench.png'), (await product.webContents.capturePage()).toPNG())
   assert.deepEqual(rendererErrors, [], 'no renderer errors')
+  await verifyWorkspace({ product, until, clickText, output: join(root, 'build'), temporary })
   const credentials = JSON.parse(await readFile(join(app.getPath('userData'), 'desktop-credentials.json'), 'utf8'))
   assert.equal(credentials.version, 1)
   assert.equal(JSON.parse(safeStorage.decryptString(Buffer.from(credentials.encrypted, 'base64'))).configured, true)

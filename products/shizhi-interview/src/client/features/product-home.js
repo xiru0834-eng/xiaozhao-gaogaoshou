@@ -6,6 +6,7 @@ import { t } from '../shared/coach-locale.js'
 import { interviewApi } from '../shared/api.js'
 import { useInterviewQuery } from '../shared/hooks.js'
 import { PracticeLibrary } from './practice-library.js'
+import { TodayActions } from './today-actions.js'
 
 async function careerRequest(path) {
   const response = await fetch(`/interview/career${path}`, { cache: 'no-store' })
@@ -57,8 +58,14 @@ export function ProductConversation(props) {
   const [viewPractice, setViewPractice] = React.useState(null)
   const [error, setError] = React.useState('')
   const frame = React.useRef(null)
+  const [intent, setIntent] = React.useState(null)
+  const pendingIntent = React.useRef(null)
   const frameReady = React.useRef(false)
   const pendingNavigation = React.useRef(null)
+  React.useEffect(() => interviewApi.subscribeWorkspaceNavigation((target) => {
+    if (target !== 'models') return
+    setTab('career'); frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-navigate', action: 'models' }, location.origin)
+  }), [])
   const session = useInterviewQuery(`product-session:${sessionId}`, () => sessionId ? interviewApi.session(sessionId) : Promise.resolve(null), [sessionId], { cache: false })
   const practice = sessionId && session.data?.resource?.data?.sessionId === sessionId ? session.data.resource.data.practice : null
   React.useEffect(() => {
@@ -81,7 +88,11 @@ export function ProductConversation(props) {
       }
       if (event.data?.type !== 'shizhi-career') return
       setError(''); setViewPractice(null)
-      if (event.data.action === 'chat' || event.data.action === 'practice') { setTab(event.data.action); return }
+      if (event.data.action === 'chat' || event.data.action === 'practice') {
+        setTab(event.data.action)
+        if (pendingIntent.current) { setIntent(pendingIntent.current); pendingIntent.current = null }
+        return
+      }
       if (event.data.action !== 'prepare' || typeof event.data.companyName !== 'string' || event.data.companyName.length > 200) return
       try {
         const data = await careerRequest(`/company?name=${encodeURIComponent(event.data.companyName)}`)
@@ -116,6 +127,11 @@ export function ProductConversation(props) {
       [['career', 'careerHome'], ['practice', 'careerPractice'], ['chat', 'chatTitle']].map(([id, label]) =>
         h('button', { type: 'button', key: id, 'aria-pressed': tab === id, onClick: () => switchView(id) }, t(label)))),
     h(ErrorNotice, null, error || session.error),
+    tab === 'career' ? h(TodayActions, {
+      onPractice: (practiceId) => { pendingIntent.current = practiceId ? { practiceId } : { page: 'bank' }; switchView('practice') },
+      onReview: () => { pendingIntent.current = { page: 'revision' }; switchView('practice') },
+      onSchedule: () => frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-navigate', action: 'schedules' }, location.origin),
+    }) : null,
     h('iframe', { ref: frame, title: t('careerFrame'), src: '/interview/career/', className: 'sz-career-frame', hidden: tab !== 'career',
       onLoad: () => {
         frame.current?.contentWindow?.postMessage({ type: 'shizhi-career-appearance-request' }, location.origin)
@@ -133,5 +149,5 @@ export function ProductConversation(props) {
           item.role, ' · ', item.topic, ' · ', item.answers, ' ', t('careerRecorded'), item.scores.length ? ` · ${(item.scores.reduce((a, b) => a + b, 0) / item.scores.length).toFixed(1)}/10` : '', ' ↗'))) : h('p', null, t('careerEmpty')),
       ) : null,
       viewPractice ? h(PracticeLibrary, { key: viewPractice, sessionId, initialPracticeId: viewPractice, allowCreate: false })
-        : h(CoachHome, { sessionId, createSession: actions.createSession, company, targetRole: role })))
+        : h(CoachHome, { sessionId, createSession: actions.createSession, company, targetRole: role, intent })))
 }

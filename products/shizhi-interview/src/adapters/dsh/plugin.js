@@ -12,6 +12,9 @@ import { registerSpeechRoutes } from '../http/speech-routes.js'
 import { CONVERSATION_POLICY, scopeCurrentRequest } from './conversation-policy.js'
 import { openCareerRepository } from '../../infrastructure/career-repository.js'
 import { registerCareerRoutes } from '../http/career-routes.js'
+import { AnswerDrafts } from '../../infrastructure/answer-drafts.js'
+import { defaultDataDirectory } from '../../infrastructure/paths.js'
+import { join, dirname } from 'node:path'
 
 export const name = 'shizhi-interview'
 export const inject = ['tools', 'agents']
@@ -20,8 +23,10 @@ export function createRuntime(ctx, options = {}) {
   const repository = options.repository || new SqliteInterviewRepository(options.databasePath)
   const exporter = options.exporter || new MarkdownPracticeExporter({ outputDirectory: options.exportDirectory })
   const system = createSystemPorts()
+  const drafts = options.drafts || new AnswerDrafts(options.repository || options.databasePath === ':memory:' ? ':memory:' : join(options.databasePath ? dirname(options.databasePath) : defaultDataDirectory(), 'drafts.sqlite'))
   const application = options.application || new InterviewApplication({
     repository,
+    drafts,
     exporter,
     events: options.events || system.events,
     clock: options.clock || system.clock,
@@ -36,6 +41,7 @@ export function createRuntime(ctx, options = {}) {
     exporter,
     eventBridge,
     toolCatalog,
+    drafts,
   }
 }
 
@@ -69,5 +75,6 @@ export function apply(ctx, config = {}) {
   ctx.effect(() => async () => {
     await runtime.toolCatalog.dispose()
     runtime.repository.close()
+    runtime.drafts.close()
   })
 }

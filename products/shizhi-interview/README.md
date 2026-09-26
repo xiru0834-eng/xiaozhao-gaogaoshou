@@ -11,6 +11,10 @@ English | [中文](README.zh.md)
 
 The home page combines the company catalog and application tracker from Xiaozhao Gaogaoshou with Shizhi interview practice. Filter companies, record application progress, and select **准备面试** to practice for a confirmed target role. Choose from 56 original questions across agent application development, networking, databases, Java, and Redis; speak or type an answer, review feedback, and try again. SQLite stores data locally. AI feedback uses the model configured in Harness.
 
+The home page shows the latest practice, review count and next interview. Answering opens a focused view with expandable navigation. Drafts are keyed by practice and question in `drafts.sqlite`, with a 500 ms debounce. Refreshing or reopening restores them. Save status and retry are visible; revision checks reject conflicting tabs, and submitted attempts invalidate older drafts. Browser storage only recovers interrupted requests.
+
+Header settings group model and voice, appearance, backup and advanced options. Desktop users can configure keys and create encrypted complete backups. Web deployments manage models through advanced settings, configure voice in `.env`, and back up `DSH_HOME` while stopped. See the [desktop guide](../shizhi-desktop/README.md).
+
 ## Table of Contents
 
 - [Use this package](#use-this-package)
@@ -38,7 +42,7 @@ npm run coach:install
 npm start
 ```
 
-For an existing checkout, update main and skip cloning. Open the private localhost URL printed by Harness. The product uses a branded header and full-width content without the framework sidebar. Top navigation offers **校招工作台**, **面试陪练**, and **直接聊聊**, without selecting a workspace. **历史会话** opens existing chats and practices on demand, with plugin management at the bottom. **返回工作台** on chat or plugin pages creates a blank session without deleting history. Each new practice gets its own session; reviews are available through **面试陪练 → 练习记录**. Company browsing, progress recording, and saving answers work without a model key; configure **Settings → Models** at the top right for chat and AI feedback. Stop the server with Ctrl+C.
+For an existing checkout, update main and skip cloning. Open the private localhost URL printed by Harness. The product uses a branded header and full-width content without the framework sidebar. Startup skips the framework developer notice while keeping skippable model onboarding and access to settings. Top navigation offers **校招工作台**, **面试陪练**, and **直接聊聊**, without selecting a workspace. **历史会话** opens existing chats and practices on demand, with plugin management at the bottom. **返回工作台** on chat or plugin pages creates a blank session without deleting history. Each new practice gets its own session; reviews are available through **面试陪练 → 练习记录**. Company browsing, progress recording, and saving answers work without a model key; configure **Settings → Models** at the top right for chat and AI feedback. Stop the server with Ctrl+C.
 
 The launcher builds the client and installs this directory as a linked bundle in its isolated `web` profile on first launch. It then starts the official `dsh web` entry point on `127.0.0.1:4317`. `SHIZHI_PORT` changes the port; `DSH_HOME` overrides the default product-local `.dsh-home` directory. If pnpm reports a store mismatch while reusing a profile, set `SHIZHI_PNPM_STORE` to that profile's original store directory and restart. Keep the printed token URL private.
 

@@ -1,6 +1,6 @@
 {
   "name": "shizhi-desktop",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "private": true,
   "packageManager": "npm@12.1.0",
   "description": "校招高手 × 拾知面试陪练",

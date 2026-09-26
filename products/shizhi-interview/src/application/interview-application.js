@@ -28,6 +28,7 @@ export class InterviewApplication {
     this.clock = validated.clock
     this.ids = validated.ids
     this.random = validated.random
+    this.drafts = validated.drafts
   }
 
   async #practice(practiceId) {
@@ -163,6 +164,7 @@ export class InterviewApplication {
     const id = requiredId(questionId, 'questionId')
     const removed = deleteQuestion(practice, { questionId: id, now })
     const nextBinding = binding.currentQuestionId === id ? clearSessionQuestion(binding, now) : binding
+    this.drafts?.remove(practice.id, id)
     await this.repository.commit({ practice: removed.practice, binding: nextBinding })
     return this.#result('question-deleted', { practiceId: practice.id, questionId: id }, nextBinding, {
       references: { practiceId: practice.id, questionId: id },
@@ -356,6 +358,7 @@ export class InterviewApplication {
     const removed = deleteQuestion(practice, { questionId: id, now })
     const binding = await this.repository.getSessionBindingByPractice(practice.id)
     const nextBinding = binding?.currentQuestionId === id ? clearSessionQuestion(binding, now) : binding
+    this.drafts?.remove(practice.id, id)
     await this.repository.commit({ practice: removed.practice, ...(nextBinding ? { binding: nextBinding } : {}) })
     return this.#result('question-deleted', { practiceId: practice.id, questionId: id }, nextBinding, {
       references: { practiceId: practice.id, questionId: id },
@@ -402,6 +405,7 @@ export class InterviewApplication {
 
   async deletePractice(practiceId, sessionId = null) {
     const practice = await this.#practice(practiceId)
+    this.drafts?.remove(practice.id)
     await this.repository.deletePractice(practice.id)
     if (sessionId) {
       const binding = await this.repository.getSessionBinding(requiredId(sessionId, 'sessionId'))

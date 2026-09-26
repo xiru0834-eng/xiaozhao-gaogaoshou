@@ -44,7 +44,7 @@ function requiredSessionId(value) {
   return value.trim()
 }
 
-export function registerApiRoutes(hostCtx, { application, eventBridge, exporter, career }) {
+export function registerApiRoutes(hostCtx, { application, eventBridge, exporter, career, drafts }) {
   const register = (path, handler) => hostCtx.effect(() => hostCtx.webServer.register({ kind: 'exact', path,
     handler: (request, response) => {
       const rejected = hostCtx.connection.requestRejection(request)
@@ -53,6 +53,34 @@ export function registerApiRoutes(hostCtx, { application, eventBridge, exporter,
     },
   }))
   const coachCommand = createCoachCommands({ application, eventBridge, resolveCompany: career ? (name) => career.company(name) : undefined })
+  register('/interview/api/today', async (request, response) => {
+    if (request.method !== 'GET') return sendJson(response, 405, { error: { message: '仅支持 GET' } })
+    try {
+      const [practices, reviews] = await Promise.all([application.listPractices({ status: 'active' }), application.reviewQueue()])
+      const recent = practices.resource.data.filter((item) => item.coachKind).sort((a, b) => b.updatedAt - a.updatedAt)[0] || null
+      const upcoming = (career?.schedules?.snapshot().items || []).filter((item) => {
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: item.zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+        return item.status === 'planned' && (item.start ? Date.parse(item.start) >= Date.now() : item.date >= today)
+      }).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))[0] || null
+      sendJson(response, 200, { recent, reviewCount: reviews.filter((item) => item.due || item.needsWork || item.uncertain).length, upcoming })
+    } catch (error) { const output = errorResponse(error); sendJson(response, output.status, output.body) }
+  })
+  register('/interview/api/draft', async (request, response) => {
+    try {
+      if (!['GET', 'POST'].includes(request.method)) return sendJson(response, 405, { error: { message: '仅支持 GET 或 POST' } })
+      if (request.method === 'POST' && (!String(request.headers['content-type'] || '').startsWith('application/json') ||
+        request.headers.origin && new URL(request.headers.origin).host !== request.headers.host)) throw new TypeError('仅接受同源 JSON 请求')
+      const input = request.method === 'POST' ? await readJsonBody(request, 160 * 1024) : Object.fromEntries(query(request))
+      if (typeof input.practice !== 'string' || typeof input.question !== 'string') throw new TypeError('缺少题目')
+      const result = await application.getPractice(input.practice)
+      const practice = result.resource.data
+      const question = practice.questions.find((item) => item.id === input.question)
+      if (!question) throw new TypeError('题目不存在')
+      if (request.method === 'GET') return sendJson(response, 200, drafts.read(practice.id, question.id, question.attempts.length))
+      if (practice.status !== 'active' || input.attempts !== question.attempts.length) throw new DomainError('DRAFT_STALE', '回答已提交或练习已结束，请刷新查看')
+      sendJson(response, 200, drafts.save(practice.id, question.id, question.attempts.length, input.revision, input.text))
+    } catch (error) { const output = errorResponse(error); sendJson(response, output.status, output.body) }
+  })
   register('/interview/api/question-bank', async (request, response) => {
     try {
       if (request.method === 'GET') return sendJson(response, 200, { items: await application.coachBank() })

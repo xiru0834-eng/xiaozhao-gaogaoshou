@@ -2,12 +2,13 @@
 import React from 'react'
 import { h, Icon } from '../shared/ui.js'
 import { t } from '../shared/coach-locale.js'
+import { ProductSettings } from './product-settings.js'
 
 /** Renders the shell's navigation seats in a header and an on-demand history dialog.
  * @param {object} props Slot renderer, session selector and new-session action.
  * @returns {object} Product header and history dialog.
  */
-export function ProductShell({ renderSlot, useSessions, createSession, openPlugins }) {
+export function ProductShell({ renderSlot, useSessions, createSession, openPlugins, theme }) {
   const header = React.useRef(null)
   const dialog = React.useRef(null)
   const historyButton = React.useRef(null)
@@ -45,7 +46,7 @@ export function ProductShell({ renderSlot, useSessions, createSession, openPlugi
         h(Icon, { name: 'grid', size: 16 }), t('shellHome')),
       h('button', { type: 'button', ref: historyButton, 'aria-haspopup': 'dialog', onClick: () => dialog.current.showModal() },
         h(Icon, { name: 'clock', size: 16 }), t('shellHistory')),
-      h('div', { className: 'sz-shell-settings' }, renderSlot('sidebar.settings', { wide: false }))),
+      h('div', { className: 'sz-shell-settings' }, h(ProductSettings, { renderSlot, theme }))),
     error ? h('div', { className: 'sz-shell-error', role: 'alert' }, error) : null,
     h('dialog', { ref: dialog, className: 'sz-shell-history', 'aria-labelledby': 'sz-history-title',
       onClose: () => historyButton.current?.focus(),

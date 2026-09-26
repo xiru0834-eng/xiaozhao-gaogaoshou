@@ -13,6 +13,7 @@ import { CoachCatalog } from './coach-catalog.js'
 import { CoachRecords } from './coach-records.js'
 import { CoachOverview } from './coach-overview.js'
 import { coachQuestionKey } from '../../domain/coach-bank.js'
+import { useAnswerDraft } from '../shared/answer-draft.js'
 
 const PAGES = [
   ['studio', 'studioPage', 'studioDescription', 'grid'],
@@ -25,14 +26,14 @@ const PAGES = [
  * @param {object} props Session, session creator and optional company context.
  * @returns {object} Practice workspace.
  */
-export function CoachHome({ sessionId, createSession, company, targetRole = '' }) {
+export function CoachHome({ sessionId, createSession, company, targetRole = '', intent }) {
   const [page, setPage] = React.useState('studio')
   const [bankTrack, setBankTrack] = React.useState('all')
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [busy, setBusy] = React.useState('')
   const [error, setError] = React.useState('')
   const [notice, setNotice] = React.useState('')
-  const [drafts, setDrafts] = React.useState({})
+  const [focused, setFocused] = React.useState(true)
   const [editing, setEditing] = React.useState('')
   const [voiceBusy, setVoiceBusy] = React.useState(false)
   const [now, setNow] = React.useState(Date.now())
@@ -45,8 +46,9 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const bankItems = bank.data?.items || []
   const question = context?.currentQuestion
   const latest = question?.attempts.at(-1)
-  const answerKey = `${sessionId}:${question?.id}`
-  const draft = drafts[answerKey] || ''
+  const answerKey = `${practice?.id}:${question?.id}`
+  const answerDraft = useAnswerDraft(practice?.id, question?.id, question?.attempts.length || 0)
+  const draft = answerDraft.text
   const mock = practice?.config.coach?.kind === 'mock'
   const active = practice?.status === 'active'
   const running = query.data?.runtime?.status === 'running'
@@ -71,6 +73,11 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   }, [page])
   React.useEffect(() => { if (practice) { setPage('session'); setPickerOpen(false) } }, [practice?.id])
   React.useEffect(() => {
+    if (intent?.practiceId === practice?.id && practice) setPage('session')
+    else if (intent?.practiceId) void run('resume', { sourcePracticeId: intent.practiceId })
+    else if (intent?.page) setPage(intent.page)
+  }, [intent])
+  React.useEffect(() => {
     if (!sessionId || !active) return undefined
     const timer = setInterval(() => { if (!document.hidden) void query.reload() }, 2500)
     return () => clearInterval(timer)
@@ -83,9 +90,10 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   async function run(command, payload = {}) {
     if (voiceBusy) { setError(t('micBusy')); return }
     if (inFlight.current || running) return
-    if (draft.trim() && ['start', 'review-start', 'resume', 'select', 'next', 'followup', 'finish', 'archive'].includes(command)) { setError(t('finishDraftHint')); return }
+    if (draft.trim() && ['select', 'next', 'followup', 'finish', 'archive'].includes(command)) { setError(t('finishDraftHint')); return }
     inFlight.current = true; setBusy(command); setError(''); setNotice('')
     try {
+      await answerDraft.flush()
       const starting = ['start', 'review-start', 'resume'].includes(command)
       const targetSession = starting || !sessionId ? await createSession() : sessionId
       const response = await fetch('/interview/api/coach', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
@@ -94,7 +102,7 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
       }) })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error?.message || t('error'))
-      if (command === 'submit') { setDrafts((current) => ({ ...current, [answerKey]: '' })); setEditing('') }
+      if (command === 'submit') { answerDraft.submitted(); setEditing('') }
       if (command === 'retry') setEditing(answerKey)
       if (result.delivery === 'unavailable') setNotice(t('unavailable'))
       if (!result.delivery && ['finish', 'archive'].includes(command)) setNotice(t('saved'))
@@ -114,7 +122,10 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
   const activePage = page === 'session' ? mock ? 'mock' : practice?.config.coach?.kind === 'targeted' ? 'targeted' : 'bank' : page
   const navigate = (id) => { setPage(id); setBankTrack('all'); setNotice(''); setError('') }
   const openBank = (track) => { navigate('bank'); setBankTrack(track) }
-  return h('div', { ref: root, className: `sz-home${page === 'session' ? ' is-answering' : ''}${page === 'studio' ? ' is-studio' : ''}` },
+  return h('div', { ref: root, className: `sz-home${page === 'session' ? ' is-answering' : ''}${page === 'session' && focused ? ' is-focused' : ''}${page === 'studio' ? ' is-studio' : ''}` },
+    page === 'session' ? h('div', { className: 'sz-focus-bar' }, h(Button, { disabled: Boolean(busy) || voiceBusy, onClick: () => setPage('studio') }, t('backToStudio')),
+      h('span', null, t(active ? 'focusHint' : 'viewReport')),
+      h(Button, { 'aria-pressed': focused, onClick: () => setFocused(!focused) }, t(focused ? 'exitFocus' : 'enterFocus'))) : null,
     h('nav', { className: 'sz-coach-nav', 'aria-label': t('coachNavigation') }, PAGES.map(([id, label, description, icon]) => h('button', {
       type: 'button', key: id, 'aria-pressed': activePage === id, title: t(description), disabled: Boolean(busy) || voiceBusy,
       onClick: () => navigate(id),
@@ -151,9 +162,14 @@ export function CoachHome({ sessionId, createSession, company, targetRole = '' }
             h('button', { type: 'button', disabled: navigationDisabled || item.key === currentBankKey, 'aria-current': item.key === currentBankKey ? 'true' : undefined,
               onClick: () => run('select', { bankKey: item.key }) }, h('span', null, item.prompt),
               item.key === currentBankKey ? h('small', null, t('currentQuestion')) : practice.questions.some((saved) => coachQuestionKey(saved.prompt) === item.key) ? h('small', null, t('practicedQuestion')) : null))))) : null) : null,
-      active && question && !ending && (!latest || editing === answerKey) ? h(VoiceAnswer, { key: answerKey, value: draft, busy: disabled,
+      active && question && !ending && (!latest || editing === answerKey || draft) ? h(React.Fragment, null, h(VoiceAnswer, { key: answerKey, value: draft, busy: disabled || !answerDraft.ready,
         submitLabel: t(mock ? 'mockSubmit' : 'submit'), onActiveChange: setVoiceBusy,
-        onChange: (text) => setDrafts((current) => ({ ...current, [answerKey]: text })), onSubmit: () => run('submit', { answer: draft }) }) : null,
+        onChange: answerDraft.change, onSubmit: () => run('submit', { answer: draft }) }),
+        h('div', { className: 'sz-draft-status', role: 'status' }, h('span', null, answerDraft.status),
+          answerDraft.conflict ? h('div', null,
+            h(Button, { disabled, onClick: () => answerDraft.resolve(true) }, t('draftKeepMine')),
+            h(Button, { disabled, onClick: () => answerDraft.resolve(false) }, t('draftUseSaved')))
+            : h(Button, { disabled, onClick: answerDraft.retry }, t('draftSaveNow')))) : null,
       running ? h('p', { className: 'sz-notice', role: 'status' }, t('modelRunning')) : null,
       incomplete && !running && !busy ? h('div', { className: 'sz-recovery', role: 'status' }, h('p', null, t(ending ? 'reportIncomplete' : mock && latest ? 'mockContinueHint' : 'reviewIncomplete')),
         h(Button, { disabled: voiceBusy, onClick: () => run(recover) }, t(ending ? 'retryReport' : mock ? 'continueMock' : !question ? 'generateQuestion' : 'review')),

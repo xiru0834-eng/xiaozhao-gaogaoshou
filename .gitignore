@@ -22,6 +22,7 @@
 *.lnk
 *.zip
 *.7z
+*.szbackup
 # Dependencies, credentials and local artifacts
 .venv/
 venv/

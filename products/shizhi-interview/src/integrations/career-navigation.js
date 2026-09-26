@@ -76,6 +76,8 @@ export function mountModelSettings(session) {
     if (event.origin !== location.origin || event.source !== window.parent) return
     if (event.data?.type === 'shizhi-career-refresh') void addHistory()
     if (event.data?.type === 'shizhi-career-navigate' && ['practice', 'chat'].includes(event.data.action)) send(event.data.action)
+    if (event.data?.type === 'shizhi-career-navigate' && event.data.action === 'schedules') document.getElementById('open-schedules')?.click()
+    if (event.data?.type === 'shizhi-career-navigate' && event.data.action === 'models') document.getElementById('open-model')?.click()
   })
   const saveStatus = document.querySelector('#savenote')
   const ready = new MutationObserver(() => {

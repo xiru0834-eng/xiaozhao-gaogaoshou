@@ -19,12 +19,12 @@ export async function verifyAppearance({ product, until, clickText, output }) {
   const closeSettings = async () => {
     product.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' })
     product.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' })
-    await until(() => js('!document.querySelector("[role=dialog]")'), 'settings closed')
+    await until(() => js('!document.querySelector(".sz-settings-dialog").open'), 'settings closed')
   }
   const settings = async (label) => {
     await js('document.querySelector(".sz-shell-settings button[aria-haspopup=dialog]").click()')
-    await until(() => clickText('通用设置', '[role="dialog"]'), 'general settings')
-    await until(() => clickText(label, '[role="dialog"]'), `select ${label}`)
+    await until(() => clickText('外观', '.sz-settings-dialog'), 'appearance settings')
+    await until(() => clickText(label, '.sz-settings-dialog'), `select ${label}`)
   }
   const menu = async (name) => {
     await frame('d.querySelector("#export-menu summary").click(); d.querySelector("#export-menu").scrollIntoView({block:"nearest"});')
@@ -97,7 +97,7 @@ export async function verifyAppearance({ product, until, clickText, output }) {
     })
     await mode('light')
     await until(() => frame('return d.documentElement.dataset.skin === "blue"'), 'saved skin after reload')
-    await until(() => clickText('稍后配置', '[role="dialog"]'), 'keyless onboarding after reload')
+    await until(() => js('!document.querySelector("[role=dialog]") && !document.querySelector("#root[inert]")'), 'no duplicate onboarding after reload')
     await until(() => js('!document.querySelector("[role=dialog]")'), 'onboarding dismissed after reload')
     product.setSize(1440, 940)
     console.log('PASS: global light/dark/system, iframe theme controls, preview cancellation, reload persistence and export hit targets.')

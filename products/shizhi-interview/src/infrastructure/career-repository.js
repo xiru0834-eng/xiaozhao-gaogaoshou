@@ -29,7 +29,7 @@ export async function openCareerRepository(directory = join(defaultDataDirectory
     const row = snapshot.companies[index]
     return { companyId: snapshot.metadata[index].id, companyName: row[0], roles: row[2], city: row[3], url: row[6] }
   }
-  return { profileId, directory, catalog, store, company, workbench,
+  return { profileId, directory, catalog, store, schedules: context.schedules, company, workbench,
     save(updates) {
       let checked
       try { checked = parseStatuses(updates) } catch (error) { throw new TypeError('投递进度格式不正确', { cause: error }) }

@@ -1,5 +1,7 @@
 import React from 'react'
 import { COACH_STYLES } from './shared/coach-styles.js'
+import { WORKSPACE_STYLES } from './shared/workspace-styles.js'
+import { flushAnswerDrafts } from './shared/answer-draft.js'
 import {
   CompactResultCard,
   PracticeSummaryCard,
@@ -22,6 +24,12 @@ import { h, parseInteractionResult, toolCallState, toolErrorAudience, toolErrorM
 
 export const name = 'shizhi-interview'
 export const inject = ['slots', 'sessions', 'uiWorkspace', 'layout', 'theme']
+
+/** The product skips the framework's developer notice and keeps model onboarding. */
+function ProductWelcomeStep({ complete }) {
+  React.useEffect(() => { complete() }, [complete])
+  return null
+}
 
 export function resolveToolView(toolName, block) {
   const state = toolCallState(block)
@@ -51,14 +59,22 @@ function ToolResourceView({ toolName, sessionId, block }) {
 }
 
 export function apply(ctx) {
+  window.shizhiSaveDrafts = flushAnswerDrafts
+  ctx.effect(() => () => { delete window.shizhiSaveDrafts })
   const coachStyle = document.createElement('style')
-  coachStyle.textContent = COACH_STYLES + SHELL_STYLES
+  coachStyle.textContent = COACH_STYLES + SHELL_STYLES + WORKSPACE_STYLES
   document.head.appendChild(coachStyle)
   ctx.effect(() => () => coachStyle.remove())
   installStyles()
   ctx.effect(() => installProductAppearance(ctx))
   const slots = ctx.get('slots')
   if (!slots) return
+  slots.inject('settings.onboarding', () => slots.register({
+    name: 'settings.onboarding', id: 'welcome-notice', order: -100, priority: -10,
+  }, ProductWelcomeStep))
+  if (window.shizhiDesktop) slots.inject('settings.onboarding', () => slots.register({
+    name: 'settings.onboarding', id: 'deepseek-official', order: 0, priority: -10,
+  }, ProductWelcomeStep))
   const actions = createHomeActions(ctx.get('sessions'), ctx.get('uiWorkspace'), interviewApi)
   slots.inject('sidebar', () => slots.register({
     name: 'sidebar', priority: -10,
@@ -67,6 +83,7 @@ export function apply(ctx) {
       'sidebar.settings': { kind: 'single', scope: 'root' },
     },
   }, (props) => h(ProductShell, { ...props, createSession: actions.createSession,
+    theme: ctx.get('theme'),
     openPlugins: () => ctx.get('layout').selectPanel('plugins'),
   })))
   slots.inject('main.conversation', () => registerProductHome(slots, ctx.get('sessions'),

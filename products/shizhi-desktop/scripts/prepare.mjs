@@ -5,6 +5,7 @@ import { cp, mkdir, readFile, writeFile, readdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { join, resolve } from 'node:path'
 import { writeIcon } from './write-icon.mjs'
+import { trimRuntime } from './trim-runtime.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const product = resolve(root, '../shizhi-interview')
@@ -80,6 +81,8 @@ async function audit(directory) {
   }
 }
 await audit(backend)
+const trimmed = await trimRuntime(join(backend, 'node_modules'))
+console.log(`Removed ${trimmed.files} compiler/debug sidecars (${(trimmed.bytes / 1048576).toFixed(1)} MiB); runtime code and licenses retained.`)
 await writeFile(join(backend, 'runtime-inventory.json'), JSON.stringify({ node: nodeVersion, archiveHash, packages: inventory }, null, 2) + '\n')
 
 await writeIcon(join(root, 'build/icon.ico'))
