@@ -1,5 +1,6 @@
 """The existing compact UI backed only by the new TypeScript profile."""
 import base64
+import html as html_lib
 import logging
 import os
 import pathlib
@@ -49,9 +50,15 @@ class DesktopAPI(CompanionAPI):
 
 
 def page_html(base):
-    html = (SOURCE_DIR / 'companion.html').read_text(encoding='utf-8')
+    template = ROOT / 'companion.html'
+    if not template.is_file():
+        template = SOURCE_DIR / 'companion.html'
+    html = template.read_text(encoding='utf-8')
     mascot = base64.b64encode((ROOT / 'assets/mascot-48.png').read_bytes()).decode()
-    result = html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', base + '/assets/companion-cast.png')
+    cast_url = base.rstrip('/') + '/assets/companion-cast.png'
+    result = html.replace('__MASCOT__', 'data:image/png;base64,' + mascot).replace('__CAST__', cast_url)
+    preload = '<link rel="preload" as="image" fetchpriority="high" href="' + html_lib.escape(cast_url, quote=True) + '">'
+    result = result.replace('</head>', preload + '</head>', 1)
     result = result.replace('与完整版共用进度', '新版桌面 · 与完整版共用进度')
     if len(result.encode('utf-8')) > 1_000_000:
         raise ValueError('桌面页面过大，停止启动以避免黑窗')
