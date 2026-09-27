@@ -4,10 +4,7 @@ import { mkdirSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import {
   DATA,
-  APPEND_DATES,
-  ownershipOf,
-  recruitChannelOf,
-  recruitChannelEvidence,
+  CATALOG_METADATA,
 } from "../shared/catalog.ts";
 import {
   DataError,
@@ -60,17 +57,12 @@ export class CatalogStore {
       this.snapshot();
       this.db.exec("BEGIN IMMEDIATE");
       try {
-        for (const row of DATA)
-          this.insert(
-            parseCompany({
-              row,
-              ownership: ownershipOf(row),
-              aliases: [],
-              firstSeenDate: APPEND_DATES.get(row[0]) ?? null,
-              channel: recruitChannelOf(row),
-              channelEvidence: recruitChannelEvidence(row),
-            }),
-          );
+        for (const row of DATA) {
+          const metadata = CATALOG_METADATA.get(row[0]);
+          if (!metadata)
+            throw new Error(`Missing catalog seed metadata for ${row[0]}`);
+          this.insert(parseCompany({ row, ...metadata }));
+        }
         this.snapshot();
         this.db.exec("COMMIT");
       } catch (error) {
