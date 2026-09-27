@@ -37,6 +37,16 @@ test("catalog seed preserves every field/order/date and initialization is idempo
     assert.deepEqual(first.appendDates, [...APPEND_DATES]);
     assert.equal(first.metadata.length, DATA.length);
     assert.equal(new Set(first.metadata.map((x) => x.id)).size, DATA.length);
+    assert.equal(first.metadata.reduce((total, company) => total + company.aliases.length, 0), 370);
+    assert.deepEqual(
+      Object.fromEntries(
+        ["foreign", "private", "public", "state"].map((ownership) => [
+          ownership,
+          first.metadata.filter((company) => company.ownership === ownership).length,
+        ]),
+      ),
+      { foreign: 36, private: 356, public: 11, state: 115 },
+    );
     store.close();
     store = new CatalogStore(path);
     assert.deepEqual(store.snapshot(), first);

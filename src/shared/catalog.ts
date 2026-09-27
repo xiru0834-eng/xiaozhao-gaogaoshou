@@ -1,4 +1,7 @@
 import type { CompanyRow } from './types.ts';
+import { CATALOG_ADDITIONS } from './catalog-additions.ts';
+import { CATALOG_METADATA } from './catalog-metadata.ts';
+export { CATALOG_METADATA };
 export const F = {n:0,cat:1,roles:2,city:3,code:4,alt:5,url:6,dl:7,dlTxt:8,note:9} as const;
 
 export const CATS: [string, string][] = [
@@ -75,6 +78,8 @@ export const PUBLIC_RESEARCH_ORGS = new Set([
 ]);
 export function ownershipOf(row: CompanyRow){
   const name = row[F.n];
+  const seed = CATALOG_METADATA.get(name);
+  if (seed) return seed.ownership;
   if(FOREIGN_COMPANIES.has(name) || row[F.cat] === "frn") return "foreign";
   if(PUBLIC_RESEARCH_ORGS.has(name)) return "public";
   if(STATE_COMPANIES.has(name) || row[F.cat] === "soe") return "state";
@@ -87,6 +92,8 @@ export function classificationLabel(row: CompanyRow){
   return owner + (category ? " · " + category : "");
 }
 export function recruitChannelOf(row: CompanyRow){
+  const seed = CATALOG_METADATA.get(row[F.n]);
+  if (seed) return seed.channel;
   if(ownershipOf(row) !== "state") return "none";
   const name = row[F.n];
   if(HYBRID_RECRUIT_COMPANIES.has(name)) return "hybrid";
@@ -97,6 +104,8 @@ export function recruitChannelOf(row: CompanyRow){
   return "verify";
 }
 export function recruitChannelEvidence(row: CompanyRow){
+  const seed = CATALOG_METADATA.get(row[F.n]);
+  if (seed) return seed.channelEvidence;
   const channel = recruitChannelOf(row);
   if(channel === "hybrid") return HYBRID_RECRUIT_EVIDENCE.get(row[F.n]) || "官方线上入口 + 官方公告确认的线下渠道";
   if(channel === "offline") return "官方公告仅见线下渠道";
@@ -448,6 +457,9 @@ export const DATA: CompanyRow[] = [
 ["海雀科技","hw","2027 智能体开发工程师（Agent/Harness/RAG）","深圳南山","无已核公开码","未发现可追溯的 2027 岗位适用内推码","mailto:zhaopin@haique-tech.com","","2027 校招 · 公告邮箱可投","2027 海内外毕业窗口 2026-09 至 2027-08；高校招聘公告明列 Agent Loop、Harness、RAG、MCP、Python/TypeScript；与用户项目最匹配之一。公告：https://job.hust.edu.cn/zpinfo1/2440709.htm"]
 ];
 
+// 新条目追加在每日追加区，历史335条记录保持原值和原顺序。
+DATA.push(...CATALOG_ADDITIONS);
+
 // 与上面的每日追加区同步维护，用于页面上的“最近新增”筛选与日期标记。
 export const APPEND_DATES = new Map([
   ["途游游戏","2026-09-19"],
@@ -478,6 +490,12 @@ export const APPEND_DATES = new Map([
   ["卓望数码","2026-09-24"],
   ["海雀科技","2026-09-24"]
 ]);
+
+for (const row of CATALOG_ADDITIONS) {
+  const firstSeenDate = CATALOG_METADATA.get(row[0])?.firstSeenDate;
+  if (firstSeenDate && !APPEND_DATES.has(row[0]))
+    APPEND_DATES.set(row[0], firstSeenDate);
+}
 
 
 export function hasCode(row: CompanyRow): boolean { return /^[A-Za-z0-9]{4,24}$/.test(row[F.code]); }
