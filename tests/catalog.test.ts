@@ -8,8 +8,8 @@ import {
   hasCode,
 } from "../src/shared/catalog.ts";
 
-test("published catalog includes all 518 companies while preserving the original 335", () => {
-  assert.equal(DATA.length, 518);
+test("published catalog includes all 874 companies while preserving earlier snapshots", () => {
+  assert.equal(DATA.length, 874);
   assert.equal(new Set(DATA.map((r) => r[0])).size, DATA.length);
   assert.deepEqual(
     Object.fromEntries(
@@ -18,7 +18,7 @@ test("published catalog includes all 518 companies while preserving the original
         DATA.filter((row) => row[1] === category).length,
       ]),
     ),
-    { ai: 56, b2b: 89, car: 31, fin: 64, frn: 21, game: 27, hw: 136, net: 49, soe: 45 },
+    { ai: 107, b2b: 149, car: 48, fin: 109, frn: 28, game: 33, hw: 242, net: 57, soe: 101 },
   );
   const hash = createHash("sha256")
     .update(JSON.stringify(DATA.slice(0, 315).map((r) => r[0])))
@@ -27,7 +27,7 @@ test("published catalog includes all 518 companies while preserving the original
     hash,
     "5dbde7cd97572cc75b882a0251233b25e39b65ac932092b37d35bf14a366ea6e",
   );
-  assert.equal(APPEND_DATES.size, 210);
+  assert.equal(APPEND_DATES.size, 566);
   // Frozen from the legacy HTML snapshot before migration: every field, not only names.
   assert.equal(
     createHash("sha256")
@@ -45,9 +45,11 @@ test("published catalog includes all 518 companies while preserving the original
       .digest("hex"),
     "4de9cafa07ca5422e24b3b21e8ff47cb8d72e7a06b793720831855436f384e5c",
   );
-  assert.deepEqual(DATA.slice(335).map((row) => row[0]).slice(-5), [
+  assert.deepEqual(DATA.slice(335, 518).map((row) => row[0]).slice(-5), [
     "费曼智核", "启望精密", "北太振寰", "巨鲨医疗", "艾飞智控",
   ]);
+  assert.ok(DATA.slice(518).every((row) => APPEND_DATES.has(row[0])));
+  assert.equal(DATA.at(-1)?.[0], "麦当劳中国科技研发中心");
 });
 test("ownership and referral rules remain compatible", () => {
   const tencent = DATA.find((r) => r[0] === "腾讯")!;
